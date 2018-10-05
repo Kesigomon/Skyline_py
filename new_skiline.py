@@ -27,6 +27,15 @@ async def on_member_join(member):
 https://chat-forum-dcc.jimdo.com/
 ──────────────────────
 """.format(member.mention,member.guild.name)
+    await client.get_channel(447751512064655370).send(content)
+@client.event
+async def on_member_remove(member):
+    content = """
+{0}が退出しました。
+ご利用ありがとうございました。
+""".format(member)
+    await client.get_channel(447751512064655370).send(content)
+
 @client.command
 @commands.check(check1)
 async def agree(ctx):
