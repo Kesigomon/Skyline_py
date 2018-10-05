@@ -37,7 +37,7 @@ async def on_member_remove(member):
 """.format(member)
     await client.get_channel(447751512064655370).send(content)
 
-@client.command
+@client.command()
 @commands.check(check1)
 async def agree(ctx):
     #送信する文章指定。
