@@ -55,7 +55,7 @@ async def agree(ctx):
 async def on_ready():
     global rolelist
     guild = client.get_guild(235718949625397251)
-    with open('ids.txt',encoding='utf-8') as f:
+    with open(__file__+'ids.txt',encoding='utf-8') as f:
         role_ids = f.read().splitlines()
     rolelist = [guild.get_role(int(i)) for i in role_ids] 
     await create_role_panel()
