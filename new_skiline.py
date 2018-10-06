@@ -39,6 +39,11 @@ async def on_member_remove(member):
 
 @client.command()
 @commands.check(check1)
+async def dainspc(ctx):
+    await ctx.send('<@328505715532759043>')
+
+@client.command()
+@commands.check(check1)
 async def agree(ctx):
     #送信する文章指定。
     content = """
