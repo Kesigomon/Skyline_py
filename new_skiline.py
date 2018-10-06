@@ -13,7 +13,7 @@ async def check1(ctx):
 async def on_member_join(member):
     name = member.display_name
     des1 = random.choice(join_messages).format(name,member.guild.me.display_name)
-    embed = discord.Embed(title='{0}が参加しました。'.format(name),description=
+    embed = discord.Embed(title='{0}さんが参加しました。'.format(name),description=
     '```\n{3}\n```\nようこそ{0}さん、よろしくお願いします！\nこのサーバーの現在の人数は{1}です。\n{2}に作られたアカウントです。'
     .format(name,member.guild.member_count,member.created_at,des1))
     await client.get_channel(412501473164001290).send(embed=embed)  
@@ -37,11 +37,16 @@ https://chat-forum-dcc.jimdo.com/
     await client.get_channel(447751512064655370).send(content)
 @client.event
 async def on_member_remove(member):
+    name = member.display_name
+    embed = discord.Embed(title='{0}さんが退出しました。'.format(name)
+    ,description='{0}さん、ご利用ありがとうございました。\nこのサーバーの現在の人数は{1}人です'.format(name,member.guild.member_count))
+    await client.get_channel(412501473164001290).send(embed=embed) 
     content = """
 {0}が退出しました。
 ご利用ありがとうございました。
 """.format(member)
     await client.get_channel(447751512064655370).send(content)
+    
 
 @client.command()
 @commands.check(check1)
