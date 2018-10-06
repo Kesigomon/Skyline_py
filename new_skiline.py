@@ -65,6 +65,12 @@ async def on_ready():
         role_ids = f.read().splitlines()
     rolelist = [guild.get_role(int(i)) for i in role_ids] 
     await create_role_panel()
+@client.listen('on_message')
+async def on_message(message):
+    if message.author == client.user:
+        return
+    if message.content == 'せやな':
+        await message.channel.send('わかる（天下無双）')
 @client.event
 async def on_reaction_add(reaction,user):
     if user == client.user:
