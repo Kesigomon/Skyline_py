@@ -16,7 +16,11 @@ async def on_member_join(member):
     embed = discord.Embed(title='{0}さんが参加しました。'.format(name),description=
     '```\n{3}\n```\nようこそ{0}さん、よろしくお願いします！\nこのサーバーの現在の人数は{1}です。\n{2}に作られたアカウントです。'
     .format(name,member.guild.member_count,member.created_at,des1))
-    await client.get_channel(412501473164001290).send(embed=embed)  
+    embed.set_thumbnail(url=member.avatar_url)
+    try:
+        await client.get_channel(412501473164001290).send(embed=embed)  
+    except discord.Forbidden:
+        pass
     content = """
     ───────────────────────
 {0}さん、
@@ -40,7 +44,11 @@ async def on_member_remove(member):
     name = member.display_name
     embed = discord.Embed(title='{0}さんが退出しました。'.format(name)
     ,description='{0}さん、ご利用ありがとうございました。\nこのサーバーの現在の人数は{1}人です'.format(name,member.guild.member_count))
-    await client.get_channel(412501473164001290).send(embed=embed) 
+    embed.set_thumbnail(url=member.avatar_url)
+    try:
+        await client.get_channel(412501473164001290).send(embed=embed) 
+    except discord.Forbidden:
+        pass
     content = """
 {0}が退出しました。
 ご利用ありがとうございました。
@@ -118,3 +126,6 @@ async def create_role_panel():
             embed = discord.Embed(title='役職パネル({0}ページ目)'.format(x+1),description=content)
             m = await channel.send(embed=embed)
             [client.loop.create_task(m.add_reaction(chr(0x0001f1e6+i))) for i in range(len(roles))]
+if __name__ == '__main__':
+    token = ''
+    client.run(token)
