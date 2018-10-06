@@ -1,16 +1,22 @@
 import asyncio
 import re
 import os 
+import random
 
 import discord
 from discord.ext import commands
 client = commands.Bot('sk!')
-
 async def check1(ctx):
     return ctx.guild is not None
 
 @client.event
 async def on_member_join(member):
+    name = member.display_name
+    des1 = random.choice(join_messages).format(name,member.guild.me.display_name)
+    embed = discord.Embed(title='{0}が参加しました。'.format(name),description=
+    '```\n{3}\n```\nようこそ{0}さん、よろしくお願いします！\nこのサーバーの現在の人数は{1}です。\n{2}に作られたアカウントです。'
+    .format(name,member.guild.member_count,member.created_at,des1))
+    await client.get_channel(412501473164001290).send(embed=embed)  
     content = """
     ───────────────────────
 {0}さん、
@@ -59,10 +65,12 @@ async def agree(ctx):
     await ctx.send(content)
 @client.listen('on_ready')
 async def on_ready():
-    global rolelist
+    global rolelist,join_messages
     guild = client.get_guild(235718949625397251)
     with open(os.path.dirname(__file__)+os.sep+'ids.txt',encoding='utf-8') as f:
         role_ids = f.read().splitlines()
+    with open(os.path.dirname(__file__)+os.sep+'join_message.txt',encoding='utf-8') as f:
+        join_messages = f.read().splitlines()
     rolelist = [guild.get_role(int(i)) for i in role_ids] 
     await create_role_panel()
 @client.listen('on_message')
