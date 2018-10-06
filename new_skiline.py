@@ -60,7 +60,10 @@ async def on_member_remove(member):
 @commands.check(check1)
 async def dainspc(ctx):
     await ctx.send('<@328505715532759043>')
-
+@commands.check(check1)
+async def role_search(ctx,*,role:discord.Role):
+    embed = discord.Embed(title='ロールサーチの結果',description='{0}\nID:{1}'.format(role.mention,role.id))
+    await ctx.send(embed=embed)
 @client.command()
 @commands.check(check1)
 async def agree(ctx):
