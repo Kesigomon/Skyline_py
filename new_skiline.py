@@ -147,17 +147,18 @@ async def skyline_update():
     channel =client.get_channel(498275174123307028)
     webhooks = await channel.webhooks()
     webhook:discord.Webhook = webhooks[0]
-    with ThreadPoolExecutor(max_workers=1) as t:
-        while not client.is_closed():
-            async for message in channel.history().filter(lambda m:m.author.id == 498275277269499904):
-                break
+
+    while not client.is_closed():
+        async for message in channel.history().filter(lambda m:m.author.id == 498275277269499904):
+            break
+        with ThreadPoolExecutor(max_workers=1) as t:
             feed = await client.loop.run_in_executor(t,functools.partial(feedparser.parse,'https://github.com/Kesigomon/Skyline_py/commits/master.atom'))
-            entry = feed.entries[0]
-            if entry.link != message.embeds[0].url:
-                embed = discord.Embed(title=feed['feed'].title,description=entry.title,timestamp=datetime.datetime(*entry.updated_parsed[0:7]),url=entry.link)
-                embed.set_author(name=entry.author,url=entry.author_detail.href,icon_url=entry.media_thumbnail[0]['url'])
-                await webhook.send(embed=embed)
-            await asyncio.sleep(60)
+        entry = feed.entries[0]
+        if entry.link != message.embeds[0].url:
+            embed = discord.Embed(title=feed['feed'].title,description=entry.title,timestamp=datetime.datetime(*entry.updated_parsed[0:7]),url=entry.link)
+            embed.set_author(name=entry.author,url=entry.author_detail.href,icon_url=entry.media_thumbnail[0]['url'])
+            await webhook.send(embed=embed)
+        await asyncio.sleep(60)
 if __name__ == '__main__':
     token = ''
     client.run(token)
