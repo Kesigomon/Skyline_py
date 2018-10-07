@@ -46,6 +46,7 @@ https://chat-forum-dcc.jimdo.com/
 ──────────────────────
 """.format(member.mention,member.guild.name)
     await client.get_channel(447751512064655370).send(content)
+    # await ctx.author.send(content2)
 #退出メッセージ
 @client.event
 async def on_member_remove(member):
@@ -166,7 +167,11 @@ async def server(ctx):
     description = '''
     サーバーの名前:{0.name}
     サーバーの人数:{0.member_count}
-    '''.format(guild)
+    サーバーのID:{0.id}
+    サーバー作成日:{0.created_at}
+    サーバーのオーナー:{0.owner.mention}
+    サーバーのチャンネル数:{1}
+    '''.format(guild,len(guild.channels))
     embed = discord.Embed(title='サーバー情報',description=description)
     embed.set_thumbnail(url=guild.icon_url)
     await ctx.send(embed=embed)
