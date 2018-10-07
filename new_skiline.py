@@ -170,6 +170,11 @@ async def server(ctx):
     embed = discord.Embed(title='サーバー情報',description=description)
     embed.set_thumbnail(url=guild.icon_url)
     await ctx.send(embed=embed)
+@client.command()
+@commands.is_owner()
+async def stop(ctx):
+    await ctx.send('停止しまーす')
+    await client.close()
 if __name__ == '__main__':
     token = ''
     client.run(token)
