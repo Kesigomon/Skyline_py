@@ -21,7 +21,7 @@ async def check1(ctx):
 async def on_member_join(member):
     name = member.display_name
     des1 = random.choice(join_messages).format(name,member.guild.me.display_name)
-    embed = discord.Embed(title='{0}さんが参加しました。'.format(name),description=
+    embed = discord.Embed(title='{0}さんが参加しました。'.format(name),colour=0x2E2EFE,description=
     '```\n{3}\n```\nようこそ{0}さん、よろしくお願いします！\nこのサーバーの現在の人数は{1}です。\n{2}に作られたアカウントです。'
     .format(name,member.guild.member_count,member.created_at,des1))
     embed.set_thumbnail(url=member.avatar_url)
@@ -52,7 +52,7 @@ https://chat-forum-dcc.jimdo.com/
 @client.event
 async def on_member_remove(member):
     name = member.display_name
-    embed = discord.Embed(title='{0}さんが退出しました。'.format(name)
+    embed = discord.Embed(title='{0}さんが退出しました。'.format(name),colour=0x2E2EFE
     ,description='{0}さん、ご利用ありがとうございました。\nこのサーバーの現在の人数は{1}人です'.format(name,member.guild.member_count))
     embed.set_thumbnail(url=member.avatar_url)
     try:
