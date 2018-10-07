@@ -1,14 +1,21 @@
 import asyncio
-import re
-import os 
+import os
 import random
+import re
+import datetime
+import functools
+from concurrent.futures import ThreadPoolExecutor
 
 import discord
+import feedparser
 from discord.ext import commands
+
 client = commands.Bot('sk!')
+firstlaunch = True
 async def check1(ctx):
     return ctx.guild is not None
 
+#参加メッセージ
 @client.event
 async def on_member_join(member):
     name = member.display_name
@@ -39,6 +46,7 @@ https://chat-forum-dcc.jimdo.com/
 ──────────────────────
 """.format(member.mention,member.guild.name)
     await client.get_channel(447751512064655370).send(content)
+#退出メッセージ
 @client.event
 async def on_member_remove(member):
     name = member.display_name
@@ -55,16 +63,18 @@ async def on_member_remove(member):
 """.format(member)
     await client.get_channel(447751512064655370).send(content)
     
-
+#だいんさん呼ぶ用コマンド
 @client.command()
 @commands.check(check1)
 async def dainspc(ctx):
     await ctx.send('<@328505715532759043>')
+#ロールサーチ
 @client.command()
 @commands.check(check1)
 async def role_search(ctx,*,role:discord.Role):
     embed = discord.Embed(title='ロールサーチの結果',description='{0}\nID:{1}'.format(role.mention,role.id))
     await ctx.send(embed=embed)
+#登録コマンド
 @client.command()
 @commands.check(check1)
 async def agree(ctx):
@@ -82,7 +92,10 @@ async def agree(ctx):
     await ctx.send(content)
 @client.listen('on_ready')
 async def on_ready():
-    global rolelist,join_messages
+    global rolelist,join_messages,firstlaunch
+    if firstlaunch:
+        firstlaunch = False
+        client.loop.create_task(skyline_update())
     guild = client.get_guild(235718949625397251)
     with open(os.path.dirname(__file__)+os.sep+'ids.txt',encoding='utf-8') as f:
         role_ids = f.read().splitlines()
@@ -130,6 +143,21 @@ async def create_role_panel():
             embed = discord.Embed(title='役職パネル({0}ページ目)'.format(x+1),description=content)
             m = await channel.send(embed=embed)
             [client.loop.create_task(m.add_reaction(chr(0x0001f1e6+i))) for i in range(len(roles))]
+async def skyline_update():
+    channel =client.get_channel(498275174123307028)
+    webhooks = await channel.webhooks()
+    webhook:discord.Webhook = webhooks[0]
+    with ThreadPoolExecutor(max_workers=1) as t:
+        while not client.is_closed():
+            async for message in channel.history().filter(lambda m:m.author.id == 498275277269499904):
+                break
+            feed = await client.loop.run_in_executor(t,functools.partial(feedparser.parse,'https://github.com/Kesigomon/Skyline_py/commits/master.atom'))
+            entry = feed.entries[0]
+            if entry.link != message.embeds[0].url:
+                embed = discord.Embed(title=feed['feed'].title,description=entry.title,timestamp=datetime.datetime(*entry.updated_parsed[0:7]),url=entry.link)
+                embed.set_author(name=entry.author,url=entry.author_detail.href,icon_url=entry.media_thumbnail[0]['url'])
+                await webhook.send()
+            await asyncio.sleep(60)
 if __name__ == '__main__':
     token = ''
     client.run(token)
