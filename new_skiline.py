@@ -156,7 +156,7 @@ async def skyline_update():
             if entry.link != message.embeds[0].url:
                 embed = discord.Embed(title=feed['feed'].title,description=entry.title,timestamp=datetime.datetime(*entry.updated_parsed[0:7]),url=entry.link)
                 embed.set_author(name=entry.author,url=entry.author_detail.href,icon_url=entry.media_thumbnail[0]['url'])
-                await webhook.send()
+                await webhook.send(embed=embed)
             await asyncio.sleep(60)
 if __name__ == '__main__':
     token = ''
