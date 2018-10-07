@@ -159,6 +159,17 @@ async def skyline_update():
             embed.set_author(name=entry.author,url=entry.author_detail.href,icon_url=entry.media_thumbnail[0]['url'])
             await webhook.send(embed=embed)
         await asyncio.sleep(60)
+@client.command()
+@commands.check(check1)
+async def server(ctx):
+    guild = ctx.guild
+    description = '''
+    サーバーの名前:{0.name}
+    サーバーの人数:{0.member_count}
+    '''.format(guild)
+    embed = discord.Embed(title='サーバー情報',description=description)
+    embed.set_thumbnail(url=guild.icon_url)
+    await ctx.send(embed=embed)
 if __name__ == '__main__':
     token = ''
     client.run(token)
