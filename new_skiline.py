@@ -4,6 +4,7 @@ import random
 import re
 import datetime
 import functools
+import json
 from concurrent.futures import ThreadPoolExecutor
 
 import discord
@@ -93,7 +94,7 @@ async def agree(ctx):
     await ctx.send(content)
 @client.listen('on_ready')
 async def on_ready():
-    global rolelist,join_messages,firstlaunch
+    global rolelist,join_messages,firstlaunch,voice_text_pair
     if firstlaunch:
         firstlaunch = False
         client.loop.create_task(skyline_update())
@@ -102,6 +103,8 @@ async def on_ready():
         role_ids = f.read().splitlines()
     with open(os.path.dirname(__file__)+os.sep+'join_message.txt',encoding='utf-8') as f:
         join_messages = f.read().splitlines()
+    with open(os.path.dirname(__file__)+os.sep+'voice_text.json') as f:
+        voice_text_pair = json.load(f)
     rolelist = [guild.get_role(int(i)) for i in role_ids] 
     await create_role_panel()
 @client.listen('on_message')
@@ -128,6 +131,16 @@ async def on_reaction_add(reaction,user):
                 await user.remove_roles(role)
                 description = '{0}の役職を解除しました'.format(role.mention)
                 await message.channel.send(user.mention,embed=discord.Embed(description=description),delete_after=10)
+@client.listen('on_voice_state_update')
+async def on_voice_state_update(member, before, after):
+    if after.channel is not None and (before.channel is None or before.channel != after.channel) and str(after.channel.id) in voice_text_pair:
+        text_channel = client.get_channel(voice_text_pair[str(after.channel.id)])
+        embed = discord.Embed(title='ボイスチャンネル入室通知',description='{0}が、入室しました。'.format(member.mention),colour=0x00af00)
+        await text_channel.send(embed=embed)
+    if before.channel is not None and (after.channel is None or before.channel != after.channel) and str(before.channel.id) in voice_text_pair:
+        text_channel = client.get_channel(voice_text_pair[str(before.channel.id)])
+        embed = discord.Embed(title='ボイスチャンネル退出通知',description='{0}が、退出しました。'.format(member.mention),colour=0xaf0000)
+        await text_channel.send(embed=embed)
 async def create_role_panel():
     global Lock
     #ループ変更するからこんな回りくどい手を取らないといけなかったりする。
