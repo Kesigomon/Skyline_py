@@ -108,7 +108,8 @@ async def on_ready():
         join_messages = f.read().splitlines()
     with open(os.path.dirname(__file__)+os.sep+'voice_text.json') as f:
         voice_text_pair = json.load(f)
-    rolelist = [guild.get_role(int(i)) for i in role_ids] 
+    rolelist = [guild.get_role(int(i)) for i in role_ids]
+    [rolelist.remove(None) for i in rolelist[:] if i is None] 
     await create_role_panel()
     print(client.user.name,client.user.id,'起動しました。',sep=':')
 @client.listen('on_message')
