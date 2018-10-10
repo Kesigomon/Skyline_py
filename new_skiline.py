@@ -15,7 +15,6 @@ client = commands.Bot('sk!')
 firstlaunch = True
 async def check1(ctx):
     return ctx.guild is not None
-
 #参加メッセージ
 @client.event
 async def on_member_join(member):
@@ -25,8 +24,9 @@ async def on_member_join(member):
     '```\n{3}\n```\nようこそ{0}さん、よろしくお願いします！\nこのサーバーの現在の人数は{1}です。\n{2}に作られたアカウントです。'
     .format(name,member.guild.member_count,member.created_at,des1))
     embed.set_thumbnail(url=member.avatar_url)
+    channel = next(c for c in member.guild.channels if c.name == '雑談フォーラム')
     try:
-        await client.get_channel(412501473164001290).send(embed=embed)  
+        await channel.send(embed=embed)  
     except discord.Forbidden:
         pass
     content = """
@@ -46,7 +46,8 @@ async def on_member_join(member):
 https://chat-forum-dcc.jimdo.com/
 ──────────────────────
 """.format(member.mention,member.guild.name)
-    await client.get_channel(447751512064655370).send(content)
+    channel = next(c for c in member.guild.channels if c.name == 'ニューメンバー')
+    await channel.send(content)
     # await ctx.author.send(content2)
 #退出メッセージ
 @client.event
@@ -55,15 +56,17 @@ async def on_member_remove(member):
     embed = discord.Embed(title='{0}さんが退出しました。'.format(name),colour=0x2E2EFE
     ,description='{0}さん、ご利用ありがとうございました。\nこのサーバーの現在の人数は{1}人です'.format(name,member.guild.member_count))
     embed.set_thumbnail(url=member.avatar_url)
+    channel = next(c for c in member.guild.channels if c.name == '雑談フォーラム')
     try:
-        await client.get_channel(412501473164001290).send(embed=embed) 
+        await channel.send(embed=embed) 
     except discord.Forbidden:
         pass
     content = """
 {0}が退出しました。
 ご利用ありがとうございました。
 """.format(member)
-    await client.get_channel(447751512064655370).send(content)
+    channel = next(c for c in member.guild.channels if c.name == 'ニューメンバー')
+    await channel.send(content)
     
 #だいんさん呼ぶ用コマンド
 @client.command()
