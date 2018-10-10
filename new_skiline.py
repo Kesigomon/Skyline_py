@@ -190,6 +190,11 @@ async def server(ctx):
 async def stop(ctx):
     await ctx.send('停止しまーす')
     await client.close()
+@client.command()
+@commands.is_owner()
+async def panel_regenerate(ctx):
+    await create_role_panel()
+    await ctx.send('再生成終了しました。')
 if __name__ == '__main__':
     token = ''
     client.run(token)
