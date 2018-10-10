@@ -207,7 +207,7 @@ async def poll(ctx,*args):
         answers = args[1:]
         emojis = [chr(0x0001f1e6+i) for i in range(len(answers))]
         embed = discord.Embed(description='\n'.join(e+a for e,a in zip(emojis,answers)))
-        m:discord.Message = await ctx.send(args[0],embed=embed)
+        m:discord.Message = await ctx.send('**{0}**'.format(args[0]),embed=embed)
         [client.loop.create_task(m.add_reaction(e)) for e in emojis]
 if __name__ == '__main__':
     token = ''
