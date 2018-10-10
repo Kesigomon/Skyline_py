@@ -13,7 +13,6 @@ from discord.ext import commands
 
 client = commands.Bot('sk!')
 firstlaunch = True
-Lock = asyncio.Lock(loop=client.loop)
 async def check1(ctx):
     return ctx.guild is not None
 
@@ -108,6 +107,7 @@ async def on_ready():
         voice_text_pair = json.load(f)
     rolelist = [guild.get_role(int(i)) for i in role_ids] 
     await create_role_panel()
+    print(client.user.name,client.user.id,'起動しました。',sep=':')
 @client.listen('on_message')
 async def on_message(message):
     if message.author == client.user:
@@ -143,15 +143,14 @@ async def on_voice_state_update(member, before, after):
         embed = discord.Embed(title='ボイスチャンネル退出通知',description='{0}が、退出しました。'.format(member.mention),colour=0xaf0000)
         await text_channel.send(embed=embed)
 async def create_role_panel():
-    async with Lock:
-        channel = client.get_channel(449185870684356608)
-        await channel.purge(limit=None,check=lambda m:m.embeds and m.author == client.user and '役職パネル' in m.embeds[0].title) 
-        for x in range(len(rolelist)//20 + 1):            
-            roles = rolelist[x*20:(x+1)*20]
-            content = '\n'.join('{0}:{1}'.format(chr(i+0x0001f1e6),r.mention) for i,r in enumerate(roles))
-            embed = discord.Embed(title='役職パネル({0}ページ目)'.format(x+1),description=content)
-            m = await channel.send(embed=embed)
-            [client.loop.create_task(m.add_reaction(chr(0x0001f1e6+i))) for i in range(len(roles))]
+    channel = client.get_channel(449185870684356608)
+    await channel.purge(limit=None,check=lambda m:m.embeds and m.author == client.user and '役職パネル' in m.embeds[0].title) 
+    for x in range(len(rolelist)//20 + 1):            
+        roles = rolelist[x*20:(x+1)*20]
+        content = '\n'.join('{0}:{1}'.format(chr(i+0x0001f1e6),r.mention) for i,r in enumerate(roles))
+        embed = discord.Embed(title='役職パネル({0}ページ目)'.format(x+1),description=content)
+        m = await channel.send(embed=embed)
+        [client.loop.create_task(m.add_reaction(chr(0x0001f1e6+i))) for i in range(len(roles))]
 async def skyline_update():
     channel =client.get_channel(498275174123307028)
     webhooks = await channel.webhooks()
