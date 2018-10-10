@@ -204,8 +204,9 @@ async def poll(ctx,*args):
     elif len(args) == 1:
         args = (args[0],'ワイトもそう思います','さまよえる亡者はそうは思いません')
     if 1 <= len(args) <= 20:
-        emojis = [chr(0x0001f1e6+i) for i in range(len(args))]
-        embed = discord.Embed(description='\n'.join(e+a for e,a in zip(emojis,args)))
+        answers = args[1:]
+        emojis = [chr(0x0001f1e6+i) for i in range(len(answers))]
+        embed = discord.Embed(description='\n'.join(e+a for e,a in zip(emojis,answers)))
         m:discord.Message = await ctx.send(args[0],embed=embed)
         [client.loop.create_task(m.add_reaction(e)) for e in emojis]
 if __name__ == '__main__':
