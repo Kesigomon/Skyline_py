@@ -4,7 +4,7 @@ import random
 import re
 import datetime
 import functools
-import json
+import yaml
 from concurrent.futures import ThreadPoolExecutor
 
 import discord
@@ -102,12 +102,11 @@ async def on_ready():
         firstlaunch = False
         client.loop.create_task(skyline_update())
     guild = client.get_guild(235718949625397251)
-    with open(os.path.dirname(__file__)+os.sep+'ids.txt',encoding='utf-8') as f:
-        role_ids = f.read().splitlines()
-    with open(os.path.dirname(__file__)+os.sep+'join_message.txt',encoding='utf-8') as f:
-        join_messages = f.read().splitlines()
-    with open(os.path.dirname(__file__)+os.sep+'voice_text.json') as f:
-        voice_text_pair = json.load(f)
+    with open(os.path.dirname(__file__)+os.sep+'config.yaml',encoding='utf-8') as f:
+        data = yaml.load(f)
+    role_ids = data['roles']
+    join_messages = data['join_message']
+    voice_text_pair = data['voice_text']
     rolelist = [guild.get_role(int(i)) for i in role_ids]
     [rolelist.remove(None) for i in rolelist[:] if i is None] 
     await create_role_panel()
