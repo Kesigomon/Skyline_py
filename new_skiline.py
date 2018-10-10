@@ -15,6 +15,7 @@ client = commands.Bot('sk!')
 firstlaunch = True
 async def check1(ctx):
     return ctx.guild is not None
+
 #参加メッセージ
 @client.event
 async def on_member_join(member):
@@ -195,6 +196,18 @@ async def stop(ctx):
 async def panel_regenerate(ctx):
     await create_role_panel()
     await ctx.send('再生成終了しました。')
+@client.command()
+@commands.check(check1)
+async def poll(ctx,*args):
+    if len(args) == 0:
+        pass
+    elif len(args) == 1:
+        args = (args[0],'ワイトもそう思います','さまよえる亡者はそうは思いません')
+    if 1 <= len(args) <= 20:
+        emojis = [chr(0x0001f1e6+i) for i in range(len(args))]
+        embed = discord.Embed(description='\n'.join(e+a for e,a in zip(emojis,args)))
+        m:discord.Message = await ctx.send(args[0],embed=embed)
+        [client.loop.create_task(m.add_reaction(e)) for e in emojis]
 if __name__ == '__main__':
     token = ''
     client.run(token)
