@@ -13,6 +13,7 @@ from discord.ext import commands
 
 client = commands.Bot('sk!')
 firstlaunch = True
+Lock = asyncio.Lock(loop=client.loop)
 async def check1(ctx):
     return ctx.guild is not None
 
@@ -142,12 +143,6 @@ async def on_voice_state_update(member, before, after):
         embed = discord.Embed(title='ボイスチャンネル退出通知',description='{0}が、退出しました。'.format(member.mention),colour=0xaf0000)
         await text_channel.send(embed=embed)
 async def create_role_panel():
-    global Lock
-    #ループ変更するからこんな回りくどい手を取らないといけなかったりする。
-    try:
-        Lock
-    except NameError:
-        Lock = asyncio.Lock(loop=client.loop)
     async with Lock:
         channel = client.get_channel(449185870684356608)
         await channel.purge(limit=None,check=lambda m:m.embeds and m.author == client.user and '役職パネル' in m.embeds[0].title) 
@@ -169,7 +164,7 @@ async def skyline_update():
             feed = await client.loop.run_in_executor(t,functools.partial(feedparser.parse,'https://github.com/Kesigomon/Skyline_py/commits/master.atom'))
         entry = feed.entries[0]
         if entry.link != message.embeds[0].url:
-            embed = discord.Embed(title=feed['feed'].title,description=entry.title,timestamp=datetime.datetime(*entry.updated_parsed[0:7]),url=entry.link)
+            embed = discord.Embed(title=entry.link.replace('https://github.com/Kesigomon/Skyline_py/commit/',''),description=entry.title,timestamp=datetime.datetime(*entry.updated_parsed[0:7]),url=entry.link)
             embed.set_author(name=entry.author,url=entry.author_detail.href,icon_url=entry.media_thumbnail[0]['url'])
             await webhook.send(embed=embed)
         await asyncio.sleep(60)
