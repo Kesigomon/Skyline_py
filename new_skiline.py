@@ -14,8 +14,7 @@ from discord.ext import commands
 client = commands.Bot('sk!')
 firstlaunch = True
 async def check1(ctx):
-    return ctx.guild is not None
-
+    return ctx.guild is not None 
 #参加メッセージ
 @client.event
 async def on_member_join(member):
@@ -77,6 +76,7 @@ async def on_member_remove(member):
 #ロールサーチ
 @client.command()
 @commands.check(check1)
+
 async def role_search(ctx,*,role:discord.Role):
     embed = discord.Embed(title='ロールサーチの結果',description='{0}\nID:{1}'.format(role.mention,role.id))
     await ctx.send(embed=embed)
@@ -173,6 +173,7 @@ async def skyline_update():
         await asyncio.sleep(60)
 @client.command()
 @commands.check(check1)
+@commands.group('普通の機能')
 async def server(ctx):
     guild = ctx.guild
     description = '''
@@ -186,18 +187,19 @@ async def server(ctx):
     embed = discord.Embed(title='サーバー情報',description=description)
     embed.set_thumbnail(url=guild.icon_url)
     await ctx.send(embed=embed)
-@client.command()
+@client.command(hidden=True)
 @commands.is_owner()
 async def stop(ctx):
     await ctx.send('停止しまーす')
     await client.close()
-@client.command()
+@client.command(hidden=True)
 @commands.is_owner()
 async def panel_regenerate(ctx):
     await create_role_panel()
     await ctx.send('再生成終了しました。')
 @client.command()
 @commands.check(check1)
+@commands.group('普通の機能')
 async def poll(ctx,*args):
     if len(args) == 0:
         pass
