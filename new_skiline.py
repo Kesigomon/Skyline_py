@@ -14,6 +14,7 @@ from discord.ext import commands
 client = commands.Bot('sk!')
 firstlaunch = True
 async def check1(ctx):
+<<<<<<< HEAD
     return ctx.guild is not None
 class 普通のコマンド:
     def __init__(self,client):
@@ -66,6 +67,9 @@ class BOTオーナー用コマンド:
     async def panel_regenerate(self,ctx):
         await create_role_panel()
         await ctx.send('再生成終了しました。')
+=======
+    return ctx.guild is not None 
+>>>>>>> c5a9beca3a77b214d95e2f08562104a3f3fae440
 #参加メッセージ
 @client.event
 async def on_member_join(member):
@@ -124,6 +128,16 @@ async def on_member_remove(member):
 # @commands.check(check1)
 # async def dainspc(ctx):
 #     await ctx.send('<@328505715532759043>')
+<<<<<<< HEAD
+=======
+#ロールサーチ
+@client.command()
+@commands.check(check1)
+
+async def role_search(ctx,*,role:discord.Role):
+    embed = discord.Embed(title='ロールサーチの結果',description='{0}\nID:{1}'.format(role.mention,role.id))
+    await ctx.send(embed=embed)
+>>>>>>> c5a9beca3a77b214d95e2f08562104a3f3fae440
 #登録コマンド
 @client.command()
 @commands.check(check1)
@@ -214,8 +228,49 @@ async def skyline_update():
             embed.set_author(name=entry.author,url=entry.author_detail.href,icon_url=entry.media_thumbnail[0]['url'])
             await webhook.send(embed=embed)
         await asyncio.sleep(60)
+<<<<<<< HEAD
 client.add_cog(普通のコマンド(client))
 client.add_cog(BOTオーナー用コマンド(client))
+=======
+@client.command()
+@commands.check(check1)
+async def server(ctx):
+    guild = ctx.guild
+    description = '''
+    サーバーの名前:{0.name}
+    サーバーの人数:{0.member_count}
+    サーバーのID:{0.id}
+    サーバー作成日:{0.created_at}
+    サーバーのオーナー:{0.owner.mention}
+    サーバーのチャンネル数:{1}
+    '''.format(guild,len(guild.channels))
+    embed = discord.Embed(title='サーバー情報',description=description)
+    embed.set_thumbnail(url=guild.icon_url)
+    await ctx.send(embed=embed)
+@client.command(hidden=True)
+@commands.is_owner()
+async def stop(ctx):
+    await ctx.send('停止しまーす')
+    await client.close()
+@client.command(hidden=True)
+@commands.is_owner()
+async def panel_regenerate(ctx):
+    await create_role_panel()
+    await ctx.send('再生成終了しました。')
+@client.command()
+@commands.check(check1)
+async def poll(ctx,*args):
+    if len(args) == 0:
+        pass
+    elif len(args) == 1:
+        args = (args[0],'ワイトもそう思います','さまよえる亡者はそうは思いません')
+    if 1 <= len(args) <= 21:
+        answers = args[1:]
+        emojis = [chr(0x0001f1e6+i) for i in range(len(answers))]
+        embed = discord.Embed(description='\n'.join(e+a for e,a in zip(emojis,answers)))
+        m:discord.Message = await ctx.send('**{0}**'.format(args[0]),embed=embed)
+        [client.loop.create_task(m.add_reaction(e)) for e in emojis]
+>>>>>>> c5a9beca3a77b214d95e2f08562104a3f3fae440
 if __name__ == '__main__':
     token = ''
     client.run(token)
