@@ -86,7 +86,7 @@ class オーナーズ用コマンド:
     @commands.command()
     async def create_category_index(self,ctx,*args):
         if args:
-            category = commands.converter.CategoryChannelConverter().convert(ctx,args[0])
+            category = await commands.converter.CategoryChannelConverter().convert(ctx,args[0])
         else:
             category = ctx.channel.category
         try:
