@@ -13,12 +13,11 @@ from discord.ext import commands
 
 client = commands.Bot('sk!')
 firstlaunch = True
-async def check1(ctx):
-    return ctx.guild is not None
 class 普通のコマンド:
     def __init__(self,client):
         self.client = client
-    async def __global_check(self,ctx):
+    async def __local_check(self,ctx):
+        print(ctx.guild is not None)
         return ctx.guild is not None
     #ロールサーチ
     @commands.command()
@@ -53,10 +52,24 @@ class 普通のコマンド:
             embed = discord.Embed(description='\n'.join(e+a for e,a in zip(emojis,answers)))
             m:discord.Message = await ctx.send('**{0}**'.format(args[0]),embed=embed)
             [self.client.loop.create_task(m.add_reaction(e)) for e in emojis]
+    @commands.command()
+    async def agree(self,ctx):
+    #送信する文章指定。
+        content = """
+{0}さんの
+アカウントが登録されました！{1}の
+{2}個のチャンネルが利用できます！
+まずは<#437110659520528395>で自己紹介をしてみてください！
+""".format(ctx.author.mention,ctx.guild.name,len(ctx.guild.channels))
+#左から順に、ユーザーのメンション、サーバーの名前、サーバーのチャンネル数に置き換える。
+        #役職付与
+        await ctx.author.add_roles(ctx.guild.get_role(268352600108171274))
+        #メッセージ送信
+        await ctx.send(content)
 class BOTオーナー用コマンド:
     def __init__(self,client):
         self.client:commands.Bot = client
-    async def __global_check(self,ctx):
+    async def __local_check(self,ctx):
         return await self.client.is_owner(ctx.author)
     @commands.command(hidden=True)
     async def stop(self,ctx):
@@ -69,7 +82,7 @@ class BOTオーナー用コマンド:
 class オーナーズ用コマンド:
     def __init__(self,client):
         self.client:commands.Bot = client
-    async def __global_check(self,ctx):
+    async def __local_check(self,ctx):
         return ctx.guild is not None and (await self.client.is_owner(ctx.author) or ctx.author == ctx.guild.owner)
     @commands.command()
     async def create_category_index(self,ctx,*args):
@@ -147,22 +160,6 @@ async def on_member_remove(member):
 # @commands.check(check1)
 # async def dainspc(ctx):
 #     await ctx.send('<@328505715532759043>')
-#登録コマンド
-@client.command()
-@commands.check(check1)
-async def agree(ctx):
-    #送信する文章指定。
-    content = """
-{0}さんの
-アカウントが登録されました！{1}の
-{2}個のチャンネルが利用できます！
-まずは<#437110659520528395>で自己紹介をしてみてください！
-""".format(ctx.author.mention,ctx.guild.name,len(ctx.guild.channels))
-#左から順に、ユーザーのメンション、サーバーの名前、サーバーのチャンネル数に置き換える。
-    #役職付与
-    await ctx.author.add_roles(ctx.guild.get_role(268352600108171274))
-    #メッセージ送信
-    await ctx.send(content)
 @client.listen('on_ready')
 async def on_ready():
     global rolelist,join_messages,firstlaunch,voice_text_pair
