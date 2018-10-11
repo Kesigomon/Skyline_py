@@ -18,7 +18,7 @@ async def check1(ctx):
 class 普通のコマンド:
     def __init__(self,client):
         self.client = client
-    def __global_check(self,ctx):
+    async def __global_check(self,ctx):
         return ctx.guild is not None
     #ロールサーチ
     @commands.command()
