@@ -17,7 +17,6 @@ class 普通のコマンド:
     def __init__(self,client):
         self.client = client
     async def __local_check(self,ctx):
-        print(ctx.guild is not None)
         return ctx.guild is not None
     #ロールサーチ
     @commands.command()
