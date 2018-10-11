@@ -70,10 +70,10 @@ async def on_member_remove(member):
     await channel.send(content)
     
 #だいんさん呼ぶ用コマンド
-@client.command()
-@commands.check(check1)
-async def dainspc(ctx):
-    await ctx.send('<@328505715532759043>')
+# @client.command()
+# @commands.check(check1)
+# async def dainspc(ctx):
+#     await ctx.send('<@328505715532759043>')
 #ロールサーチ
 @client.command()
 @commands.check(check1)
