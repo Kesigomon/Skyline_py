@@ -71,7 +71,7 @@ class オーナーズ用コマンド:
         self.client:commands.Bot = client
     async def __global_check(self,ctx):
         return ctx.guild is not None and (await self.client.is_owner(ctx.author) or ctx.author == ctx.guild.owner)
-    @commands.command
+    @commands.command()
     async def create_category_index(self,ctx,*args):
         if args:
             category = commands.converter.CategoryChannelConverter().convert(ctx,args[0])
@@ -237,19 +237,6 @@ async def skyline_update():
             embed.set_author(name=entry.author,url=entry.author_detail.href,icon_url=entry.media_thumbnail[0]['url'])
             await webhook.send(embed=embed)
         await asyncio.sleep(60)
-async def create_category_index(category:discord.CategoryChannel):
-    try:
-        index_channel:discord.TextChannel = next(c for c in category.channels if c.name == 'category-index')
-    except StopIteration:
-        pass
-    else:
-        await index_channel.purge(limit=None,check=lambda m:m.author == client.user)
-        for channel in category.channels:
-            if channel != index_channel:
-                description = channel.topic if channel.topic is not None else 'トピックはないと思います'
-                embed = discord.Embed(title='ID:{0}'.format(channel.id),description=description)
-                name = channel.mention if isinstance(channel,discord.TextChannel) else channel.name
-                await index_channel.send(name,embed=embed)
 client.add_cog(普通のコマンド(client))
 client.add_cog(BOTオーナー用コマンド(client))
 client.add_cog(オーナーズ用コマンド(client))
