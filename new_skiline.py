@@ -173,7 +173,6 @@ async def skyline_update():
         await asyncio.sleep(60)
 @client.command()
 @commands.check(check1)
-@commands.group('普通の機能')
 async def server(ctx):
     guild = ctx.guild
     description = '''
@@ -199,7 +198,6 @@ async def panel_regenerate(ctx):
     await ctx.send('再生成終了しました。')
 @client.command()
 @commands.check(check1)
-@commands.group('普通の機能')
 async def poll(ctx,*args):
     if len(args) == 0:
         pass
