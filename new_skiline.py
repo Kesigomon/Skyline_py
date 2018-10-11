@@ -252,6 +252,7 @@ async def create_category_index(category:discord.CategoryChannel):
                 await index_channel.send(name,embed=embed)
 client.add_cog(普通のコマンド(client))
 client.add_cog(BOTオーナー用コマンド(client))
+client.add_cog(オーナーズ用コマンド(client))
 if __name__ == '__main__':
     token = ''
     client.run(token)
