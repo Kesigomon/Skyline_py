@@ -203,7 +203,7 @@ async def poll(ctx,*args):
         pass
     elif len(args) == 1:
         args = (args[0],'ワイトもそう思います','さまよえる亡者はそうは思いません')
-    if 1 <= len(args) <= 20:
+    if 1 <= len(args) <= 21:
         answers = args[1:]
         emojis = [chr(0x0001f1e6+i) for i in range(len(answers))]
         embed = discord.Embed(description='\n'.join(e+a for e,a in zip(emojis,answers)))
