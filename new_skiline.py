@@ -120,7 +120,7 @@ class オーナーズ用コマンド:
             else:
                 content += '{0}:{1}\n'.format(category.name,index_channel.mention)
         else:
-            await self.index_index.purge(limit=None)
+            await self.index_index.purge(limit=None,check=lambda m:m.author == self.client.user)
             await self.index_index.send(content)
 #参加メッセージ
 @client.event
