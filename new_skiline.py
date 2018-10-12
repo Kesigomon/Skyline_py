@@ -90,10 +90,17 @@ class オーナーズ用コマンド:
         self.index_index = client.get_channel(500274844253028353)
     @commands.command()
     async def create_category_index(self,ctx,*args):
-        if args:
-            category = await commands.converter.CategoryChannelConverter().convert(ctx,args[0])
-        else:
+        if not args:
             category = ctx.channel.category
+        elif isinstance(args[0],discord.CategoryChannel):
+            pass
+        elif args[0] == 'all':
+            tasks = [self.client.loop.create_task(self.create_category_index(ctx)) for category in 
+            ctx.guild.categories]
+            await asyncio.wait(tasks)
+            return
+        else:
+            category = await commands.converter.CategoryChannelConverter().convert(ctx,args[0])
         try:
             index_channel:discord.TextChannel = next(c for c in category.channels if c.name == 'category-index')
         except StopIteration:
