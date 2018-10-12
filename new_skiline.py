@@ -106,7 +106,8 @@ class オーナーズ用コマンド:
             +'\n'.join(map(lambda c:c.mention,channels)))
             for channel in channels:
                 description = channel.topic if channel.topic is not None else 'トピックはないと思います'
-                embed = discord.Embed(title='{1}\nID:{0}'.format(channel.id,channel.name),description=description)
+                embed = discord.Embed(title=channel.name,description='ID:{0}'.format(channel.id))
+                embed.add_field(name='チャンネルトピック',value=description)
                 await index_channel.send(embed=embed)
     @commands.command()
     async def create_index_index(self,ctx):
