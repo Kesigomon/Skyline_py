@@ -94,13 +94,14 @@ class オーナーズ用コマンド:
         except StopIteration:
             await ctx.send('index用チャンネルが見つかりませんでした。')
         else:
+            channels = sorted((c for c in category.channel if isinstance(c,discord.TextChannel) or c != index_channel)
+            ,key=lambda c:c.position)
             await index_channel.purge(limit=None,check=lambda m:m.author == self.client.user)
-            for channel in category.channels:
-                if channel != index_channel:
-                    description = channel.topic if channel.topic is not None else 'トピックはないと思います'
-                    embed = discord.Embed(title='ID:{0}'.format(channel.id),description=description)
-                    name = channel.mention if isinstance(channel,discord.TextChannel) else channel.name
-                    await index_channel.send(name,embed=embed)
+            await index_channel.send('\n'.join(map(lambda c:c.name,channels)))
+            for channel in channels:
+                description = channel.topic if channel.topic is not None else 'トピックはないと思います'
+                embed = discord.Embed(title='ID:{0}'.format(channel.id),description=description)
+                await index_channel.send(embed=embed)
 #参加メッセージ
 @client.event
 async def on_member_join(member):
