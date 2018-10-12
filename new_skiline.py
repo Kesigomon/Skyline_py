@@ -90,32 +90,33 @@ class オーナーズ用コマンド:
         self.index_index = client.get_channel(500274844253028353)
     @commands.command()
     async def create_category_index(self,ctx,*args):
+        async def _create_category_index(category,error_ignore=False):
+            try:
+                index_channel:discord.TextChannel = next(c for c in category.channels if c.name == 'category-index')
+            except StopIteration:
+                if not error_ignore:await ctx.send('index用チャンネルが見つかりませんでした。')
+            else:
+                channels = sorted((c for c in category.channels if isinstance(c,discord.TextChannel) and c != index_channel)
+                ,key=lambda c:c.position)
+                await index_channel.purge(limit=None,check=lambda m:m.author == self.client.user)
+                await index_channel.send('\n'.join(('-'*10,self.index_index.mention,'-'*10,'')) 
+                +'\n'.join(map(lambda c:c.mention,channels)))
+                for channel in channels:
+                    description = channel.topic if channel.topic else 'トピックはないと思います'
+                    embed = discord.Embed(title=channel.name,description='ID:{0}'.format(channel.id))
+                    embed.add_field(name='チャンネルトピック',value=description)
+                    await index_channel.send(embed=embed)
         if not args:
             category = ctx.channel.category
-        elif isinstance(args[0],discord.CategoryChannel):
-            pass
+            await _create_category_index(category,error_ignore=False)
         elif args[0] == 'all':
-            tasks = [self.client.loop.create_task(self.create_category_index(ctx)) for category in 
+            tasks = [self.client.loop.create_task(_create_category_index(category,error_ignore=True)) for category in 
             ctx.guild.categories]
             await asyncio.wait(tasks)
-            return
         else:
             category = await commands.converter.CategoryChannelConverter().convert(ctx,args[0])
-        try:
-            index_channel:discord.TextChannel = next(c for c in category.channels if c.name == 'category-index')
-        except StopIteration:
-            await ctx.send('index用チャンネルが見つかりませんでした。')
-        else:
-            channels = sorted((c for c in category.channels if isinstance(c,discord.TextChannel) and c != index_channel)
-            ,key=lambda c:c.position)
-            await index_channel.purge(limit=None,check=lambda m:m.author == self.client.user)
-            await index_channel.send('\n'.join(('-'*10,self.index_index.mention,'-'*10,'')) 
-            +'\n'.join(map(lambda c:c.mention,channels)))
-            for channel in channels:
-                description = channel.topic if channel.topic else 'トピックはないと思います'
-                embed = discord.Embed(title=channel.name,description='ID:{0}'.format(channel.id))
-                embed.add_field(name='チャンネルトピック',value=description)
-                await index_channel.send(embed=embed)
+            await _create_category_index(category,error_ignore=False)
+
     @commands.command()
     async def create_index_index(self,ctx):
         content = str()
