@@ -14,6 +14,7 @@ from discord.ext import commands
 client = commands.Bot('sk!')
 firstlaunch = True
 class 普通のコマンド:
+    __slots__ = ('client',)
     def __init__(self,client):
         self.client = client
     async def __local_check(self,ctx):
@@ -66,6 +67,7 @@ class 普通のコマンド:
         #メッセージ送信
         await ctx.send(content)
 class BOTオーナー用コマンド:
+    __slots__ = ('client',)
     def __init__(self,client):
         self.client:commands.Bot = client
     async def __local_check(self,ctx):
@@ -79,10 +81,13 @@ class BOTオーナー用コマンド:
         await create_role_panel()
         await ctx.send('再生成終了しました。')
 class オーナーズ用コマンド:
+    __slots__ = ('client','index_index')
     def __init__(self,client):
         self.client:commands.Bot = client
     async def __local_check(self,ctx):
         return ctx.guild is not None and (await self.client.is_owner(ctx.author) or ctx.author == ctx.guild.owner)
+    async def on_ready(self):
+        self.index_index = client.get_channel(500274844253028353)
     @commands.command()
     async def create_category_index(self,ctx,*args):
         if args:
@@ -97,11 +102,25 @@ class オーナーズ用コマンド:
             channels = sorted((c for c in category.channels if isinstance(c,discord.TextChannel) and c != index_channel)
             ,key=lambda c:c.position)
             await index_channel.purge(limit=None,check=lambda m:m.author == self.client.user)
-            await index_channel.send('\n'.join(map(lambda c:c.mention,channels)))
+            await index_channel.send('\n'.join(('-'*10,self.index_index.mention,'-'*10,'')) 
+            +'\n'.join(map(lambda c:c.mention,channels)))
             for channel in channels:
                 description = channel.topic if channel.topic is not None else 'トピックはないと思います'
                 embed = discord.Embed(title='{1}\nID:{0}'.format(channel.id,channel.name),description=description)
                 await index_channel.send(embed=embed)
+    @commands.command()
+    async def create_index_index(self,ctx):
+        content = str()
+        for category in ctx.guild.categories:
+            try:
+                index_channel:discord.TextChannel = next(c for c in category.channels if c.name == 'category-index')
+            except StopIteration:
+                pass
+            else:
+                content += '{0}:{1}\n'.format(category.name,index_channel.mention)
+        else:
+            await self.index_index.purge(limit=None)
+            await self.index_index.send(content)
 #参加メッセージ
 @client.event
 async def on_member_join(member):
