@@ -105,7 +105,7 @@ class オーナーズ用コマンド:
             await index_channel.send('\n'.join(('-'*10,self.index_index.mention,'-'*10,'')) 
             +'\n'.join(map(lambda c:c.mention,channels)))
             for channel in channels:
-                description = channel.topic if channel.topic is not None else 'トピックはないと思います'
+                description = channel.topic if channel.topic else 'トピックはないと思います'
                 embed = discord.Embed(title=channel.name,description='ID:{0}'.format(channel.id))
                 embed.add_field(name='チャンネルトピック',value=description)
                 await index_channel.send(embed=embed)
