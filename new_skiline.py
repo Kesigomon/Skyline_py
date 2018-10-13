@@ -77,9 +77,31 @@ class BOTオーナー用コマンド:
         await ctx.send('停止しまーす')
         await client.close()
     @commands.command(hidden=True)
-    async def panel_regenerate(self,ctx):
-        await create_role_panel()
-        await ctx.send('再生成終了しました。')
+    async def say(self,ctx,*,arg):
+        await ctx.send(arg)
+    @commands.command(hidden=True)
+    async def said(self,ctx,*,arg):
+        try:
+            await ctx.message.delete()
+        except discord.Forbidden:
+            pass
+        await ctx.send(arg)
+class スタッフ用コマンド:
+    __slots__ = ('client','limit_role')
+    def __init__(self,client):
+        self.client = client
+    async def __local_check(self,ctx):
+        role_ids = [r.id for r in ctx.author.roles]
+        return (any(x in role_ids for x in (429281099672322056,268352165175623680,))
+        or await client.is_owner(ctx.author))
+    async def on_ready(self):
+        self.limit_role:discord.Role = client.get_guild(235718949625397251).get_role(412567728067575809)
+    @commands.command()
+    async def limit(self,ctx,member:discord.Member):
+        Tasks = [self.client.loop.create_task(member.remove_roles(r)) for r in member.roles 
+        if r != self.limit_role]
+        await asyncio.wait(Tasks)
+        await member.add_roles(self.limit_role)
 class オーナーズ用コマンド:
     __slots__ = ('client','index_index')
     def __init__(self,client):
@@ -116,7 +138,10 @@ class オーナーズ用コマンド:
         else:
             category = await commands.converter.CategoryChannelConverter().convert(ctx,args[0])
             await _create_category_index(category,error_ignore=False)
-
+    @commands.command()
+    async def panel_regenerate(self,ctx):
+        await create_role_panel()
+        await ctx.send('再生成終了しました。')
     @commands.command()
     async def create_index_index(self,ctx):
         content = str()
@@ -265,6 +290,7 @@ async def skyline_update():
 client.add_cog(普通のコマンド(client))
 client.add_cog(BOTオーナー用コマンド(client))
 client.add_cog(オーナーズ用コマンド(client))
+client.add_cog(スタッフ用コマンド(client))
 if __name__ == '__main__':
     token = ''
     client.run(token)
