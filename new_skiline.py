@@ -92,11 +92,10 @@ class スタッフ用コマンド:
         self.client = client
     async def __local_check(self,ctx):
         role_ids = [r.id for r in ctx.author.roles]
-        return (any(x in role_ids for x in (429281099672322056,268352165175623680,))
-        or await client.is_owner(ctx.author))
+        return (any(x in role_ids for x in (429281099672322056,268352165175623680,)))
     async def on_ready(self):
         self.limit_role:discord.Role = client.get_guild(235718949625397251).get_role(412567728067575809)
-    @commands.command()
+    @commands.command(brief='制限付きユーザーを付けます')
     async def limit(self,ctx,member:discord.Member):
         Tasks = [self.client.loop.create_task(member.remove_roles(r)) for r in member.roles 
         if r != self.limit_role]
@@ -110,7 +109,7 @@ class オーナーズ用コマンド:
         return ctx.guild is not None and (await self.client.is_owner(ctx.author) or ctx.author == ctx.guild.owner)
     async def on_ready(self):
         self.index_index = client.get_channel(500274844253028353)
-    @commands.command()
+    @commands.command(brief='カテゴリインデックスを作ります')
     async def create_category_index(self,ctx,*args):
         async def _create_category_index(category,error_ignore=False):
             try:
@@ -138,11 +137,11 @@ class オーナーズ用コマンド:
         else:
             category = await commands.converter.CategoryChannelConverter().convert(ctx,args[0])
             await _create_category_index(category,error_ignore=False)
-    @commands.command()
+    @commands.command(brief='役職パネルを再生成します')
     async def panel_regenerate(self,ctx):
         await create_role_panel()
         await ctx.send('再生成終了しました。')
-    @commands.command()
+    @commands.command(brief='インデックスインデックスを再生成します')
     async def create_index_index(self,ctx):
         content = str()
         for category in ctx.guild.categories:
