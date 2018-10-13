@@ -66,6 +66,9 @@ class 普通のコマンド:
         await ctx.author.add_roles(ctx.guild.get_role(268352600108171274))
         #メッセージ送信
         await ctx.send(content)
+    @commands.command()
+    async def くいな(self,ctx):
+        await ctx.send(random.choice(data['kuina']))
 class BOTオーナー用コマンド:
     __slots__ = ('client',)
     def __init__(self,client):
@@ -157,6 +160,7 @@ class オーナーズ用コマンド:
 #参加メッセージ
 @client.event
 async def on_member_join(member):
+    join_messages = data['join_message']
     name = member.display_name
     des1 = random.choice(join_messages).format(name,member.guild.me.display_name)
     embed = discord.Embed(title='{0}さんが参加しました。'.format(name),colour=0x2E2EFE,description=
@@ -214,7 +218,7 @@ async def on_member_remove(member):
 #     await ctx.send('<@328505715532759043>')
 @client.listen('on_ready')
 async def on_ready():
-    global rolelist,join_messages,firstlaunch,voice_text_pair
+    global rolelist,firstlaunch,data
     if firstlaunch:
         firstlaunch = False
         client.loop.create_task(skyline_update())
@@ -222,8 +226,6 @@ async def on_ready():
     with open(os.path.dirname(__file__)+os.sep+'config.yaml',encoding='utf-8') as f:
         data = yaml.load(f)
     role_ids = data['roles']
-    join_messages = data['join_message']
-    voice_text_pair = data['voice_text']
     rolelist = [guild.get_role(int(i)) for i in role_ids]
     [rolelist.remove(None) for i in rolelist[:] if i is None] 
     await create_role_panel()
@@ -254,6 +256,7 @@ async def on_reaction_add(reaction,user):
                 await message.channel.send(user.mention,embed=discord.Embed(description=description),delete_after=10)
 @client.listen('on_voice_state_update')
 async def on_voice_state_update(member, before, after):
+    voice_text_pair = data['voice_text']
     if after.channel is not None and (before.channel is None or before.channel != after.channel) and str(after.channel.id) in voice_text_pair:
         text_channel = client.get_channel(voice_text_pair[str(after.channel.id)])
         embed = discord.Embed(title='ボイスチャンネル入室通知',description='{0}が、入室しました。'.format(member.mention),colour=0x00af00)
