@@ -157,6 +157,21 @@ class オーナーズ用コマンド:
         else:
             await self.index_index.purge(limit=None,check=lambda m:m.author == self.client.user)
             await self.index_index.send(content)
+class DM用コマンド:
+    __slots__ = ('client','users')
+    def __init__(self,client):
+        self.client = client
+        self.users = dict()
+    async def __local_check(self,ctx):
+        return isinstance(ctx.channel,discord.DMChannel)
+    async def on_message(self,message:discord.Message):
+        if isinstance(message.channel,discord.DMChannel) and message.author in self.users\
+        and not message.content.startswith(client.command_prefix+'target'):
+            await self.users[message.author].send(message.content)
+    @commands.command()
+    async def target(self,ctx,channel:discord.TextChannel):
+        self.users.update({ctx.author:channel})
+        await ctx.send('ターゲットを{0}にしました。'.format(channel.mention))
 #参加メッセージ
 @client.event
 async def on_member_join(member):
@@ -293,6 +308,7 @@ client.add_cog(普通のコマンド(client))
 client.add_cog(BOTオーナー用コマンド(client))
 client.add_cog(オーナーズ用コマンド(client))
 client.add_cog(スタッフ用コマンド(client))
+client.add_cog(DM用コマンド(client))
 if __name__ == '__main__':
     token = ''
     client.run(token)
