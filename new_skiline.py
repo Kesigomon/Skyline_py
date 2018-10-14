@@ -316,6 +316,7 @@ client.add_cog(BOTオーナー用コマンド(client))
 client.add_cog(オーナーズ用コマンド(client))
 client.add_cog(スタッフ用コマンド(client))
 client.add_cog(DM用コマンド(client))
+client.add_cog(ネタコマンド(client))
 if __name__ == '__main__':
     token = ''
     client.run(token)
