@@ -69,6 +69,9 @@ class 普通のコマンド:
     @commands.command()
     async def くいな(self,ctx):
         await ctx.send(random.choice(data['kuina']))
+    @commands.command()
+    async def 氷河(self,ctx):
+        await ctx.send(random.choice(data['hyouga']))
 class BOTオーナー用コマンド:
     __slots__ = ('client',)
     def __init__(self,client):
