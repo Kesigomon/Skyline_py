@@ -66,12 +66,6 @@ class 普通のコマンド:
         await ctx.author.add_roles(ctx.guild.get_role(268352600108171274))
         #メッセージ送信
         await ctx.send(content)
-    @commands.command()
-    async def くいな(self,ctx):
-        await ctx.send(random.choice(data['kuina']))
-    @commands.command()
-    async def 氷河(self,ctx):
-        await ctx.send(random.choice(data['hyouga']))
 class BOTオーナー用コマンド:
     __slots__ = ('client',)
     def __init__(self,client):
@@ -175,6 +169,16 @@ class DM用コマンド:
     async def target(self,ctx,channel:discord.TextChannel):
         self.users.update({ctx.author:channel})
         await ctx.send('ターゲットを{0}にしました。'.format(channel.mention))
+class ネタコマンド:
+    __slots__ = ('client','users')
+    def __init__(self,client):
+        self.client = client
+    @commands.command()
+    async def くいな(self,ctx):
+        await ctx.send(random.choice(data['kuina']))
+    @commands.command()
+    async def 氷河(self,ctx):
+        await ctx.send(random.choice(data['hyouga']))
 #参加メッセージ
 @client.event
 async def on_member_join(member):
@@ -278,11 +282,11 @@ async def on_voice_state_update(member, before, after):
     if after.channel is not None and (before.channel is None or before.channel != after.channel) and str(after.channel.id) in voice_text_pair:
         text_channel = client.get_channel(voice_text_pair[str(after.channel.id)])
         embed = discord.Embed(title='ボイスチャンネル入室通知',description='{0}が、入室しました。'.format(member.mention),colour=0x00af00)
-        await text_channel.send(embed=embed)
+        await text_channel.send(embed=embed,delete_after=180)
     if before.channel is not None and (after.channel is None or before.channel != after.channel) and str(before.channel.id) in voice_text_pair:
         text_channel = client.get_channel(voice_text_pair[str(before.channel.id)])
         embed = discord.Embed(title='ボイスチャンネル退出通知',description='{0}が、退出しました。'.format(member.mention),colour=0xaf0000)
-        await text_channel.send(embed=embed)
+        await text_channel.send(embed=embed,delete_after=180)
 async def create_role_panel():
     channel = client.get_channel(449185870684356608)
     await channel.purge(limit=None,check=lambda m:m.embeds and m.author == client.user and '役職パネル' in m.embeds[0].title) 
