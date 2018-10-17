@@ -102,41 +102,94 @@ class スタッフ用コマンド:
         await asyncio.wait(Tasks)
         await member.add_roles(self.limit_role)
 class オーナーズ用コマンド:
-    __slots__ = ('client','index_index')
+    __slots__ = ('client','index_index','id_match')
     def __init__(self,client):
         self.client:commands.Bot = client
+        self.id_match = re.compile(r'ID:(\d*)')
     async def __local_check(self,ctx):
         return ctx.guild is not None and (await self.client.is_owner(ctx.author) or ctx.author == ctx.guild.owner)
     async def on_ready(self):
         self.index_index = client.get_channel(500274844253028353)
+    def _create_category_find_index_channel(self,category) -> discord.TextChannel: 
+        try:
+            index_channel:discord.TextChannel = next(c for c in category.channels if c.name == 'category-index')
+        except StopIteration:
+            return None
+        else:
+            return index_channel
+    async def _create_category_index1(self,category): #インデックスの上のメンションのやつを作る方。
+        index_channel = self._create_category_find_index_channel(category)
+        if index_channel is not None:
+            async for message in (index_channel.history(reverse=True)
+            .filter(lambda m:m.author == self.client.user and not m.embeds)):
+                break
+            channels = sorted((c for c in category.channels if isinstance(c,discord.TextChannel) and c != index_channel)
+            ,key=lambda c:c.position)
+            content = '\n'.join(('-'*10,self.index_index.mention,'-'*10,'')) \
+            +'\n'.join(map(lambda c:c.mention,sorted(channels,key=lambda c: c.position)))
+            try:
+                await message.edit(content=content)
+            except UnboundLocalError:
+                await index_channel.send(content=content)
+            return 1
+    async def _create_category_index2(self,channel): #インデックスの下のEmbedを作る方。
+        index_channel = self._create_category_find_index_channel(channel.category)
+        if index_channel is not None:
+            async for message in (index_channel.history(reverse=True)
+            .filter(lambda m:m.author == self.client.user and m.embeds)):
+                match = self.id_match.search(message.embeds[0].description)
+                if match and channel.id == int(match.group(1)):
+                    break
+                else:
+                    del message
+            description = channel.topic if channel.topic else 'トピックはないと思います'
+            embed = discord.Embed(title=channel.name,description='ID:{0}'.format(channel.id))
+            embed.add_field(name='チャンネルトピック',value=description)
+            try:
+                await message.edit(embed=embed)
+            except UnboundLocalError:
+                await index_channel.send(embed=embed)
+            return 1
+    async def on_guild_channel_create(self,channel):
+        if (isinstance(channel,discord.TextChannel)
+        and channel.category is not None):
+            await self._create_category_index1(channel.category)
+            await self._create_category_index2(channel)
+    async def on_guild_channel_delete(self,channel):
+        if (isinstance(channel,discord.TextChannel)
+        and channel.category is not None):
+            await self._create_category_index1(channel.category)
+            index_channel = self._create_category_find_index_channel(channel.category)
+            async for message in (index_channel.history(reverse=True)
+            .filter(lambda m:m.author == self.client.user and m.embeds)):
+                match = self.id_match.search(message.embeds[0].description)
+                if match and channel.id == int(match.group(1)):
+                    await message.delete()
+                    break
     @commands.command(brief='カテゴリインデックスを作ります')
     async def create_category_index(self,ctx,*args):
-        async def _create_category_index(category,error_ignore=False):
-            try:
-                index_channel:discord.TextChannel = next(c for c in category.channels if c.name == 'category-index')
-            except StopIteration:
-                if not error_ignore:await ctx.send('index用チャンネルが見つかりませんでした。')
+        async def _create_category_index(category,ctx=None):
+            index_channel:discord.TextChannel = self._create_category_find_index_channel(category)
+            if index_channel is None:
+                if ctx is not None:
+                    await ctx.send('インデックスチャンネルが見つかりませんでした。')
             else:
-                channels = sorted((c for c in category.channels if isinstance(c,discord.TextChannel) and c != index_channel)
-                ,key=lambda c:c.position)
-                await index_channel.purge(limit=None,check=lambda m:m.author == self.client.user)
-                await index_channel.send('\n'.join(('-'*10,self.index_index.mention,'-'*10,'')) 
-                +'\n'.join(map(lambda c:c.mention,channels)))
-                for channel in channels:
-                    description = channel.topic if channel.topic else 'トピックはないと思います'
-                    embed = discord.Embed(title=channel.name,description='ID:{0}'.format(channel.id))
-                    embed.add_field(name='チャンネルトピック',value=description)
-                    await index_channel.send(embed=embed)
+                await index_channel.purge(check=lambda m:m.author == client.user and m.embeds)
+                await self._create_category_index1(category)
+                tasks = [self.client.loop.create_task(self._create_category_index2(channel)) for channel in 
+                sorted((c for c in category.channels if isinstance(c,discord.TextChannel) and c != index_channel)
+                ,key=lambda c:c.position)]
+                await asyncio.wait(tasks)
         if not args:
             category = ctx.channel.category
-            await _create_category_index(category,error_ignore=False)
+            await _create_category_index(category,ctx)
         elif args[0] == 'all':
-            tasks = [self.client.loop.create_task(_create_category_index(category,error_ignore=True)) for category in 
+            tasks = [self.client.loop.create_task(_create_category_index(category,)) for category in 
             ctx.guild.categories]
             await asyncio.wait(tasks)
         else:
             category = await commands.converter.CategoryChannelConverter().convert(ctx,args[0])
-            await _create_category_index(category,error_ignore=False)
+            await _create_category_index(category,ctx)
     @commands.command(brief='役職パネルを再生成します')
     async def panel_regenerate(self,ctx):
         await create_role_panel()
@@ -170,7 +223,7 @@ class DM用コマンド:
         self.users.update({ctx.author:channel})
         await ctx.send('ターゲットを{0}にしました。'.format(channel.mention))
 class ネタコマンド:
-    __slots__ = ('client','users')
+    __slots__ = ('client',)
     def __init__(self,client):
         self.client = client
     @commands.command()
