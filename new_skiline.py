@@ -140,8 +140,9 @@ class オーナーズ用コマンド:
                 match = self.id_match.search(message.embeds[0].description)
                 if match and channel.id == int(match.group(1)):
                     break
-                else:
-                    del message
+            else:
+                try:del message
+                except UnboundLocalError:pass
             description = channel.topic if channel.topic else 'トピックはないと思います'
             embed = discord.Embed(title=channel.name,description='ID:{0}'.format(channel.id))
             embed.add_field(name='チャンネルトピック',value=description)
@@ -166,6 +167,11 @@ class オーナーズ用コマンド:
                 if match and channel.id == int(match.group(1)):
                     await message.delete()
                     break
+    async def on_guild_channel_update(self,before,after):
+        if isinstance(after,discord.TextChannel) and after.name != 'category-index':
+            if before.category is not None and (after.category is None or before.category != after.category):
+                await self.on_guild_channel_delete(before)
+            await self.on_guild_channel_create(after)
     @commands.command(brief='カテゴリインデックスを作ります')
     async def create_category_index(self,ctx,*args):
         async def _create_category_index(category,ctx=None):
