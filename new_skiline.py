@@ -317,7 +317,7 @@ class Joke_Command:
 #参加メッセージ
 @client.event
 async def on_member_join(member):
-    if 'discord.gg' in member.author.display_name:
+    if 'discord.gg' in member.display_name:
         await member.ban(reason='招待リンクの名前のため、BAN',delete_message_days=1)
     else:
         join_messages = data['join_message']
