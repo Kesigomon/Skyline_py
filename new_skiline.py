@@ -174,19 +174,12 @@ class Staff_Command:
         if r != self.limit_role]
         await asyncio.wait(Tasks)
         await member.add_roles(self.limit_role)
-<<<<<<< HEAD
-class オーナーズ用コマンド:
-    __slots__ = ('client','index_index','id_match')
-    def __init__(self,client):
-        self.client:commands.Bot = client
-        self.id_match = re.compile(r'ID:(\d*)')
-=======
 class Owners_Command:
-    __slots__ = ('client','index_index','name')
+    __slots__ = ('client','index_index','name','id_match')
     def __init__(self,client,name=None):
         self.client:commands.Bot = client
+        self.id_match = re.compile(r'ID:(\d*)')
         self.name = name if name is not None else type(self).__name__
->>>>>>> コグの名前を英語にしつつ、ヘルプに表示するときに日本語表示になるように改造してやった。
     async def __local_check(self,ctx):
         return ctx.guild is not None and (await self.client.is_owner(ctx.author) or ctx.author == ctx.guild.owner)
     async def on_ready(self):
@@ -310,15 +303,9 @@ class DM_Command:
     async def target(self,ctx,channel:discord.TextChannel):
         self.users.update({ctx.author:channel})
         await ctx.send('ターゲットを{0}にしました。'.format(channel.mention))
-<<<<<<< HEAD
-class ネタコマンド:
-    __slots__ = ('client',)
-    def __init__(self,client):
-=======
 class Joke_Command:
     __slots__ = ('client','users','name')
     def __init__(self,client,name=None):
->>>>>>> コグの名前を英語にしつつ、ヘルプに表示するときに日本語表示になるように改造してやった。
         self.client = client
         self.name = name if name is not None else type(self).__name__
     @commands.command()
