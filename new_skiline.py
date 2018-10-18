@@ -110,7 +110,7 @@ class オーナーズ用コマンド:
         return ctx.guild is not None and (await self.client.is_owner(ctx.author) or ctx.author == ctx.guild.owner)
     async def on_ready(self):
         self.index_index = client.get_channel(500274844253028353)
-    def _create_category_find_index_channel(self,category) -> discord.TextChannel: 
+    def _create_category_find_index_channel(self,category) -> discord.TextChannel: #インデックスチャンネルをサーチ。なければNone
         try:
             index_channel:discord.TextChannel = next(c for c in category.channels if c.name == 'category-index')
         except StopIteration:
@@ -241,20 +241,23 @@ class ネタコマンド:
 #参加メッセージ
 @client.event
 async def on_member_join(member):
-    join_messages = data['join_message']
-    name = member.display_name
-    des1 = random.choice(join_messages).format(name,member.guild.me.display_name)
-    embed = discord.Embed(title='{0}さんが参加しました。'.format(name),colour=0x2E2EFE,description=
-    '```\n{3}\n```\nようこそ{0}さん、よろしくお願いします！\nこのサーバーの現在の人数は{1}です。\n{2}に作られたアカウントです。'
-    .format(name,member.guild.member_count,member.created_at,des1))
-    embed.set_thumbnail(url=member.avatar_url)
-    channel = next(c for c in member.guild.channels if c.name == '雑談フォーラム')
-    try:
-        await channel.send(embed=embed)  
-    except discord.Forbidden:
-        pass
-    content = """
-    ───────────────────────
+    if 'discord.gg' in member.author.display_name:
+        await member.ban(reason='招待リンクの名前のため、BAN',delete_message_days=1)
+    else:
+        join_messages = data['join_message']
+        name = member.display_name
+        des1 = random.choice(join_messages).format(name,member.guild.me.display_name)
+        embed = discord.Embed(title='{0}さんが参加しました。'.format(name),colour=0x2E2EFE,description=
+        '```\n{3}\n```\nようこそ{0}さん、よろしくお願いします！\nこのサーバーの現在の人数は{1}です。\n{2}に作られたアカウントです。'
+        .format(name,member.guild.member_count,member.created_at,des1))
+        embed.set_thumbnail(url=member.avatar_url)
+        channel = next(c for c in member.guild.channels if c.name == '雑談フォーラム')
+        try:
+            await channel.send(embed=embed)  
+        except discord.Forbidden:
+            pass
+        content = """
+───────────────────────
 {0}さん、
 ようこそ{1}へ！:tada: :hugging: 
 雑談フォーラムは雑談に特化したDiscordサーバー。
@@ -270,9 +273,8 @@ async def on_member_join(member):
 https://chat-forum-dcc.jimdo.com/
 ──────────────────────
 """.format(member.mention,member.guild.name)
-    channel = next(c for c in member.guild.channels if c.name == 'ニューメンバー')
-    await channel.send(content)
-    # await ctx.author.send(content2)
+        channel = next(c for c in member.guild.channels if c.name == 'ニューメンバー')
+        await channel.send(content)
 #退出メッセージ
 @client.event
 async def on_member_remove(member):
