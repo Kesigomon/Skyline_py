@@ -5,18 +5,89 @@ import re
 import datetime
 import functools
 import yaml
+import inspect
+import itertools
 from concurrent.futures import ThreadPoolExecutor
 
 import discord
 import feedparser
 from discord.ext import commands
+class MyFormatter(commands.HelpFormatter):
+    async def format(self):
+        """Handles the actual behaviour involved with formatting.
 
-client = commands.Bot('sk!')
+        To change the behaviour, this method should be overridden.
+
+        Returns
+        --------
+        list
+            A paginated output of the help command.
+        """
+        self._paginator = commands.Paginator()
+
+        # we need a padding of ~80 or so
+
+        description = self.command.description if not self.is_cog() else inspect.getdoc(self.command)
+
+        if description:
+            # <description> portion
+            self._paginator.add_line(description, empty=True)
+
+        if isinstance(self.command, commands.Command):
+            # <signature portion>
+            signature = self.get_command_signature()
+            self._paginator.add_line(signature, empty=True)
+
+            # <long doc> section
+            if self.command.help:
+                self._paginator.add_line(self.command.help, empty=True)
+
+            # end it here if it's just a regular command
+            if not self.has_subcommands():
+                self._paginator.close_page()
+                return self._paginator.pages
+
+        max_width = self.max_name_size
+
+        def category(tup):
+            instance = tup[1].instance
+            cog = instance.name if instance is not None else None 
+            # we insert the zero width space there to give it approximate
+            # last place sorting position.
+            return cog + ':' if cog is not None else '\u200bNo Category:'
+
+        filtered = await self.filter_command_list()
+        if self.is_bot():
+            data = sorted(filtered, key=category)
+            for category, _commands in itertools.groupby(data, key=category):
+                # there simply is no prettier way of doing this.
+                _commands = sorted(_commands)
+                if len(_commands) > 0:
+                    self._paginator.add_line(category)
+
+                self._add_subcommands_to_page(max_width, _commands)
+        else:
+            filtered = sorted(filtered)
+            if filtered:
+                self._paginator.add_line('Commands:')
+                self._add_subcommands_to_page(max_width, filtered)
+
+        # add the ending note
+        self._paginator.add_line()
+        ending_note = self.get_ending_note()
+        self._paginator.add_line(ending_note)
+        return self._paginator.pages
+    def get_ending_note(self):
+        command_name = self.context.invoked_with
+        return "「{0}{1} (コマンド名)」 または「{0}{1} （カテゴリ名）」とタイプすると詳しい説明が見られます。" \
+        .format(self.clean_prefix, command_name)
+client = commands.Bot('sk!',formatter=MyFormatter())
 firstlaunch = True
-class 普通のコマンド:
-    __slots__ = ('client',)
-    def __init__(self,client):
+class Normal_Command:
+    __slots__ = ('client','name')
+    def __init__(self,client,name=None):
         self.client = client
+        self.name = name if name is not None else type(self).__name__
     async def __local_check(self,ctx):
         return ctx.guild is not None
     #ロールサーチ
@@ -66,10 +137,11 @@ class 普通のコマンド:
         await ctx.author.add_roles(ctx.guild.get_role(268352600108171274))
         #メッセージ送信
         await ctx.send(content)
-class BOTオーナー用コマンド:
-    __slots__ = ('client',)
-    def __init__(self,client):
-        self.client:commands.Bot = client
+class Bot_Owner_Command:
+    __slots__ = ('client','name',)
+    def __init__(self,client,name=None):
+        self.client = client
+        self.name = name if name is not None else type(self).__name__
     async def __local_check(self,ctx):
         return await self.client.is_owner(ctx.author)
     @commands.command(hidden=True)
@@ -86,10 +158,11 @@ class BOTオーナー用コマンド:
         except discord.Forbidden:
             pass
         await ctx.send(arg)
-class スタッフ用コマンド:
-    __slots__ = ('client','limit_role')
-    def __init__(self,client):
+class Staff_Command:
+    __slots__ = ('client','limit_role','name')
+    def __init__(self,client,name=None):
         self.client = client
+        self.name = name if name is not None else type(self).__name__
     async def __local_check(self,ctx):
         role_ids = [r.id for r in ctx.author.roles]
         return (any(x in role_ids for x in (429281099672322056,268352165175623680,)))
@@ -101,11 +174,19 @@ class スタッフ用コマンド:
         if r != self.limit_role]
         await asyncio.wait(Tasks)
         await member.add_roles(self.limit_role)
+<<<<<<< HEAD
 class オーナーズ用コマンド:
     __slots__ = ('client','index_index','id_match')
     def __init__(self,client):
         self.client:commands.Bot = client
         self.id_match = re.compile(r'ID:(\d*)')
+=======
+class Owners_Command:
+    __slots__ = ('client','index_index','name')
+    def __init__(self,client,name=None):
+        self.client:commands.Bot = client
+        self.name = name if name is not None else type(self).__name__
+>>>>>>> コグの名前を英語にしつつ、ヘルプに表示するときに日本語表示になるように改造してやった。
     async def __local_check(self,ctx):
         return ctx.guild is not None and (await self.client.is_owner(ctx.author) or ctx.author == ctx.guild.owner)
     async def on_ready(self):
@@ -213,10 +294,11 @@ class オーナーズ用コマンド:
         else:
             await self.index_index.purge(limit=None,check=lambda m:m.author == self.client.user)
             await self.index_index.send(content)
-class DM用コマンド:
-    __slots__ = ('client','users')
-    def __init__(self,client):
+class DM_Command:
+    __slots__ = ('client','users','name')
+    def __init__(self,client,name=None):
         self.client = client
+        self.name = name if name is not None else type(self).__name__
         self.users = dict()
     async def __local_check(self,ctx):
         return isinstance(ctx.channel,discord.DMChannel)
@@ -228,10 +310,17 @@ class DM用コマンド:
     async def target(self,ctx,channel:discord.TextChannel):
         self.users.update({ctx.author:channel})
         await ctx.send('ターゲットを{0}にしました。'.format(channel.mention))
+<<<<<<< HEAD
 class ネタコマンド:
     __slots__ = ('client',)
     def __init__(self,client):
+=======
+class Joke_Command:
+    __slots__ = ('client','users','name')
+    def __init__(self,client,name=None):
+>>>>>>> コグの名前を英語にしつつ、ヘルプに表示するときに日本語表示になるように改造してやった。
         self.client = client
+        self.name = name if name is not None else type(self).__name__
     @commands.command()
     async def くいな(self,ctx):
         await ctx.send(random.choice(data['kuina']))
@@ -372,12 +461,12 @@ async def skyline_update():
             embed.set_author(name=entry.author,url=entry.author_detail.href,icon_url=entry.media_thumbnail[0]['url'])
             await webhook.send(embed=embed)
         await asyncio.sleep(60)
-client.add_cog(普通のコマンド(client))
-client.add_cog(BOTオーナー用コマンド(client))
-client.add_cog(オーナーズ用コマンド(client))
-client.add_cog(スタッフ用コマンド(client))
-client.add_cog(DM用コマンド(client))
-client.add_cog(ネタコマンド(client))
+client.add_cog(Normal_Command(client,'普通のコマンド'))
+client.add_cog(Bot_Owner_Command(client,'BOTオーナー用コマンド'))
+client.add_cog(Owners_Command(client,'オーナーズ用コマンド'))
+client.add_cog(Staff_Command(client,'スタッフ用コマンド'))
+client.add_cog(DM_Command(client,'DM用コマンド'))
+client.add_cog(Joke_Command(client,'ネタコマンド'))
 if __name__ == '__main__':
     token = ''
     client.run(token)
