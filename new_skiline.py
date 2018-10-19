@@ -286,20 +286,20 @@ class Owners_Command:
         index_channel = self._create_category_find_index_channel(
             category)
         if index_channel is not None:
-            async for message in (index_channel.history(reverse=True)
-                                  .filter(lambda m: m.author == self.client.user and not m.embeds)):
+            history = index_channel.history(
+                reverse=True)
+            async for message in history.filter(
+                lambda m: m.author == self.client.user and not m.embeds
+            ):
                 break
             channels = sorted(
                 (c for c in category.channels if isinstance(
                     c,
                     discord.TextChannel) and c != index_channel),
                 key=lambda c: c.position)
-            content = '\n'.join(('-' * 10,
-                                 self.index_index.mention,
-                                 '-' * 10,
-                                 '')) + '\n'.join(map(lambda c: c.mention,
-                                                      sorted(channels,
-                                                             key=lambda c: c.position)))
+            content = '\n'.join(('-' * 10, self.index_index.mention, '-' * 10, '')) \
+                + '\n'.join(map(lambda c: c.mention, sorted(
+                    channels, key=lambda c: c.position)))
             try:
                 await message.edit(content=content)
             except UnboundLocalError:
@@ -482,11 +482,14 @@ async def on_member_join(member):
             title='{0}さんが参加しました。'.format(
                 name),
             colour=0x2E2EFE,
-            description='```\n{3}\n```\nようこそ{0}さん、よろしくお願いします！\nこのサーバーの現在の人数は{1}です。\n{2}に作られたアカウントです。' .format(
-                name,
-                member.guild.member_count,
-                member.created_at,
-                des1))
+            description="""
+            ```\n{3}```
+            ようこそ{0}さん、よろしくお願いします！
+            このサーバーの現在の人数は{1}です。
+            {2}に作られたアカウントです。
+            """ .format(
+                name, member.guild.member_count,
+                member.created_at, des1))
         embed.set_thumbnail(
             url=member.avatar_url)
         channel = next(
