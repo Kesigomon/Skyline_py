@@ -133,9 +133,9 @@ class Normal_Command:
             args = (args[0], 'ワイトもそう思います', 'さまよえる亡者はそうは思いません')
         if 1 <= len(args) <= 21:
             answers = args[1:]
-            emojis = [chr(0x0001f1e6+i) for i in range(len(answers))]
+            emojis = [chr(0x0001f1e6 + i) for i in range(len(answers))]
             embed = discord.Embed(description='\n'.join(
-                e+a for e, a in zip(emojis, answers)))
+                e + a for e, a in zip(emojis, answers)))
             m: discord.Message = await ctx.send('**{0}**'.format(args[0]), embed=embed)
             [self.client.loop.create_task(m.add_reaction(e)) for e in emojis]
 
@@ -239,7 +239,7 @@ class Owners_Command:
                 break
             channels = sorted((c for c in category.channels if isinstance(
                 c, discord.TextChannel) and c != index_channel), key=lambda c: c.position)
-            content = '\n'.join(('-'*10, self.index_index.mention, '-'*10, '')) \
+            content = '\n'.join(('-' * 10, self.index_index.mention, '-' * 10, '')) \
                 + '\n'.join(map(lambda c: c.mention,
                                 sorted(channels, key=lambda c: c.position)))
             try:
@@ -357,7 +357,7 @@ class DM_Command:
 
     async def on_message(self, message: discord.Message):
         if isinstance(message.channel, discord.DMChannel) and message.author in self.users\
-                and not message.content.startswith(client.command_prefix+'target'):
+                and not message.content.startswith(client.command_prefix + 'target'):
             await self.users[message.author].send(message.content)
 
     @commands.command()
@@ -403,7 +403,7 @@ async def on_member_join(member):
         content = """
 ───────────────────────
 {0}さん、
-ようこそ{1}へ！:tada: :hugging: 
+ようこそ{1}へ！:tada: :hugging:
 雑談フォーラムは雑談に特化したDiscordサーバー。
 しかし、現状はほとんどのチャンネルが
 利用できないようになっています。
@@ -454,7 +454,7 @@ async def on_ready():
         firstlaunch = False
         client.loop.create_task(skyline_update())
     guild = client.get_guild(235718949625397251)
-    with open(os.path.dirname(__file__)+os.sep+'config.yaml', encoding='utf-8') as f:
+    with open(os.path.dirname(__file__) + os.sep + 'config.yaml', encoding='utf-8') as f:
         data = yaml.load(f)
     role_ids = data['roles']
     rolelist = [guild.get_role(int(i)) for i in role_ids]
@@ -480,8 +480,8 @@ async def on_reaction_add(reaction, user):
         await message.remove_reaction(reaction, user)
         match = re.search(r'役職パネル\((\d)ページ目\)', message.embeds[0].title)
         if match:
-            role = rolelist[ord(reaction.emoji) +
-                            int(match.expand(r'\1'))*20 - 0x1F1FA]
+            role = rolelist[ord(reaction.emoji)
+                            + int(match.expand(r'\1')) * 20 - 0x1F1FA]
             if role not in user.roles:
                 await user.add_roles(role)
                 description = '{0}の役職を付与しました。'.format(role.mention)
@@ -512,14 +512,14 @@ async def on_voice_state_update(member, before, after):
 async def create_role_panel():
     channel = client.get_channel(449185870684356608)
     await channel.purge(limit=None, check=lambda m: m.embeds and m.author == client.user and '役職パネル' in m.embeds[0].title)
-    for x in range(len(rolelist)//20 + 1):
-        roles = rolelist[x*20:(x+1)*20]
+    for x in range(len(rolelist) // 20 + 1):
+        roles = rolelist[x * 20:(x + 1) * 20]
         content = '\n'.join('{0}:{1}'.format(
-            chr(i+0x0001f1e6), r.mention) for i, r in enumerate(roles))
+            chr(i + 0x0001f1e6), r.mention) for i, r in enumerate(roles))
         embed = discord.Embed(
-            title='役職パネル({0}ページ目)'.format(x+1), description=content)
+            title='役職パネル({0}ページ目)'.format(x + 1), description=content)
         m = await channel.send(embed=embed)
-        [client.loop.create_task(m.add_reaction(chr(0x0001f1e6+i)))
+        [client.loop.create_task(m.add_reaction(chr(0x0001f1e6 + i)))
          for i in range(len(roles))]
 
 
