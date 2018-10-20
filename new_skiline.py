@@ -297,12 +297,12 @@ class Owners_Command:
 
     async def on_guild_channel_update(self, before, after):
         if isinstance(after, discord.TextChannel) and after.name != 'category-index':
-            if before.category is not None and (after.category is None or before.category != after.category) \
-                    and (before.name != after.name
-                         or bool(before.topic) is not bool(after.topic)
-                         or before.topic != after.topic):
+            if before.category is not None and (after.category is None or before.category != after.category):
                 await self.on_guild_channel_delete(before)
-            await self.on_guild_channel_create(after)
+            if (before.name != after.name
+                    or bool(before.topic) is not bool(after.topic)
+                    or before.topic != after.topic):
+                await self.on_guild_channel_create(after)
 
     @commands.command(brief='カテゴリインデックスを作ります')
     async def create_category_index(self, ctx, *args):
