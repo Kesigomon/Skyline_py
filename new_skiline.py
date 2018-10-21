@@ -431,21 +431,30 @@ https://chat-forum-dcc.jimdo.com/
 
 @client.event
 async def on_member_remove(member):
-    name = member.display_name
-    embed = discord.Embed(title='{0}さんが退出しました。'.format(
-        name), colour=0x2E2EFE, description='{0}さん、ご利用ありがとうございました。\nこのサーバーの現在の人数は{1}人です'.format(name, member.guild.member_count))
-    embed.set_thumbnail(url=member.avatar_url)
-    channel = next(c for c in member.guild.channels if c.name == '雑談フォーラム')
-    try:
-        await channel.send(embed=embed)
-    except discord.Forbidden:
-        pass
-    content = """
+    def check(log):
+        return (
+            log.action in (discord.AuditLogAction.ban, discord.AuditLogAction.kick)
+            and log.target.id == member.id
+            and datetime.datetime.utcnow() - log.created_at <= datetime.timedelta(seconds=1)
+        )
+    audit_logs = await member.guild.audit_logs(limit=10)\
+        .filter(check).flatten()
+    if not audit_logs:
+        name = member.display_name
+        embed = discord.Embed(title='{0}さんが退出しました。'.format(
+            name), colour=0x2E2EFE, description='{0}さん、ご利用ありがとうございました。\nこのサーバーの現在の人数は{1}人です'.format(name, member.guild.member_count))
+        embed.set_thumbnail(url=member.avatar_url)
+        channel = next(c for c in member.guild.channels if c.name == '雑談フォーラム')
+        try:
+            await channel.send(embed=embed)
+        except discord.Forbidden:
+            pass
+        content = """
 {0}が退出しました。
 ご利用ありがとうございました。
 """.format(member)
-    channel = next(c for c in member.guild.channels if c.name == 'ニューメンバー')
-    await channel.send(content)
+        channel = next(c for c in member.guild.channels if c.name == 'ニューメンバー')
+        await channel.send(content)
 
 # だいんさん呼ぶ用コマンド
 # @client.command()
