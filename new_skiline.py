@@ -435,10 +435,10 @@ async def on_member_remove(member):
         return (
             log.action in (discord.AuditLogAction.ban, discord.AuditLogAction.kick)
             and log.target.id == member.id
-            and datetime.datetime.utcnow() - log.created_at <= datetime.timedelta(seconds=1)
+            and abs(datetime.datetime.utcnow() - log.created_at) <= datetime.timedelta(seconds=1)
         )
     await asyncio.sleep(0.5)
-    audit_logs = await member.guild.audit_logs(limit=10)\
+    audit_logs = await member.guild.audit_logs()\
         .filter(check).flatten()
     if not audit_logs:
         name = member.display_name
