@@ -437,6 +437,7 @@ async def on_member_remove(member):
             and log.target.id == member.id
             and datetime.datetime.utcnow() - log.created_at <= datetime.timedelta(seconds=1)
         )
+    await asyncio.sleep(0.5)
     audit_logs = await member.guild.audit_logs(limit=10)\
         .filter(check).flatten()
     if not audit_logs:
