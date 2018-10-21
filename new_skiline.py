@@ -437,10 +437,10 @@ async def on_member_remove(member):
             and log.target.id == member.id
             and abs(datetime.datetime.utcnow() - log.created_at) <= datetime.timedelta(seconds=1)
         )
-    await asyncio.sleep(0.5)
-    audit_logs = await member.guild.audit_logs()\
-        .filter(check).flatten()
-    if not audit_logs:
+    audit_logs = await member.guild.audit_logs().flatten()
+    print([log.action for log in audit_logs])
+    filtered = filter(check, audit_logs)
+    if not filtered:
         name = member.display_name
         embed = discord.Embed(title='{0}さんが退出しました。'.format(
             name), colour=0x2E2EFE, description='{0}さん、ご利用ありがとうございました。\nこのサーバーの現在の人数は{1}人です'.format(name, member.guild.member_count))
