@@ -438,7 +438,6 @@ async def on_member_remove(member):
             and abs(datetime.datetime.utcnow() - log.created_at) <= datetime.timedelta(seconds=1)
         )
     audit_logs = await member.guild.audit_logs().flatten()
-    print([log.action for log in audit_logs])
     filtered = filter(check, audit_logs)
     if not filtered:
         name = member.display_name
