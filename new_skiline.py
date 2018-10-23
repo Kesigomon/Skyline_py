@@ -387,48 +387,41 @@ class Joke_Command:
     @commands.command(name='氷河')
     async def hyouga(self, ctx):
         await ctx.send(random.choice(data['hyouga']))
+
+
 # 参加メッセージ
-
-
 @client.event
 async def on_member_join(member):
     if 'discord.gg' in member.display_name:
         await member.ban(reason='招待リンクの名前のため、BAN', delete_message_days=1)
     else:
-        join_messages = data['join_message']
-        name = member.display_name
-        des1 = random.choice(join_messages).format(
-            name, member.guild.me.display_name)
-        embed = discord.Embed(title='{0}さんが参加しました。'.format(name), colour=0x2E2EFE, description='```\n{3}\n```\nようこそ{0}さん、よろしくお願いします！\nこのサーバーの現在の人数は{1}です。\n{2}に作られたアカウントです。'
-                              .format(name, member.guild.member_count, member.created_at, des1))
-        embed.set_thumbnail(url=member.avatar_url)
-        channel = next(c for c in member.guild.channels if c.name == '雑談フォーラム')
         try:
-            await channel.send(embed=embed)
-        except discord.Forbidden:
+            zatsudan_forum = next(c for c in member.guild.channels if c.name == '雑談フォーラム')
+            new_member = next(c for c in member.guild.channels if c.name == 'ニューメンバー')
+        except StopIteration:
             pass
-        content = """
-───────────────────────
-{0}さん、
-ようこそ{1}へ！:tada: :hugging:
-雑談フォーラムは雑談に特化したDiscordサーバー。
-しかし、現状はほとんどのチャンネルが
-利用できないようになっています。
-<#449813164171853825> をよく読み、
-「アカウント登録」を
-済ませてからご参加ください！
+        else:
+            join_messages = data['join_messages']
+            name = member.display_name
+            des1 = random.choice(join_messages).format(
+                name, member.guild.me.display_name)
+            embed = discord.Embed(
+                title='{0}さんが参加しました。'.format(name),
+                colour=0x2E2EFE,
+                description='```\n{3}\n```\nようこそ{0}さん、よろしくお願いします！\nこのサーバーの現在の人数は{1}です。\n{2}に作られたアカウントです。'
+                           .format(name, member.guild.member_count, member.created_at, des1)
+            )
+            embed.set_thumbnail(url=member.avatar_url)
 
-<#447747221975334912> を読むと楽しく利用できます。
+            try:
+                await zatsudan_forum.send(embed=embed)
+            except discord.Forbidden:
+                pass
+            content = data['join_message'].format(member.mention, member.guild.name)
+            await new_member.send(content)
 
-当サーバーに関する情報はこちらをご覧ください：
-https://chat-forum-dcc.jimdo.com/
-──────────────────────
-""".format(member.mention, member.guild.name)
-        channel = next(c for c in member.guild.channels if c.name == 'ニューメンバー')
-        await channel.send(content)
+
 # 退出メッセージ
-
-
 @client.event
 async def on_member_remove(member):
     def check(log):
@@ -440,21 +433,25 @@ async def on_member_remove(member):
     audit_logs = await member.guild.audit_logs().flatten()
     filtered = filter(check, audit_logs)
     if not filtered:
-        name = member.display_name
-        embed = discord.Embed(title='{0}さんが退出しました。'.format(
-            name), colour=0x2E2EFE, description='{0}さん、ご利用ありがとうございました。\nこのサーバーの現在の人数は{1}人です'.format(name, member.guild.member_count))
-        embed.set_thumbnail(url=member.avatar_url)
-        channel = next(c for c in member.guild.channels if c.name == '雑談フォーラム')
         try:
-            await channel.send(embed=embed)
-        except discord.Forbidden:
+            zatsudan_forum = next(c for c in member.guild.channels if c.name == '雑談フォーラム')
+            new_member = next(c for c in member.guild.channels if c.name == 'ニューメンバー')
+        except StopIteration:
             pass
-        content = """
+        else:
+            name = member.display_name
+            embed = discord.Embed(title='{0}さんが退出しました。'.format(
+                name), colour=0x2E2EFE, description='{0}さん、ご利用ありがとうございました。\nこのサーバーの現在の人数は{1}人です'.format(name, member.guild.member_count))
+            embed.set_thumbnail(url=member.avatar_url)
+            try:
+                await zatsudan_forum.send(embed=embed)
+            except discord.Forbidden:
+                pass
+            content = """
 {0}が退出しました。
 ご利用ありがとうございました。
 """.format(member)
-        channel = next(c for c in member.guild.channels if c.name == 'ニューメンバー')
-        await channel.send(content)
+            await new_member.send(content)
 
 # だいんさん呼ぶ用コマンド
 # @client.command()
