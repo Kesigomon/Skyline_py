@@ -389,6 +389,60 @@ class Joke_Command:
         await ctx.send(random.choice(data['hyouga']))
 
 
+class Categor_recover():  # 言わずと知れたカテゴリリカバリ機能
+    __slots__ = ('client', 'category_cache')
+
+    def __init__(self, client):
+        self.client: discord.Client = client
+
+    async def on_ready(self):
+        self.category_cache \
+            = {c.id: c.name for c in self.client.get_all_channels()
+                if isinstance(c, discord.CategoryChannel)}
+
+    async def on_guild_channel_create(self, channel):
+        if isinstance(channel, discord.CategoryChannel):
+            self.category_cache[channel.id] = channel.name
+
+    async def on_guild_channel_delete(self, channel):
+        if isinstance(channel, discord.CategoryChannel):
+            if channel.name not in (c.name for c in channel.guild.categories):
+                await channel.guild.create_category(
+                    name=channel.name,
+                    overwrites=dict(channel.overwrites)
+                )
+
+    async def on_guild_channel_update(self, before, after):
+        if before.category_id is not None and after.category_id is None:
+            name = self.category_cache[before.category_id]
+            guild = after.guild
+            while before.category_id in (c.id for c in after.guild.categories):
+                try:
+                    await self.client.wait_for(
+                        'guild_channel_delete',
+                        check=lambda c: c == before.category,
+                        timeout=1)
+                except asyncio.TimeoutError:
+                    continue
+                else:
+                    break
+            A = True
+            while name not in (c.name for c in guild.categories):
+                try:
+                    new_category = await self.client.wait_for(
+                        'guild_channel_create',
+                        check=lambda c: c.guild == guild and name == c.name,
+                        timeout=1)
+                except asyncio.TimeoutError:
+                    continue
+                else:
+                    A = False
+                    break
+            if A:
+                new_category = next(c for c in guild.categories if c.name == name)
+            await after.edit(category=new_category)
+
+
 # 参加メッセージ
 @client.event
 async def on_member_join(member):
@@ -559,6 +613,7 @@ client.add_cog(Owners_Command(client, 'オーナーズ用コマンド'))
 client.add_cog(Staff_Command(client, 'スタッフ用コマンド'))
 client.add_cog(DM_Command(client, 'DM用コマンド'))
 client.add_cog(Joke_Command(client, 'ネタコマンド'))
+client.add_cog(Categor_recover(client))
 if __name__ == '__main__':
     token = ''
     client.run(token)
