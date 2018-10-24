@@ -431,7 +431,7 @@ async def on_member_remove(member):
             and abs(datetime.datetime.utcnow() - log.created_at) <= datetime.timedelta(seconds=1)
         )
     audit_logs = await member.guild.audit_logs().flatten()
-    filtered = filter(check, audit_logs)
+    filtered = list(filter(check, audit_logs))
     if not filtered:
         try:
             zatsudan_forum = next(c for c in member.guild.channels if c.name == '雑談フォーラム')
