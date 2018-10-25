@@ -61,8 +61,8 @@ class MyFormatter(commands.HelpFormatter):
 
         filtered = await self.filter_command_list()
         if self.is_bot():
-            data = sorted(filtered, key=category)
-            for category, _commands in itertools.groupby(data, key=category):
+            _data = sorted(filtered, key=category)
+            for category, _commands in itertools.groupby(_data, key=category):
                 # there simply is no prettier way of doing this.
                 _commands = sorted(_commands)
                 if len(_commands) > 0:
@@ -92,23 +92,27 @@ firstlaunch = True
 
 
 class Normal_Command:
-    __slots__ = ('client', 'name')
+    __slots__ = ('client', 'name', 'data', 'categories')
 
-    def __init__(self, client, name=None):
+    def __init__(self, client, data, name=None):
         self.client = client
         self.name = name if name is not None else type(self).__name__
+        self.data = data
 
     async def __local_check(self, ctx):
         return ctx.guild is not None
-    # ロールサーチ
 
+    async def on_ready(self):
+        self.categories = [self.client.get_channel(i) for i in self.data['free_categories']]
+
+    # ロールサーチ
     @commands.command()
     async def role_search(self, ctx, *, role: discord.Role):
         embed = discord.Embed(
             title='ロールサーチの結果', description='{0}\nID:{1}'.format(role.mention, role.id))
         await ctx.send(embed=embed)
-    # サーバ情報表示
 
+    # サーバ情報表示
     @commands.command()
     async def server(self, ctx):
         guild = ctx.guild
@@ -157,6 +161,51 @@ class Normal_Command:
             await ctx.send(content)
         else:
             await ctx.send('登録終わってますやんか')
+
+    @commands.command(name='ftcc')
+    async def free_text_channel_create(self, ctx, name, category_n=None):
+        channel = await self._free_channel_create(ctx, name, category_n, VC=False)
+        if channel is not None:
+            await ctx.send('作成しました。\n{0}'.format(channel.mention))
+        else:
+            pass
+
+    @commands.command(name='fvcc')
+    async def free_voice_channel_create(self, ctx, name, category_n=None):
+        channel = await self._free_channel_create(ctx, name, category_n, VC=True)
+        if channel is not None:
+            await ctx.send('作成しました。')
+        else:
+            pass
+
+    async def _free_channel_create(self, ctx, name, category_n=None, VC=False):
+        if 493697937444962306 in (r.id for r in ctx.author.roles):
+            if category_n is None:
+                category_n = 1
+                while len(self.categories[category_n - 1].channels) >= 50:  # チャンネル数50以上のカテゴリがあれば次のカテゴリへ
+                    category_n += 1
+            else:
+                category_n = int(category_n)
+            category = self.categories[category_n - 1]
+            guild = category.guild
+            overwrites = {
+                self.client.user:
+                    discord.PermissionOverwrite.from_pair(discord.Permissions.all(), discord.Permissions.none()),
+                ctx.author:
+                    discord.PermissionOverwrite.from_pair(discord.Permissions.all(), discord.Permissions.none()),
+                guild.default_role:
+                    discord.PermissionOverwrite.from_pair(discord.Permissions.none(), discord.Permissions.all()),
+                guild.get_role(412567728067575809):
+                    discord.PermissionOverwrite.from_pair(discord.Permissions.none(), discord.Permissions.all()),
+                guild.get_role(499886891563483147):
+                    discord.PermissionOverwrite.from_pair(discord.Permissions(37080128), discord.Permissions(2 ** 53 - 37080129)),
+            }
+            if VC:
+                return await guild.create_voice_channel(name, overwrites=overwrites, category=category)
+            else:
+                return await guild.create_text_channel(name, overwrites=overwrites, category=category)
+        else:
+            return None
 
 
 class Bot_Owner_Command:
@@ -374,19 +423,20 @@ class DM_Command:
 
 
 class Joke_Command:
-    __slots__ = ('client', 'users', 'name')
+    __slots__ = ('client', 'users', 'name', 'data')
 
-    def __init__(self, client, name=None):
+    def __init__(self, client, data, name=None):
         self.client = client
+        self.data = data
         self.name = name if name is not None else type(self).__name__
 
     @commands.command(name='くいな')
     async def kuina(self, ctx):
-        await ctx.send(random.choice(data['kuina']))
+        await ctx.send(random.choice(self.data['kuina']))
 
     @commands.command(name='氷河')
     async def hyouga(self, ctx):
-        await ctx.send(random.choice(data['hyouga']))
+        await ctx.send(random.choice(self.data['hyouga']))
 
 
 class Categor_recover():  # 言わずと知れたカテゴリリカバリ機能
@@ -516,13 +566,11 @@ async def on_member_remove(member):
 
 @client.listen('on_ready')
 async def on_ready():
-    global rolelist, firstlaunch, data
+    global rolelist, firstlaunch
     if firstlaunch:
         firstlaunch = False
         client.loop.create_task(skyline_update())
     guild = client.get_guild(235718949625397251)
-    with open(os.path.dirname(__file__) + os.sep + 'config.yaml', encoding='utf-8') as f:
-        data = yaml.load(f)
     role_ids = data['roles']
     rolelist = [guild.get_role(int(i)) for i in role_ids]
     [rolelist.remove(None) for i in rolelist[:] if i is None]
@@ -607,12 +655,16 @@ async def skyline_update():
                              icon_url=entry.media_thumbnail[0]['url'])
             await webhook.send(embed=embed)
         await asyncio.sleep(60)
-client.add_cog(Normal_Command(client, '普通のコマンド'))
+
+
+with open(os.path.dirname(__file__) + os.sep + 'config.yaml', encoding='utf-8') as f:
+    data = yaml.load(f)
+client.add_cog(Normal_Command(client, data, '普通のコマンド'))
 client.add_cog(Bot_Owner_Command(client, 'BOTオーナー用コマンド'))
 client.add_cog(Owners_Command(client, 'オーナーズ用コマンド'))
 client.add_cog(Staff_Command(client, 'スタッフ用コマンド'))
 client.add_cog(DM_Command(client, 'DM用コマンド'))
-client.add_cog(Joke_Command(client, 'ネタコマンド'))
+client.add_cog(Joke_Command(client, data, 'ネタコマンド'))
 client.add_cog(Categor_recover(client))
 if __name__ == '__main__':
     token = ''
