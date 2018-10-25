@@ -167,19 +167,15 @@ class Normal_Command:
         channel = await self._free_channel_create(ctx, name, category_n, VC=False)
         if channel is not None:
             await ctx.send('作成しました。\n{0}'.format(channel.mention))
-        else:
-            pass
 
     @commands.command(name='fvcc')
     async def free_voice_channel_create(self, ctx, name, category_n=None):
         channel = await self._free_channel_create(ctx, name, category_n, VC=True)
         if channel is not None:
             await ctx.send('作成しました。')
-        else:
-            pass
 
     async def _free_channel_create(self, ctx, name, category_n=None, VC=False):
-        if 493697937444962306 in (r.id for r in ctx.author.roles):
+        if 448842082187214864 in (r.id for r in ctx.author.roles):
             if category_n is None:
                 category_n = 1
                 while len(self.categories[category_n - 1].channels) >= 50:  # チャンネル数50以上のカテゴリがあれば次のカテゴリへ
@@ -205,6 +201,7 @@ class Normal_Command:
             else:
                 return await guild.create_text_channel(name, overwrites=overwrites, category=category)
         else:
+            await ctx.send('あなたはまだチャンネルを作成できません')
             return None
 
 
