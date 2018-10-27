@@ -533,7 +533,7 @@ async def on_member_remove(member):
     now = datetime.datetime.utcnow()
     await asyncio.sleep(0.5)
     audit_logs = await member.guild.audit_logs(action=discord.AuditLogAction.kick).flatten()
-    audit_logs.expand(await member.guild.audit_logs(action=discord.AuditLogAction.ban).flatten())
+    audit_logs.extend(await member.guild.audit_logs(action=discord.AuditLogAction.ban).flatten())
     filtered = list(filter(check, audit_logs))
     if not filtered:
         try:
