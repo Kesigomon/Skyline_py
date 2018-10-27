@@ -527,11 +527,13 @@ async def on_member_join(member):
 async def on_member_remove(member):
     def check(log):
         return (
-            log.action in (discord.AuditLogAction.ban, discord.AuditLogAction.kick)
-            and log.target.id == member.id
-            and abs(datetime.datetime.utcnow() - log.created_at) <= datetime.timedelta(seconds=1)
+            log.target.id == member.id
+            and abs(now - log.created_at) <= datetime.timedelta(seconds=1)
         )
-    audit_logs = await member.guild.audit_logs().flatten()
+    now = datetime.datetime.utcnow()
+    await asyncio.sleep(0.5)
+    audit_logs = await member.guild.audit_logs(action=discord.AuditLogAction.kick).flatten()
+    audit_logs.append(await member.guild.audit_logs(action=discord.AuditLogAction.ban).flatten())
     filtered = list(filter(check, audit_logs))
     if not filtered:
         try:
