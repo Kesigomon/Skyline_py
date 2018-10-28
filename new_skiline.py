@@ -619,7 +619,7 @@ async def on_voice_state_update(member, before, after):
             colour=0x00af00
         )
         await text_channel.send(embed=embed, delete_after=180)
-        if after.channel.id == 445925012340473877:  # 音楽鑑賞VCの場合
+        if after.channel.id == 449881389643333633:  # 音楽鑑賞VCの場合
             await member.add_roles(DJ)  # DJ役職を付与
     if before.channel is not None and (after.channel is None or before.channel != after.channel) and str(before.channel.id) in voice_text_pair:
         text_channel = client.get_channel(
@@ -630,7 +630,7 @@ async def on_voice_state_update(member, before, after):
             colour=0xaf0000
         )
         await text_channel.send(embed=embed, delete_after=180)
-        if after.channel.id == 445925012340473877:  # 音楽鑑賞VCの場合
+        if after.channel.id == 449881389643333633:  # 音楽鑑賞VCの場合
             await member.remove_roles(DJ)  # DJ役職を解除
 
 
