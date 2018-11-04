@@ -375,11 +375,6 @@ class Owners_Command:
             category = await commands.converter.CategoryChannelConverter().convert(ctx, args[0])
             await _create_category_index(category, ctx)
 
-    @commands.command(brief='役職パネルを再生成します')
-    async def panel_regenerate(self, ctx):
-        await create_role_panel()
-        await ctx.send('再生成終了しました。')
-
     @commands.command(brief='インデックスインデックスを再生成します')
     async def create_index_index(self, ctx):
         content = str()
@@ -490,6 +485,90 @@ class Categor_recover():  # 言わずと知れたカテゴリリカバリ機能
             await after.edit(category=new_category)
 
 
+class Role_panel():  # 役職パネルの機能
+    __slots__ = ('client', 'data', 'prog1', 'channel', 'channel_id')
+
+    def __init__(self, client, channel_id, name=None,):
+        self.client = client
+        self.channel_id = channel_id
+        self.prog1 = re.compile(r'役職パネル\((\d)ページ目\)')
+
+    async def __local_check(self, ctx):
+        role_ids = [r.id for r in ctx.author.roles]
+        return any(x in role_ids for x in (429281099672322056, 268352165175623680, 450624921878659084)) \
+            or await client.is_owner(ctx.author)  # マネージメント、サブオーナー、オーナーズが使える感じ
+
+    async def on_ready(self):
+        self.channel = self.client.get_channel(self.channel_id)
+        async for m in self.channel.history().filter(lambda m: m.author == self.client.user):
+            self.client._connection._messages.append(m)
+
+    @commands.command()
+    async def rolepanel_add(self, ctx, *, role: discord.Role):
+        break1 = False
+        history = await self.channel.history(reverse=True)\
+            .filter(lambda m: m.author == self.client.user and m.embeds).flatten()
+        for m in history:
+            embed = m.embeds[0]
+            description = embed.description
+            lines = description.splitlines()
+            for i in range(20):
+                character = chr(0x0001f1e6 + i)
+                if character not in description:
+                    new_lines = '\n'.join(lines[0:i] + ['{0}:{1}'.format(character, role.mention)] + lines[i:len(lines) + 1])
+                    embed.description = new_lines
+                    await m.edit(embed=embed)
+                    await m.add_reaction(character)
+                    break1 = True
+                    break
+            if break1:
+                break
+        else:
+            embed = discord.Embed(
+                title='役職パネル({0}ページ目)'.format(len(history) + 1),
+                description='\U0001f1e6:{0}'.format(role.mention)
+            )
+            m = await self.channel.send(embed=embed)
+            await m.add_reaction('\U0001f1e6')
+
+    @commands.command()
+    async def rolepanel_remove(self, ctx, *, role: discord.Role):
+        break1 = False
+        async for m in self.channel.history(reverse=True).filter(lambda m: m.author == self.client.user and m.embeds):
+            embed = m.embeds[0]
+            description = embed.description
+            lines = description.splitlines(keepends=True)
+            for line in lines[:]:
+                if role.mention in line:
+                    embed.description = description.replace(line, '')
+                    await m.edit(embed=embed)
+                    await m.remove_reaction(line[0], self.client.user)
+                    break1 = True
+                    break
+            if break1:
+                break
+
+    async def on_reaction_add(self, reaction, user):
+        if user == client.user:
+            return
+        message = reaction.message
+        if message.channel == self.channel and message.author == client.user:
+            await message.remove_reaction(reaction, user)
+            match = self.prog1.search(message.embeds[0].title)
+            if match:
+                match2 = re.search(reaction.emoji + r':<@&(\d*)>', message.embeds[0].description)
+                if match2:
+                    role = message.guild.get_role(int(match2.group(1)))
+                    if role not in user.roles:
+                        await user.add_roles(role)
+                        description = '{0}の役職を付与しました。'.format(role.mention)
+                        await message.channel.send(user.mention, embed=discord.Embed(description=description), delete_after=10)
+                    else:
+                        await user.remove_roles(role)
+                        description = '{0}の役職を解除しました'.format(role.mention)
+                        await message.channel.send(user.mention, embed=discord.Embed(description=description), delete_after=10)
+
+
 # 参加メッセージ
 @client.event
 async def on_member_join(member):
@@ -565,15 +644,10 @@ async def on_member_remove(member):
 
 @client.listen('on_ready')
 async def on_ready():
-    global rolelist, firstlaunch
+    global firstlaunch
     if firstlaunch:
         firstlaunch = False
         client.loop.create_task(skyline_update())
-    guild = client.get_guild(235718949625397251)
-    role_ids = data['roles']
-    rolelist = [guild.get_role(int(i)) for i in role_ids]
-    [rolelist.remove(None) for i in rolelist[:] if i is None]
-    await create_role_panel()
     print(client.user.name, client.user.id, '起動しました。', sep=':')
 
 
@@ -583,27 +657,6 @@ async def on_message(message):
         return
     if message.content == 'せやな':
         await message.channel.send('わかる（天下無双）')
-
-
-@client.event
-async def on_reaction_add(reaction, user):
-    if user == client.user:
-        return
-    message = reaction.message
-    if message.channel.id == 449185870684356608 and message.author == client.user:
-        await message.remove_reaction(reaction, user)
-        match = re.search(r'役職パネル\((\d)ページ目\)', message.embeds[0].title)
-        if match:
-            role = rolelist[ord(reaction.emoji)
-                            + int(match.expand(r'\1')) * 20 - 0x1F1FA]
-            if role not in user.roles:
-                await user.add_roles(role)
-                description = '{0}の役職を付与しました。'.format(role.mention)
-                await message.channel.send(user.mention, embed=discord.Embed(description=description), delete_after=10)
-            else:
-                await user.remove_roles(role)
-                description = '{0}の役職を解除しました'.format(role.mention)
-                await message.channel.send(user.mention, embed=discord.Embed(description=description), delete_after=10)
 
 
 @client.listen('on_voice_state_update')
@@ -633,20 +686,6 @@ async def on_voice_state_update(member, before, after):
         if before.channel.id == 445925012340473877:  # 音楽鑑賞VCの場合
             DJ = before.channel.guild.get_role(470543155612221470)  # DJ役職
             await member.remove_roles(DJ)  # DJ役職を解除
-
-
-async def create_role_panel():
-    channel = client.get_channel(449185870684356608)
-    await channel.purge(limit=None, check=lambda m: m.embeds and m.author == client.user and '役職パネル' in m.embeds[0].title)
-    for x in range(len(rolelist) // 20 + 1):
-        roles = rolelist[x * 20:(x + 1) * 20]
-        content = '\n'.join('{0}:{1}'.format(
-            chr(i + 0x0001f1e6), r.mention) for i, r in enumerate(roles))
-        embed = discord.Embed(
-            title='役職パネル({0}ページ目)'.format(x + 1), description=content)
-        m = await channel.send(embed=embed)
-        [client.loop.create_task(m.add_reaction(chr(0x0001f1e6 + i)))
-         for i in range(len(roles))]
 
 
 async def skyline_update():
