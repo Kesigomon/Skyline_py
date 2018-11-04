@@ -486,12 +486,13 @@ class Categor_recover():  # 言わずと知れたカテゴリリカバリ機能
 
 
 class Role_panel():  # 役職パネルの機能
-    __slots__ = ('client', 'data', 'prog1', 'channel', 'channel_id')
+    __slots__ = ('client', 'prog1', 'channel', 'channel_id', 'name')
 
     def __init__(self, client, channel_id, name=None,):
         self.client = client
         self.channel_id = channel_id
         self.prog1 = re.compile(r'役職パネル\((\d)ページ目\)')
+        self.name = name if name is not None else type(self).__name__
 
     async def __local_check(self, ctx):
         role_ids = [r.id for r in ctx.author.roles]
@@ -715,6 +716,7 @@ client.add_cog(Owners_Command(client, 'オーナーズ用コマンド'))
 client.add_cog(Staff_Command(client, 'スタッフ用コマンド'))
 client.add_cog(DM_Command(client, 'DM用コマンド'))
 client.add_cog(Joke_Command(client, data, 'ネタコマンド'))
+client.add_cog(Role_panel(client, 449185870684356608, '役職パネル'))
 client.add_cog(Categor_recover(client))
 if __name__ == '__main__':
     token = ''
