@@ -577,7 +577,9 @@ async def on_member_join(member):
         await member.ban(reason='招待リンクの名前のため、BAN', delete_message_days=1)
     else:
         try:
-            zatsudan_forum = next(c for c in member.guild.channels if c.name == '雑談フォーラム')
+            zatsudan_forum \
+                = next(c for c in member.guild.channels
+                       if '雑談フォーラム' in c.name and '2' not in c.name)
             new_member = next(c for c in member.guild.channels if c.name == 'ニューメンバー')
         except StopIteration:
             pass
@@ -617,7 +619,9 @@ async def on_member_remove(member):
     filtered = list(filter(check, audit_logs))
     if not filtered:
         try:
-            zatsudan_forum = next(c for c in member.guild.channels if c.name == '雑談フォーラム')
+            zatsudan_forum \
+                = next(c for c in member.guild.channels
+                       if '雑談フォーラム' in c.name and '2' not in c.name)
             new_member = next(c for c in member.guild.channels if c.name == 'ニューメンバー')
         except StopIteration:
             pass
