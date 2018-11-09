@@ -156,7 +156,7 @@ class Normal_Command:
 """.format(ctx.author.mention, ctx.guild.name, len(ctx.guild.channels))
             # 左から順に、ユーザーのメンション、サーバーの名前、サーバーのチャンネル数に置き換える。
             # 役職付与
-            await ctx.author.add_roles(roles)
+            await ctx.author.add_roles(*roles)
             # メッセージ送信
             await ctx.send(content)
         else:
