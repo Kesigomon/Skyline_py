@@ -145,8 +145,8 @@ class Normal_Command:
 
     @commands.command()
     async def agree(self, ctx):
-        normal_user = ctx.guild.get_role(268352600108171274)
-        if normal_user not in ctx.author.roles:
+        roles = [ctx.guild.get_role(i) for i in (268352600108171274, 499886891563483147)]
+        if roles not in ctx.author.roles:
             # 送信する文章指定。
             content = """
 {0}さんの
@@ -156,7 +156,7 @@ class Normal_Command:
 """.format(ctx.author.mention, ctx.guild.name, len(ctx.guild.channels))
             # 左から順に、ユーザーのメンション、サーバーの名前、サーバーのチャンネル数に置き換える。
             # 役職付与
-            await ctx.author.add_roles(normal_user)
+            await ctx.author.add_roles(roles)
             # メッセージ送信
             await ctx.send(content)
         else:
@@ -188,7 +188,7 @@ class Normal_Command:
                 self.client.user:
                     discord.PermissionOverwrite.from_pair(discord.Permissions.all(), discord.Permissions.none()),
                 ctx.author:
-                    discord.PermissionOverwrite.from_pair(discord.Permissions.all(), discord.Permissions.none()),
+                    discord.PermissionOverwrite.from_pair(discord.Permissions(603318609), discord.Permissions.none()),
                 guild.default_role:
                     discord.PermissionOverwrite.from_pair(discord.Permissions.none(), discord.Permissions.all()),
                 guild.get_role(412567728067575809):
