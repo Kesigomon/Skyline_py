@@ -571,7 +571,7 @@ class Role_panel():  # 役職パネルの機能
 
 
 class Manage_channel():
-    __slots__ = ('client',)
+    __slots__ = ('client', 'name')
     permissions_jp = {
         'create_instant_invite': '招待を作成',
         'manage_channels': 'チャンネルの管理',
@@ -975,7 +975,7 @@ client.add_cog(Staff_Command(client, 'スタッフ用コマンド'))
 client.add_cog(DM_Command(client, 'DM用コマンド'))
 client.add_cog(Joke_Command(client, data, 'ネタコマンド'))
 client.add_cog(Role_panel(client, 449185870684356608, '役職パネル'))
-client.add_cog(Manage_channel(client,'自由チャンネル編集コマンド'))
+client.add_cog(Manage_channel(client, '自由チャンネル編集コマンド'))
 client.add_cog(Categor_recover(client))
 if __name__ == '__main__':
     token = ''
