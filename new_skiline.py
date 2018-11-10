@@ -698,7 +698,7 @@ class Manage_channel():
                     start = page * 17
                     targets = [i[0] for i in overwrites[start:end]]
                     description = '\n'.join(
-                        '{0}:{1}'.format(i, t.mention)
+                        '{0}:{1}'.format(chr(i + EMOJI_K), t.mention)
                         for i, t in enumerate(targets)
                     )
                     return targets, description
