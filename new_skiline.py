@@ -710,6 +710,7 @@ class Manage_channel():
                  for i in range(len(targets))]
                 await message.add_reaction('\U0001f519')
                 await message.add_reaction('\U0001f51c')
+                await message.add_reaction('\u274c')
 
                 def check3(reaction, user):
                     return (
@@ -728,6 +729,9 @@ class Manage_channel():
                         new_page = page - 1
                     elif reaction.emoji == '\U0001f51c':
                         new_page = page + 1
+                    elif reaction.emoji == '\u274c':
+                        await ctx.send('中止しました。')
+                        return
                     else:
                         break
                     if new_page != page:
