@@ -570,6 +570,260 @@ class Role_panel():  # 役職パネルの機能
                         await message.channel.send(user.mention, embed=discord.Embed(description=description), delete_after=10)
 
 
+class Manage_channel():
+    __slots__ = ('client',)
+    permissions_jp = {
+        'create_instant_invite': '招待を作成',
+        'manage_channels': 'チャンネルの管理',
+        'manage_roles': '権限の管理',
+        'manage_webhooks': 'Webhookの管理',
+    }
+    permissions_jp_text = {
+        'read_messages': 'メッセージを読む',
+        'send_messages': 'メッセージを送信',
+        'manage_messages': 'メッセージの管理',
+        'embed_links': '埋め込みリンク',
+        'attach_files': 'ファイルを添付',
+        'read_message_history': 'メッセージ履歴を読む',
+        'external_emojis': '外部の絵文字の使用',
+        'add_reactions': 'リアクションの追加',
+    }
+    permissions_jp_voice = {
+        'read_messages': 'チャンネルを見る',
+        'connect': '接続',
+        'speak': '発言',
+        'mute_members': 'メンバーをミュート',
+        'deafen_members': 'メンバーのスピーカーをミュート',
+        'move_members': 'メンバーを移動',
+        'use_voice_activation': '音声検出を使用',
+        'priority_speaker': 'プライオリティスピーカー'
+    }
+
+    def __init__(self, client, name=None,):
+        self.client: discord.Client = client
+        self.name = name if name is not None else type(self).__name__
+
+    async def on_command(self, ctx):
+        if self is ctx.cog:
+            ctx
+
+    @commands.command()
+    async def cedit(self, ctx, *args):
+        EMOJI_K = 0x1f1e6  # 絵文字定数(これを足したり引いたりするとリアクション的にうまくいく)
+        EMBED_TITLE = 'チャンネル権限編集'
+        if args:
+            try:
+                channel = await commands.TextChannelConverter().convert(ctx, args[0])
+            except commands.BadArgument:
+                try:
+                    channel = await commands.VoiceChannelConverter().convert(ctx, args[0])
+                except commands.BadArgument:
+                    await ctx.send('チャンネルが見つかりませんでした。')
+                    return
+        else:
+            channel = ctx.channel
+        if (
+            ctx.author in [i[0] for i in channel.overwrites]
+            and channel.overwrites_for(ctx.author).manage_roles is not False
+        ):
+            all_commands = (
+                '新規に役職を追加設定',
+                '新規にユーザーを追加設定',
+                '現在設定されている追加設定の変更',
+                '現在設定されている追加設定の削除'
+            )
+            emojis = [chr(i + EMOJI_K) for i in range(len(all_commands))]
+            embed = discord.Embed(
+                title=EMBED_TITLE,
+                description='\n'.join(
+                    '{0}:{1}'.format(i, e)
+                    for i, e in zip(emojis, all_commands)
+                )
+            )
+            embed.set_footer(text='対象チャンネル:{0.name}\nチャンネルID:{0.id}'.format(channel))
+            message = await ctx.send(embed=embed)
+            [await message.add_reaction(e)
+             for e in emojis]
+
+            def check(reaction, user):
+                return (
+                    reaction.me and ctx.author == user
+                    and reaction.message.id == message.id
+                    and reaction.message.channel == message.channel
+                )
+            reaction, _ = \
+                await self.client.wait_for('reaction_add', check=check)
+            await message.delete()
+            num_command = ord(reaction.emoji) - EMOJI_K
+            if 0 <= num_command <= 1:
+                if num_command == 0:
+                    target_type = '役職'
+                else:
+                    target_type = 'ユーザー'
+                description = ('チャンネルの追加設定に{0}を追加します。\n'
+                               '追加したい{0}を入力してください').format(target_type)
+                await ctx.send(description)
+
+                def check1(message):
+                    return (
+                        message.channel == ctx.channel
+                        and message.author == ctx.author
+                    )
+                message2 = await self.client.wait_for('message', check=check1)
+                if num_command == 0:
+                    converter = commands.RoleConverter()
+                else:
+                    converter = commands.MemberConverter()
+                try:
+                    target = await converter.convert(ctx, message2.content)
+                except commands.BadArgument:
+                    await ctx.send(
+                        '指定した{0}が見つかりませんでした'.format(target_type)
+                        + 'もう一度やり直して下さい。'
+                    )
+                    return
+            elif 2 <= num_command <= 3:
+                action = '変更' if num_command == 2 else '削除'
+                description = (
+                    '追加設定を{0}します\n'
+                    '{0}したい役職、またはユーザーを選んでください'
+                ).format(action)
+                embed = discord.Embed(title=EMBED_TITLE, description=description)
+                overwrites = channel.overwrites
+
+                def func2(page=0):
+                    end = (page + 1) * 17
+                    if len(overwrites) < end:
+                        end = len(overwrites)
+                    start = page * 17
+                    targets = [i[0] for i in overwrites[start:end]]
+                    description = '\n'.join(
+                        '{0}:{1}'.format(i, t.mention)
+                        for i, t in enumerate(targets)
+                    )
+                    return targets, description
+                page = 0
+                targets, description = func2(page)
+                embed.add_field(name='役職・ユーザー一覧', value=description)
+                message = await ctx.send(embed=embed)
+                [await message.add_reaction(chr(i + EMOJI_K))
+                 for i in range(len(targets))]
+                await message.add_reaction('\U0001f519')
+                await message.add_reaction('\U0001f51c')
+
+                def check3(reaction, user):
+                    return (
+                        user == ctx.author
+                        and reaction.me
+                        and reaction.message.channel == message.channel
+                        and reaction.message.id == message.id
+                    )
+
+                while True:
+                    new_page = page
+                    reaction, user = \
+                        await self.client.wait_for('reaction_add', check=check3)
+                    await message.remove_reaction(reaction, user)
+                    if reaction.emoji == '\U0001f519':
+                        new_page = page - 1
+                    elif reaction.emoji == '\U0001f51c':
+                        new_page = page + 1
+                    else:
+                        break
+                    if new_page != page:
+                        new_targets, description = func2(page=new_page)
+                        if description != '':
+                            embed.set_field_at(
+                                0, name='役職・ユーザー一覧', value=description
+                            )
+                            await message.edit(embed=embed)
+                            page = new_page
+                            targets = new_targets
+                await message.delete()
+                target = targets[ord(reaction.emoji) - EMOJI_K]
+            if num_command <= 2:
+                perms_jp = self.permissions_jp.copy()
+                perms_jp.update(
+                    self.permissions_jp_text
+                    if isinstance(channel, discord.TextChannel)
+                    else self.permissions_jp_voice
+                )
+                perms = tuple(perms_jp.keys())
+
+                def func1(overwrite):
+                    description = ''
+                    n = 0
+                    for en, jp in perms_jp.items():
+                        try:
+                            value = getattr(overwrite, en)
+                        except AttributeError:
+                            continue
+                        else:
+                            description += '{0}'.format(chr(n + EMOJI_K))
+                            description += jp
+                        if value:
+                            description += ':\u2705\n'
+                        elif value is None:
+                            description += ':\u2b1c\n'
+                        else:
+                            description += ':\u274c\n'
+                        n += 1
+                    return description
+                overwrite: discord.PermissionOverwrite = channel.overwrites_for(target)
+                embed = discord.Embed(
+                    title=EMBED_TITLE,
+                    description='{0}の権限設定を変更します'.format(target.mention)
+                )
+                embed.add_field(name='権限一覧', value=func1(overwrite))
+                message3 = await ctx.send(embed=embed)
+                [await message3.add_reaction(chr(i + EMOJI_K))
+                 for i in range(len(perms))]
+                await message3.add_reaction('\u2705')
+                await message3.add_reaction('\u274c')
+
+                def check2(reaction, user):
+                    return (
+                        user == ctx.author
+                        and reaction.me
+                        and reaction.message.channel == message3.channel
+                        and reaction.message.id == message3.id
+                    )
+
+                loop = True
+                while loop:
+                    reaction, user = await self.client.wait_for('reaction_add', check=check2)
+                    if reaction.emoji == '\u2705':
+                        loop = False
+                        continue
+                    elif reaction.emoji == '\u274c':
+                        await message3.delete()
+                        await ctx.send('中止しました。')
+                        break
+                    await message3.remove_reaction(reaction, user)
+                    perm = perms[ord(reaction.emoji) - EMOJI_K]
+                    value = getattr(overwrite, perm)
+                    if value:
+                        value = False
+                    elif value is None:
+                        value = True
+                    else:
+                        value = None
+                    if perm == 'manage_roles' and value:
+                        value = False
+                    overwrite.update(**{perm: value})
+                    embed.set_field_at(0, name='権限一覧', value=func1(overwrite))
+                    await message3.edit(embed=embed)
+                else:
+                    await message3.delete()
+                    await channel.set_permissions(target, overwrite=overwrite)
+                    await ctx.send('権限を変更しました。')
+            elif num_command == 3:
+                await channel.set_permissions(target, overwrite=None)
+                await ctx.send('権限を削除しました。')
+        else:
+            await ctx.send('あなたはそれをする権限がありません。')
+
+
 # 参加メッセージ
 @client.event
 async def on_member_join(member):
@@ -721,6 +975,7 @@ client.add_cog(Staff_Command(client, 'スタッフ用コマンド'))
 client.add_cog(DM_Command(client, 'DM用コマンド'))
 client.add_cog(Joke_Command(client, data, 'ネタコマンド'))
 client.add_cog(Role_panel(client, 449185870684356608, '役職パネル'))
+client.add_cog(Manage_channel(client,'自由チャンネル編集コマンド'))
 client.add_cog(Categor_recover(client))
 if __name__ == '__main__':
     token = ''
