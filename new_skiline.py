@@ -662,7 +662,7 @@ class Manage_channel():
                     target_type = 'ユーザー'
                 description = ('チャンネルの追加設定に{0}を追加します。\n'
                                '追加したい{0}を入力してください').format(target_type)
-                await ctx.send(description)
+                message = await ctx.send(description)
 
                 def check1(message):
                     return (
@@ -670,6 +670,7 @@ class Manage_channel():
                         and message.author == ctx.author
                     )
                 message2 = await self.client.wait_for('message', check=check1)
+                await message.delete()
                 if num_command == 0:
                     converter = commands.RoleConverter()
                 else:
@@ -730,6 +731,7 @@ class Manage_channel():
                     elif reaction.emoji == '\U0001f51c':
                         new_page = page + 1
                     elif reaction.emoji == '\u274c':
+                        await message.delete()
                         await ctx.send('中止しました。')
                         return
                     else:
@@ -969,6 +971,10 @@ async def skyline_update():
             await webhook.send(embed=embed)
         await asyncio.sleep(60)
 
+
+@client.event
+async def on_command(ctx):
+    print('{0.author.name}は{0.command.name}を{0.channel.name}で使用しました'.format(ctx))
 
 with open(os.path.dirname(__file__) + os.sep + 'config.yaml', encoding='utf-8') as f:
     data = yaml.load(f)
