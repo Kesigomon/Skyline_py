@@ -430,6 +430,12 @@ class Joke_Command:
     async def hyouga(self, ctx):
         await ctx.send(random.choice(self.data['hyouga']))
 
+    async def on_message(self, message):
+        if message.author == client.user:
+            return
+        if message.content == '\\せやな':
+            await message.channel.send('わかる（天下無双）')
+
 
 class Categor_recover():  # 言わずと知れたカテゴリリカバリ機能
     __slots__ = ('client', 'category_cache')
@@ -914,14 +920,6 @@ async def on_ready():
         firstlaunch = False
         client.loop.create_task(skyline_update())
     print(client.user.name, client.user.id, '起動しました。', sep=':')
-
-
-@client.listen('on_message')
-async def on_message(message):
-    if message.author == client.user:
-        return
-    if message.content == 'せやな':
-        await message.channel.send('わかる（天下無双）')
 
 
 @client.listen('on_voice_state_update')
