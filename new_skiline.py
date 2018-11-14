@@ -605,7 +605,7 @@ class Manage_channel():
     }
 
     def __init__(self, client, name=None,):
-        self.client: discord.Client = client
+        self.client: commands.Bot = client
         self.name = name if name is not None else type(self).__name__
 
     async def on_command(self, ctx):
@@ -630,7 +630,7 @@ class Manage_channel():
         if (
             ctx.author in [i[0] for i in channel.overwrites]
             and channel.overwrites_for(ctx.author).manage_roles is not False
-        ):
+        ) or await self.client.is_owner(ctx.author):
             all_commands = (
                 '新規に役職を追加設定',
                 '新規にユーザーを追加設定',
