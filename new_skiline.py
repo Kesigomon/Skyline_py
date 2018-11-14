@@ -146,7 +146,7 @@ class Normal_Command:
     @commands.command()
     async def agree(self, ctx):
         roles = [ctx.guild.get_role(i) for i in (268352600108171274, 499886891563483147)]
-        if roles not in ctx.author.roles:
+        if roles[0] not in ctx.author.roles:
             # 送信する文章指定。
             content = """
 {0}さんの
