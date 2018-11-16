@@ -159,6 +159,33 @@ class Normal_Command:
             await ctx.author.add_roles(*roles)
             # メッセージ送信
             await ctx.send(content)
+            member = ctx.author
+            try:
+                zatsudan_forum \
+                    = next(c for c in member.guild.channels
+                           if '雑談フォーラム' in c.name and '2' not in c.name)
+                new_member = next(c for c in member.guild.channels if c.name == 'ニューメンバー')
+            except StopIteration:
+                pass
+            else:
+                join_messages = data['join_messages']
+                name = member.display_name
+                des1 = random.choice(join_messages).format(
+                    name, member.guild.me.display_name)
+                embed = discord.Embed(
+                    title='{0}さんが参加しました。'.format(name),
+                    colour=0x2E2EFE,
+                    description='```\n{3}\n```\nようこそ{0}さん、よろしくお願いします！\nこのサーバーの現在の人数は{1}です。\n{2}に作られたアカウントです。'
+                    .format(name, member.guild.member_count, member.created_at, des1)
+                )
+                embed.set_thumbnail(url=member.avatar_url)
+
+                try:
+                    await zatsudan_forum.send(embed=embed)
+                except discord.Forbidden:
+                    pass
+                content = data['join_message'].format(member.mention, member.guild.name)
+                await new_member.send(content)
         else:
             await ctx.send('登録終わってますやんか')
 
@@ -840,33 +867,6 @@ class Manage_channel():
 async def on_member_join(member):
     if 'discord.gg' in member.display_name:
         await member.ban(reason='招待リンクの名前のため、BAN', delete_message_days=1)
-    else:
-        try:
-            zatsudan_forum \
-                = next(c for c in member.guild.channels
-                       if '雑談フォーラム' in c.name and '2' not in c.name)
-            new_member = next(c for c in member.guild.channels if c.name == 'ニューメンバー')
-        except StopIteration:
-            pass
-        else:
-            join_messages = data['join_messages']
-            name = member.display_name
-            des1 = random.choice(join_messages).format(
-                name, member.guild.me.display_name)
-            embed = discord.Embed(
-                title='{0}さんが参加しました。'.format(name),
-                colour=0x2E2EFE,
-                description='```\n{3}\n```\nようこそ{0}さん、よろしくお願いします！\nこのサーバーの現在の人数は{1}です。\n{2}に作られたアカウントです。'
-                           .format(name, member.guild.member_count, member.created_at, des1)
-            )
-            embed.set_thumbnail(url=member.avatar_url)
-
-            try:
-                await zatsudan_forum.send(embed=embed)
-            except discord.Forbidden:
-                pass
-            content = data['join_message'].format(member.mention, member.guild.name)
-            await new_member.send(content)
 
 
 # 退出メッセージ
