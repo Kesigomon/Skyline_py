@@ -164,7 +164,6 @@ class Normal_Command:
                 zatsudan_forum \
                     = next(c for c in member.guild.channels
                            if '雑談フォーラム' in c.name and '2' not in c.name)
-                new_member = next(c for c in member.guild.channels if c.name == 'ニューメンバー')
             except StopIteration:
                 pass
             else:
@@ -180,12 +179,7 @@ class Normal_Command:
                 )
                 embed.set_thumbnail(url=member.avatar_url)
 
-                try:
-                    await zatsudan_forum.send(embed=embed)
-                except discord.Forbidden:
-                    pass
-                content = data['join_message'].format(member.mention, member.guild.name)
-                await new_member.send(content)
+                await zatsudan_forum.send(embed=embed)
         else:
             await ctx.send('登録終わってますやんか')
 
@@ -867,6 +861,14 @@ class Manage_channel():
 async def on_member_join(member):
     if 'discord.gg' in member.display_name:
         await member.ban(reason='招待リンクの名前のため、BAN', delete_message_days=1)
+    else:
+        try:
+            new_member = next(c for c in member.guild.channels if c.name == 'ニューメンバー')
+        except StopIteration:
+            pass
+        else:
+            content = data['join_message'].format(member.mention, member.guild.name)
+            await new_member.send(content)
 
 
 # 退出メッセージ
