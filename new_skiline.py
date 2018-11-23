@@ -9,6 +9,7 @@ import inspect
 import itertools
 from concurrent.futures import ThreadPoolExecutor
 
+import aiohttp
 import discord
 import feedparser
 from discord.ext import commands
@@ -95,7 +96,7 @@ class Normal_Command:
     __slots__ = ('client', 'name', 'data', 'categories')
 
     def __init__(self, client, data, name=None):
-        self.client = client
+        self.client: commands.Bot = client
         self.name = name if name is not None else type(self).__name__
         self.data = data
 
@@ -854,6 +855,44 @@ class Manage_channel():
                 await ctx.send('権限を削除しました。')
         else:
             await ctx.send('あなたはそれをする権限がありません。')
+
+
+class Emergency_call():
+    __slots__ = ('client', 'name', 'data', 'url')
+
+    def __init__(self, client, name=None):
+        self.client: commands.Bot = client
+        self.name = name if name is not None else type(self).__name__
+        self.url = os.environ['emergency_call_url']
+
+    async def __local_check(self, ctx):
+        role_ids = [r.id for r in ctx.author.roles]
+        return (any(x in role_ids for x in (429281099672322056, 268352165175623680, 482009178940899328)))
+
+    async def on_command_error(self, ctx, error):
+        if ctx.cog is self:
+            if isinstance(error, commands.CheckFailure):
+                await ctx.send('あなたはこのコマンドを実行する権限がありません。')
+
+    @commands.command()
+    async def emergency_call(self, ctx):
+        message = await ctx.send('エマージェンシーコールを発動しますか？')
+
+        def check1(reaction, user):
+            return reaction.message.id == message.id and reaction.message.channel == message.channel \
+                and user == ctx.author
+        [self.client.loop.create_task(message.add_reaction(i))
+         for i in ('\u2705', '\u274c')]
+        reaction, _ = await self.client.wait_for('reaction_add', check=check1)
+        await message.delete()
+        if reaction.emoji == '\u2705':
+            Data = {'value1': str(ctx.author), 'value2': ctx.channel.name, 'value3': ctx.guild.name}
+            async with aiohttp.ClientSession() as session:
+                async with session.post(self.url, data=Data):
+                    pass
+            await ctx.send('エマージェンシーコールを発動しました')
+        else:
+            await ctx.send('キャンセルしました')
 
 
 # 参加メッセージ
