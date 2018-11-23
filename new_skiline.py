@@ -874,7 +874,7 @@ class Emergency_call():
             if isinstance(error, commands.CheckFailure):
                 await ctx.send('あなたはこのコマンドを実行する権限がありません。')
 
-    @commands.command()
+    @commands.command(hidden=True)
     async def emergency_call(self, ctx):
         message = await ctx.send('エマージェンシーコールを発動しますか？')
 
@@ -1024,6 +1024,7 @@ client.add_cog(DM_Command(client, 'DM用コマンド'))
 client.add_cog(Joke_Command(client, data, 'ネタコマンド'))
 client.add_cog(Role_panel(client, 449185870684356608, '役職パネル'))
 client.add_cog(Manage_channel(client, '自由チャンネル編集コマンド'))
+client.add_cog(Emergency_call(client, '緊急呼び出しコマンド'))
 client.add_cog(Categor_recover(client))
 if __name__ == '__main__':
     token = ''
