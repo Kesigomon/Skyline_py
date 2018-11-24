@@ -92,6 +92,10 @@ client = commands.Bot('sk!', formatter=MyFormatter())
 firstlaunch = True
 
 
+async def zatsudan_forum_check(ctx):
+    return ctx.guild is not None and ctx.guild.id == 235718949625397251
+
+
 class Normal_Command:
     __slots__ = ('client', 'name', 'data', 'categories')
 
@@ -128,8 +132,8 @@ class Normal_Command:
         embed = discord.Embed(title='サーバー情報', description=description)
         embed.set_thumbnail(url=guild.icon_url)
         await ctx.send(embed=embed)
-    # 投票機能
 
+    # 投票機能
     @commands.command()
     async def poll(self, ctx, *args):
         if len(args) == 0:
@@ -144,7 +148,7 @@ class Normal_Command:
             m: discord.Message = await ctx.send('**{0}**'.format(args[0]), embed=embed)
             [self.client.loop.create_task(m.add_reaction(e)) for e in emojis]
 
-    @commands.command()
+    @commands.command(check=[zatsudan_forum_check])
     async def agree(self, ctx):
         roles = [ctx.guild.get_role(i) for i in (268352600108171274, 499886891563483147)]
         if roles[0] not in ctx.author.roles:
@@ -270,7 +274,7 @@ class Staff_Command:
         self.limit_role: discord.Role = client.get_guild(
             235718949625397251).get_role(412567728067575809)
 
-    @commands.command(brief='制限付きユーザーを付けます')
+    @commands.command(brief='制限付きユーザーを付けます', check=[zatsudan_forum_check])
     async def limit(self, ctx, member: discord.Member):
         Tasks = [self.client.loop.create_task(member.remove_roles(r)) for r in member.roles
                  if r != self.limit_role]
@@ -397,7 +401,7 @@ class Owners_Command:
             category = await commands.converter.CategoryChannelConverter().convert(ctx, args[0])
             await _create_category_index(category, ctx)
 
-    @commands.command(brief='インデックスインデックスを再生成します')
+    @commands.command(brief='インデックスインデックスを再生成します', check=[zatsudan_forum_check])
     async def create_index_index(self, ctx):
         content = str()
         for category in ctx.guild.categories:
@@ -524,8 +528,11 @@ class Role_panel():  # 役職パネルの機能
 
     async def __local_check(self, ctx):
         role_ids = [r.id for r in ctx.author.roles]
-        return any(x in role_ids for x in (429281099672322056, 268352165175623680, 450624921878659084)) \
-            or await client.is_owner(ctx.author)  # マネージメント、サブオーナー、オーナーズが使える感じ
+        return (
+            await zatsudan_forum_check(ctx)
+            and (any(x in role_ids for x in (429281099672322056, 268352165175623680, 450624921878659084))
+                 or await client.is_owner(ctx.author))  # マネージメント、サブオーナー、オーナーズが使える感じ
+        )
 
     async def on_ready(self):
         self.channel = self.client.get_channel(self.channel_id)
@@ -1024,7 +1031,7 @@ client.add_cog(DM_Command(client, 'DM用コマンド'))
 client.add_cog(Joke_Command(client, data, 'ネタコマンド'))
 client.add_cog(Role_panel(client, 449185870684356608, '役職パネル'))
 client.add_cog(Manage_channel(client, '自由チャンネル編集コマンド'))
-client.add_cog(Emergency_call(client, '緊急呼び出しコマンド'))
+# client.add_cog(Emergency_call(client, '緊急呼び出しコマンド'))
 client.add_cog(Categor_recover(client))
 if __name__ == '__main__':
     token = ''
