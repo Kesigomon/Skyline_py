@@ -535,7 +535,7 @@ class Role_panel():  # 役職パネルの機能
         )
 
     async def on_ready(self):
-        self.channel = self.client.get_channel(self.channel_id)
+        self.channel: discord.TextChannel = self.client.get_channel(self.channel_id)
         async for m in self.channel.history().filter(lambda m: m.author == self.client.user):
             self.client._connection._messages.append(m)
 
@@ -551,7 +551,11 @@ class Role_panel():  # 役職パネルの機能
             for i in range(20):
                 character = chr(0x0001f1e6 + i)
                 if character not in description:
-                    new_lines = '\n'.join(lines[0:i] + ['{0}:{1}'.format(character, role.mention)] + lines[i:len(lines) + 1])
+                    new_lines = '\n'.join(
+                        lines[0:i]
+                        + ['{0}:{1}'.format(character, role.mention)]
+                        + lines[i:len(lines) + 1]
+                    )
                     embed.description = new_lines
                     await m.edit(embed=embed)
                     await m.add_reaction(character)
@@ -570,7 +574,8 @@ class Role_panel():  # 役職パネルの機能
     @commands.command()
     async def rolepanel_remove(self, ctx, *, role: discord.Role):
         break1 = False
-        async for m in self.channel.history(reverse=True).filter(lambda m: m.author == self.client.user and m.embeds):
+        async for m in self.channel.history(reverse=True)\
+                .filter(lambda m: m.author == self.client.user and m.embeds):
             embed = m.embeds[0]
             description = embed.description
             lines = description.splitlines(keepends=True)
@@ -583,6 +588,38 @@ class Role_panel():  # 役職パネルの機能
                     break
             if break1:
                 break
+
+    @commands.command()
+    async def rolepanel_regenerate(self, ctx):
+
+        def filter_func(m: discord.Message):
+            return (
+                m.author == self.client.user
+                and m.embeds
+            )
+        prog = re.compile(r'<@&(\d*)>')
+        roles = set()
+        guild: discord.Guild = self.channel.guild
+        async for message in self.channel.history(reverse=True)\
+                .filter(filter_func):
+            message: discord.Message
+            for line in message.embeds[0].description.splitlines():
+                match = prog.search(line)
+                if match:
+                    role_id = int(match.group(1))
+                    roles.add(guild.get_role(role_id))
+            await message.delete()
+        roles.discard(None)
+        rolelist = list(roles)
+        for x in range(len(rolelist) // 20 + 1):
+            roles = rolelist[x * 20:(x + 1) * 20]
+            content = '\n'.join('{0}:{1}'.format(
+                chr(i + 0x0001f1e6), r.mention) for i, r in enumerate(roles))
+            embed = discord.Embed(
+                title='役職パネル({0}ページ目)'.format(x + 1), description=content)
+            m = await self.channel.send(embed=embed)
+            [client.loop.create_task(m.add_reaction(chr(0x0001f1e6 + i)))
+             for i in range(len(roles))]
 
     async def on_reaction_add(self, reaction, user):
         if user == client.user:
