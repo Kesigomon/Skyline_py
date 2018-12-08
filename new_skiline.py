@@ -268,7 +268,10 @@ class Staff_Command:
 
     async def __local_check(self, ctx):
         role_ids = [r.id for r in ctx.author.roles]
-        return (any(x in role_ids for x in (429281099672322056, 268352165175623680,)))
+        return (
+            any(x in role_ids for x in (429281099672322056, 268352165175623680,))
+            or await self.client.is_owner(ctx.author)
+        )
 
     async def on_ready(self):
         self.limit_role: discord.Role = client.get_guild(
@@ -939,6 +942,92 @@ class Emergency_call():
             await ctx.send('キャンセルしました')
 
 
+class Kouron():
+    __slots__ = ('client', 'role_dict', 'guild', 'ready')
+
+    def __init__(self, client,):
+        self.client: commands.Bot = client
+        self.ready = asyncio.Event(loop=client.loop)
+
+    async def __local_check(self, ctx):
+        await self.ready.wait()
+        return ctx.guild == self.guild
+
+    async def on_ready(self):
+        """
+        Dic1は役職のIDとレベルの対応リスト。
+        self.role_dict は　役職とレベルの対応リスト。
+
+        別なサーバーで使いたい場合は
+        Dic1を対応するロールIDに変更しておいて
+        get_guildの部分を、対応するサーバーIDに変更。
+        """
+        Dic1 = {
+            482009530373505044: 50,
+            482009178940899328: 40,
+            450625941455110144: 30,
+            448843313139679233: 20,
+            448842082187214864: 10,
+            448840831655215104: 5,
+            268352600108171274: 1,
+        }
+        self.guild = self.client.get_guild(235718949625397251)
+        self.role_dict = {self.guild.get_role(key): value
+                          for key, value in Dic1.items()}
+        self.ready.set()
+
+    @commands.command()
+    async def kouron(self, ctx: commands.context.Context, *members: discord.Member):
+        if 450625941455110144 not in (r.id for r in ctx.author.roles):
+            await ctx.send('あなたはまだこのコマンドを使えません。')
+            return
+        if len(members) <= 1:
+            await ctx.send('2人以上のメンバーを指定してください。')
+            return
+        mentions = '\n'.join(m.mention for m in members)
+        embed = discord.Embed(title='口論コマンドのテスト', description=mentions)
+        embed.add_field(name='レベル合計', value='0')
+        embed.set_footer(text='\u2705でこの口論に賛成します。\n\U0001f504でリロード。')
+        message: discord.Message = await ctx.send(embed=embed)
+        [await message.add_reaction(i)
+         for i in ('\u2705', '\U0001f504')]
+
+        def check_func1(_reaction, _user):
+            return (
+                _user != self.client.user
+                and _reaction.me
+                and _reaction.message.channel == message.channel
+                and _reaction.message.id == message.id
+            )
+
+        def filter_func(_user):
+            return (
+                _user not in ([self.client.user, ctx.author] + list(members))
+                and isinstance(_user, discord.Member)
+            )
+        while True:
+            reaction, user = (await self.client.wait_for('reaction_add', check=check_func1))
+            message = reaction.message
+            if reaction.emoji == '\U0001f504':
+                await message.remove_reaction('\U0001f504', user)
+            reaction = next(i for i in message.reactions if i.emoji == '\u2705')
+            users = await reaction.users()\
+                .filter(filter_func)\
+                .flatten()
+            level_sum = sum(self._level_caculate(i) for i in users) if users else 0
+            embed.set_field_at(0, name='レベル合計', value=str(level_sum))
+            await message.edit(embed=embed)
+            if level_sum >= 70:
+                await ctx.send('{0}\n口論と認められました。\n速やかに別なチャンネルへの移動をお願いします。'.format(mentions))
+                break
+
+    def _level_caculate(self, member: discord.Member):
+        for role, value in self.role_dict.items():
+            if role in member.roles:
+                return value
+        return 0
+
+
 # 参加メッセージ
 @client.event
 async def on_member_join(member):
@@ -1070,6 +1159,7 @@ client.add_cog(Role_panel(client, 449185870684356608, '役職パネル'))
 client.add_cog(Manage_channel(client, '自由チャンネル編集コマンド'))
 client.add_cog(Emergency_call(client, '緊急呼び出しコマンド'))
 client.add_cog(Categor_recover(client))
+client.add_cog(Kouron(client, ))
 if __name__ == '__main__':
     token = ''
     client.run(token)
