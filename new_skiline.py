@@ -591,12 +591,14 @@ class Role_panel():  # 役職パネルの機能
         await self._rolepanel_add(ctx, role, tag=tag)
 
     @commands.command()
-    async def rolepanel_remove(self, ctx, *, role: discord.Role):
+    async def rolepanel_remove(self, ctx, role: discord.Role, tag=None):
         break1 = False
         async for m in self.channel.history(reverse=True)\
                 .filter(lambda m: m.author == self.client.user and m.embeds):
             embed = m.embeds[0]
             description = embed.description
+            if tag is not None and tag not in embed.title:
+                continue
             lines = description.splitlines(keepends=True)
             for line in lines[:]:
                 if role.mention in line:
