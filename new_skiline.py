@@ -134,9 +134,31 @@ class Normal_Command:
         await ctx.send(embed=embed)
 
     @commands.command()
-    async def member(self, ctx, member: discord.Member = None):
+    async def member(self, ctx, member=None):
         if member is None:
             member = ctx.author
+        else:
+            try:
+                member = await commands.MemberConverter().convert(ctx, member)
+            except commands.CommandError:
+                try:
+                    member = await commands.UserConverter().convert(ctx, member)
+                except commands.CommandError:
+                    await ctx.send('ユーザーが見つかりませんでした')
+                    return
+        icon_url=member.avatar_url_as(format='png', size=1024)
+        embed = discord.Embed(description=member.mention)
+        embed.set_author(name=str(member), icon_url=icon_url)
+        embed.set_image(url=icon_url)
+        args = {
+            'ID': member.id,
+            'アカウントが作られた日': member.created_at,
+        }
+        if isinstance(member, discord.Member):
+            args.update({'このサーバーに入った日': member.joined_at})
+        [embed.add_field(name=key, value=value)
+         for key, value in args.items()]
+        await ctx.send(embed=embed)
 
     # 投票機能
     @commands.command()
@@ -209,11 +231,11 @@ class Normal_Command:
         if 448842082187214864 in (r.id for r in ctx.author.roles):
             if category_n is None:
                 category_n = 1
-                while len(self.categories[category_n - 1].channels) >= 50:  # チャンネル数50以上のカテゴリがあれば次のカテゴリへ
+                while len(self.categories[category_n].channels) >= 50:  # チャンネル数50以上のカテゴリがあれば次のカテゴリへ
                     category_n += 1
             else:
                 category_n = int(category_n)
-            category = self.categories[category_n - 1]
+            category = self.categories[category_n]
             guild = category.guild
             overwrites = {
                 self.client.user:
