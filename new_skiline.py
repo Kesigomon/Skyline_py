@@ -606,7 +606,7 @@ class Role_panel():  # 役職パネルの機能
                     break1 = True
                     break
             m = await self.channel.get_message(m.id)
-            if not m.reaction:
+            if not m.reactions:
                 await m.delete()
             if break1:
                 break
