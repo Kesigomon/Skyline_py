@@ -133,6 +133,11 @@ class Normal_Command:
         embed.set_thumbnail(url=guild.icon_url)
         await ctx.send(embed=embed)
 
+    @commands.command()
+    async def member(self, ctx, member: discord.Member = None):
+        if member is None:
+            member = ctx.author
+
     # 投票機能
     @commands.command()
     async def poll(self, ctx, *args):
@@ -521,13 +526,13 @@ class Categor_recover():  # 言わずと知れたカテゴリリカバリ機能
 
 
 class Role_panel():  # 役職パネルの機能
-    __slots__ = ('client', 'prog1', 'channel', 'channel_id', 'name')
+    __slots__ = ('client', 'channel', 'pattern', 'channel_id', 'name')
 
     def __init__(self, client, channel_id, name=None,):
         self.client = client
         self.channel_id = channel_id
-        self.prog1 = re.compile(r'役職パネル\((\d)ページ目\)')
         self.name = name if name is not None else type(self).__name__
+        self.pattern = re.compile(r'役職パネル\((.*?)\)')
 
     async def __local_check(self, ctx):
         role_ids = [r.id for r in ctx.author.roles]
@@ -539,14 +544,21 @@ class Role_panel():  # 役職パネルの機能
 
     async def on_ready(self):
         self.channel: discord.TextChannel = self.client.get_channel(self.channel_id)
-        async for m in self.channel.history().filter(lambda m: m.author == self.client.user):
-            self.client._connection._messages.append(m)
+        async for message in self.channel.history().filter(lambda m: m.author == self.client.user):
+            for reaction in message.reactions:
+                async for user in reaction.users().filter(lambda u: u != client.user):
+                    self.client.loop.create_task(message.remove_reaction(reaction, user))
+            self.client._connection._messages.append(message)
 
-    @commands.command()
-    async def rolepanel_add(self, ctx, *, role: discord.Role):
+    async def _rolepanel_add(self, ctx, role: discord.Role, tag):
+        def check(m):
+            return (
+                m.author == self.client.user and m.embeds
+                and tag in m.embeds[0].title
+            )
         break1 = False
         history = await self.channel.history(reverse=True)\
-            .filter(lambda m: m.author == self.client.user and m.embeds).flatten()
+            .filter(check).flatten()
         for m in history:
             embed = m.embeds[0]
             description = embed.description
@@ -568,11 +580,15 @@ class Role_panel():  # 役職パネルの機能
                 break
         else:
             embed = discord.Embed(
-                title='役職パネル({0}ページ目)'.format(len(history) + 1),
+                title='役職パネル({1})({0}ページ目)'.format(len(history) + 1, tag),
                 description='\U0001f1e6:{0}'.format(role.mention)
             )
             m = await self.channel.send(embed=embed)
             await m.add_reaction('\U0001f1e6')
+
+    @commands.command()
+    async def rolepanel_add(self, ctx, role: discord.Role, tag='ノーマル'):
+        await self._rolepanel_add(ctx, role, tag=tag)
 
     @commands.command()
     async def rolepanel_remove(self, ctx, *, role: discord.Role):
@@ -601,28 +617,34 @@ class Role_panel():  # 役職パネルの機能
                 and m.embeds
             )
         prog = re.compile(r'<@&(\d*)>')
-        roles = set()
+        roles = {}
         guild: discord.Guild = self.channel.guild
         async for message in self.channel.history(reverse=True)\
                 .filter(filter_func):
             message: discord.Message
+            tag = self.pattern.search(message.embeds[0].title).group(1)
+            if tag not in roles:
+                roles.update({tag: set()})
             for line in message.embeds[0].description.splitlines():
                 match = prog.search(line)
                 if match:
                     role_id = int(match.group(1))
-                    roles.add(guild.get_role(role_id))
+                    roles[tag].add(guild.get_role(role_id))
             await message.delete()
-        roles.discard(None)
-        rolelist = list(roles)
-        for x in range(len(rolelist) // 20 + 1):
-            roles = rolelist[x * 20:(x + 1) * 20]
-            content = '\n'.join('{0}:{1}'.format(
-                chr(i + 0x0001f1e6), r.mention) for i, r in enumerate(roles))
-            embed = discord.Embed(
-                title='役職パネル({0}ページ目)'.format(x + 1), description=content)
-            m = await self.channel.send(embed=embed)
-            [client.loop.create_task(m.add_reaction(chr(0x0001f1e6 + i)))
-             for i in range(len(roles))]
+        for tag, value in roles.items():
+            value.discard(None)
+            rolelist = list(value)
+            for x in range(len(rolelist) // 20 + 1):
+                roles = rolelist[x * 20:(x + 1) * 20]
+                content = '\n'.join('{0}:{1}'.format(
+                    chr(i + 0x0001f1e6), r.mention) for i, r in enumerate(roles))
+                embed = discord.Embed(
+                    title='役職パネル({1})({0}ページ目)'.format(x + 1, tag),
+                    description=content
+                )
+                m = await self.channel.send(embed=embed)
+                [client.loop.create_task(m.add_reaction(chr(0x0001f1e6 + i)))
+                 for i in range(len(roles))]
 
     async def on_reaction_add(self, reaction, user):
         if user == client.user:
@@ -630,8 +652,7 @@ class Role_panel():  # 役職パネルの機能
         message = reaction.message
         if message.channel == self.channel and message.author == client.user:
             await message.remove_reaction(reaction, user)
-            match = self.prog1.search(message.embeds[0].title)
-            if match:
+            if '役職パネル' in message.embeds[0].title:
                 match2 = re.search(reaction.emoji + r':<@&(\d*)>', message.embeds[0].description)
                 if match2:
                     role = message.guild.get_role(int(match2.group(1)))
@@ -1157,7 +1178,7 @@ client.add_cog(DM_Command(client, 'DM用コマンド'))
 client.add_cog(Joke_Command(client, data, 'ネタコマンド'))
 client.add_cog(Role_panel(client, 449185870684356608, '役職パネル'))
 client.add_cog(Manage_channel(client, '自由チャンネル編集コマンド'))
-client.add_cog(Emergency_call(client, '緊急呼び出しコマンド'))
+# client.add_cog(Emergency_call(client, '緊急呼び出しコマンド'))
 client.add_cog(Categor_recover(client))
 client.add_cog(Kouron(client, ))
 if __name__ == '__main__':
