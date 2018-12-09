@@ -494,10 +494,11 @@ class Joke_Command:
 
 
 class Categor_recover():  # 言わずと知れたカテゴリリカバリ機能
-    __slots__ = ('client', 'category_cache')
+    __slots__ = ('client', 'category_cache', 'name')
 
-    def __init__(self, client):
+    def __init__(self, client, name=None):
         self.client: discord.Client = client
+        self.name = name if name is not None else type(self).__name__
 
     async def on_ready(self):
         self.category_cache \
@@ -991,11 +992,12 @@ class Emergency_call():
 
 
 class Kouron():
-    __slots__ = ('client', 'role_dict', 'guild', 'ready')
+    __slots__ = ('client', 'role_dict', 'guild', 'ready', 'name')
 
-    def __init__(self, client,):
+    def __init__(self, client, name=None):
         self.client: commands.Bot = client
         self.ready = asyncio.Event(loop=client.loop)
+        self.name = name if name is not None else type(self).__name__
 
     async def __local_check(self, ctx):
         await self.ready.wait()
@@ -1206,8 +1208,8 @@ client.add_cog(Joke_Command(client, data, 'ネタコマンド'))
 client.add_cog(Role_panel(client, 449185870684356608, '役職パネル'))
 client.add_cog(Manage_channel(client, '自由チャンネル編集コマンド'))
 # client.add_cog(Emergency_call(client, '緊急呼び出しコマンド'))
-client.add_cog(Categor_recover(client))
-client.add_cog(Kouron(client, ))
+client.add_cog(Categor_recover(client, 'カテゴリーリカバリー'))
+client.add_cog(Kouron(client, '口論コマンド'))
 if __name__ == '__main__':
     token = ''
     client.run(token)
