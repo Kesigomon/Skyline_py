@@ -146,7 +146,7 @@ class Normal_Command:
                 except commands.CommandError:
                     await ctx.send('ユーザーが見つかりませんでした')
                     return
-        icon_url=member.avatar_url_as(format='png', size=1024)
+        icon_url = member.avatar_url_as(format='png', size=1024)
         embed = discord.Embed(description=member.mention)
         embed.set_author(name=str(member), icon_url=icon_url)
         embed.set_image(url=icon_url)
@@ -692,6 +692,19 @@ class Role_panel():  # 役職パネルの機能
                         await user.remove_roles(role)
                         description = '{0}の役職を解除しました'.format(role.mention)
                         await message.channel.send(user.mention, embed=discord.Embed(description=description), delete_after=10)
+
+    async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
+        cache = self.client._connection._messages
+        if payload.channel_id != self.channel.id or payload.message_id in (m.id for m in cache):
+            return
+        user = client.get_guild(payload.guild_id).get_member(payload.user_id)
+        message = await client.get_channel(payload.channel_id).get_message(payload.message_id)
+        cache.append(message)
+        if payload.emoji.is_unicode_emoji():
+            reaction = next(r for r in message.reactions if r.emoji == payload.emoji.name)
+        else:
+            reaction = next(r for r in message.reactions if r.custom_emoji and r.emoji.id == payload.emoji.id)
+        await self.on_reaction_add(reaction, user)
 
 
 class Manage_channel():
