@@ -180,12 +180,12 @@ class Normal_Command:
         roles = [ctx.guild.get_role(i) for i in (268352600108171274, 499886891563483147)]
         if roles[0] not in ctx.author.roles:
             # 送信する文章指定。
-            content = """
-{0}さんの
-アカウントが登録されました！{1}の
-{2}個のチャンネルが利用できます！
-まずは<#437110659520528395>で自己紹介をしてみてください！
-""".format(ctx.author.mention, ctx.guild.name, len(ctx.guild.channels))
+            content = (
+                '{0}さんの'
+                'アカウントが登録されました！{1}の'
+                '{2}個のチャンネルが利用できます！'
+                'まずは<#437110659520528395>で自己紹介をしてみてください！'
+            ).format(ctx.author.mention, ctx.guild.name, len(ctx.guild.channels))
             # 左から順に、ユーザーのメンション、サーバーの名前、サーバーのチャンネル数に置き換える。
             # 役職付与
             await ctx.author.add_roles(*roles)
@@ -1091,62 +1091,124 @@ class Kouron():
         return 0
 
 
-# 参加メッセージ
-@client.event
-async def on_member_join(member):
-    if 'discord.gg' in member.display_name:
-        await member.ban(reason='招待リンクの名前のため、BAN', delete_message_days=1)
-    else:
-        try:
-            new_member = next(c for c in member.guild.channels if c.name == 'ニューメンバー')
-        except StopIteration:
-            pass
-        else:
-            content = data['join_message'].format(member.mention, member.guild.name)
-            await new_member.send(content)
+class Events():
+    __slots__ = ('client', 'name', 'data', 'DJ', 'beginner_chat', 'Normal_User', 'OverLevel10')
 
+    def __init__(self, client, data: dict, name=None):
+        self.client: commands.Bot = client
+        self.name = name if name is not None else type(self).__name__
+        self.data = data
 
-# 退出メッセージ
-@client.event
-async def on_member_remove(member):
-    def check(log):
-        return (
-            log.target.id == member.id
-            and abs(now - log.created_at) <= datetime.timedelta(seconds=1)
-        )
-    now = datetime.datetime.utcnow()
-    await asyncio.sleep(0.5)
-    audit_logs = await member.guild.audit_logs(action=discord.AuditLogAction.kick).flatten()
-    audit_logs.extend(await member.guild.audit_logs(action=discord.AuditLogAction.ban).flatten())
-    filtered = list(filter(check, audit_logs))
-    if not filtered:
-        try:
-            zatsudan_forum \
-                = next(c for c in member.guild.channels
-                       if '雑談フォーラム' in c.name and '2' not in c.name)
-            new_member = next(c for c in member.guild.channels if c.name == 'ニューメンバー')
-        except StopIteration:
-            pass
+    async def on_ready(self):
+        guild: discord.Guild = client.get_guild(235718949625397251)
+        self.DJ = guild.get_role(470543155612221470)
+        self.beginner_chat = client.get_channel(524540064995213312)
+        self.Normal_User = guild.get_role(268352600108171274)
+        self.OverLevel10 = guild.get_role(448840831655215104)
+
+    async def on_member_join(self, member):
+        if 'discord.gg' in member.display_name:
+            await member.ban(reason='招待リンクの名前のため、BAN', delete_message_days=1)
         else:
-            name = member.display_name
-            embed = discord.Embed(title='{0}さんが退出しました。'.format(
-                name), colour=0x2E2EFE, description='{0}さん、ご利用ありがとうございました。\nこのサーバーの現在の人数は{1}人です'.format(name, member.guild.member_count))
-            embed.set_thumbnail(url=member.avatar_url)
             try:
-                await zatsudan_forum.send(embed=embed)
-            except discord.Forbidden:
+                new_member = next(c for c in member.guild.channels if c.name == 'ニューメンバー')
+            except StopIteration:
                 pass
-            content = """
-{0}が退出しました。
-ご利用ありがとうございました。
-""".format(member)
-            await new_member.send(content)
+            else:
+                content = self.data['join_message'].format(member.mention, member.guild.name)
+                await new_member.send(content)
 
-# だいんさん呼ぶ用コマンド
-# @client.command()
-# @commands.check(check1)
-# async def dainspc(ctx):
-#     await ctx.send('<@328505715532759043>')
+    async def on_member_remove(self, member):
+        def check(log):
+            return (
+                log.target.id == member.id
+                and abs(now - log.created_at) <= datetime.timedelta(seconds=1)
+            )
+        now = datetime.datetime.utcnow()
+        await asyncio.sleep(0.5)
+        audit_logs = await member.guild.audit_logs(action=discord.AuditLogAction.kick).flatten()
+        audit_logs.extend(await member.guild.audit_logs(action=discord.AuditLogAction.ban).flatten())
+        filtered = list(filter(check, audit_logs))
+        if not filtered:
+            try:
+                zatsudan_forum \
+                    = next(c for c in member.guild.channels
+                           if '雑談フォーラム' in c.name and '2' not in c.name)
+                new_member = next(c for c in member.guild.channels if c.name == 'ニューメンバー')
+            except StopIteration:
+                pass
+            else:
+                name = member.display_name
+                embed = discord.Embed(
+                    title='{0}さんが退出しました。'.format(name),
+                    colour=0x2E2EFE,
+                    description='{0}さん、ご利用ありがとうございました。\nこのサーバーの現在の人数は{1}人です'
+                    .format(name, member.guild.member_count)
+                )
+                embed.set_thumbnail(url=member.avatar_url)
+                try:
+                    await zatsudan_forum.send(embed=embed)
+                except discord.Forbidden:
+                    pass
+                content = (
+                    '{0}が退出しました。'
+                    'ご利用ありがとうございました。'
+                ).format(member)
+                await new_member.send(content)
+
+    async def on_voice_state_update(self, member, before, after):
+        voice_text_pair = self.data['voice_text']
+        if (
+            after.channel is not None
+            and (before.channel is None
+                 or before.channel != after.channel)
+            and str(after.channel.id) in voice_text_pair
+        ):
+            text_channel = client.get_channel(
+                voice_text_pair[str(after.channel.id)])
+            embed = discord.Embed(
+                title='ボイスチャンネル入室通知',
+                description='{0}が、入室しました。'.format(member.mention),
+                colour=0x00af00
+            )
+            await text_channel.send(embed=embed, delete_after=180)
+            if after.channel.id == 445925012340473877:  # 音楽鑑賞VCの場合
+                await member.add_roles(self.DJ)  # DJ役職を付与
+        if (
+            before.channel is not None
+            and (after.channel is None
+                 or before.channel != after.channel)
+            and str(before.channel.id) in voice_text_pair
+        ):
+            text_channel = client.get_channel(
+                voice_text_pair[str(before.channel.id)])
+            embed = discord.Embed(
+                title='ボイスチャンネル退出通知',
+                description='{0}が、退出しました。'.format(member.mention),
+                colour=0xaf0000
+            )
+            await text_channel.send(embed=embed, delete_after=180)
+            if before.channel.id == 445925012340473877:  # 音楽鑑賞VCの場合
+                await member.remove_roles(self.DJ)  # DJ役職を解除
+
+    async def on_member_update(self, before: discord.Member, after: discord.Member):
+        if before.roles != after.roles:
+            if (
+                self.Normal_User in after.roles
+                and self.OverLevel10 not in after.roles
+            ):
+                await self.beginner_chat.set_permissions(
+                    after,
+                    overwrite=discord.PermissionOverwrite.from_pair(
+                        discord.Permissions(37080128),
+                        discord.Permissions(2 ** 53 - 37080129)
+                    )
+                )
+            else:
+                await self.beginner_chat.set_permissions(
+                    after,
+                    overwrite=None
+                )
 
 
 @client.listen('on_ready')
@@ -1156,35 +1218,6 @@ async def on_ready():
         firstlaunch = False
         client.loop.create_task(skyline_update())
     print(client.user.name, client.user.id, '起動しました。', sep=':')
-
-
-@client.listen('on_voice_state_update')
-async def on_voice_state_update(member, before, after):
-    voice_text_pair = data['voice_text']
-    if after.channel is not None and (before.channel is None or before.channel != after.channel) and str(after.channel.id) in voice_text_pair:
-        text_channel = client.get_channel(
-            voice_text_pair[str(after.channel.id)])
-        embed = discord.Embed(
-            title='ボイスチャンネル入室通知',
-            description='{0}が、入室しました。'.format(member.mention),
-            colour=0x00af00
-        )
-        await text_channel.send(embed=embed, delete_after=180)
-        if after.channel.id == 445925012340473877:  # 音楽鑑賞VCの場合
-            DJ = after.channel.guild.get_role(470543155612221470)  # DJ役職
-            await member.add_roles(DJ)  # DJ役職を付与
-    if before.channel is not None and (after.channel is None or before.channel != after.channel) and str(before.channel.id) in voice_text_pair:
-        text_channel = client.get_channel(
-            voice_text_pair[str(before.channel.id)])
-        embed = discord.Embed(
-            title='ボイスチャンネル退出通知',
-            description='{0}が、退出しました。'.format(member.mention),
-            colour=0xaf0000
-        )
-        await text_channel.send(embed=embed, delete_after=180)
-        if before.channel.id == 445925012340473877:  # 音楽鑑賞VCの場合
-            DJ = before.channel.guild.get_role(470543155612221470)  # DJ役職
-            await member.remove_roles(DJ)  # DJ役職を解除
 
 
 async def skyline_update():
@@ -1223,6 +1256,7 @@ client.add_cog(Manage_channel(client, '自由チャンネル編集コマンド')
 # client.add_cog(Emergency_call(client, '緊急呼び出しコマンド'))
 client.add_cog(Categor_recover(client, 'カテゴリーリカバリー'))
 client.add_cog(Kouron(client, '口論コマンド'))
+client.add_cog(Events(client, data, '参加・退出通知、VC通知'))
 if __name__ == '__main__':
     token = ''
     client.run(token)
