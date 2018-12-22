@@ -296,7 +296,9 @@ class Staff_Command:
     async def __local_check(self, ctx):
         role_ids = [r.id for r in ctx.author.roles]
         return (
-            any(x in role_ids for x in (429281099672322056, 268352165175623680,))
+            any(x in role_ids for x in
+                (429281099672322056, 268352165175623680, 450624921878659084)
+                )
             or await self.client.is_owner(ctx.author)
         )
 
