@@ -96,6 +96,36 @@ async def zatsudan_forum_check(ctx):
     return ctx.guild is not None and ctx.guild.id == 235718949625397251
 
 
+async def member_join(member: discord.Member):
+    try:
+        Channel_list = [
+            c for c in member.guild.channels
+            if '雑談フォーラム' in c.name
+        ]
+        Channel_list.sort(key=lambda c: c.position)
+        zatsudan_forum = Channel_list[0]
+    except IndexError:
+        pass
+    else:
+        join_messages = data['join_messages']
+        name = member.display_name
+        des1 = random.choice(join_messages)\
+            .format(name, member.guild.me.display_name)
+        embed = discord.Embed(
+            title='{0}さんが参加しました。'.format(name),
+            colour=0x2E2EFE,
+            description=(
+                '```\n{3}\n```\n'
+                'ようこそ{0}さん、よろしくお願いします！\n'
+                'このサーバーの現在の人数は{1}です。\n'
+                'n{2}に作られたアカウントです。'
+            ).format(name, member.guild.member_count, member.created_at, des1)
+        )
+        embed.set_thumbnail(url=member.avatar_url)
+
+        await zatsudan_forum.send(embed=embed)
+
+
 class Normal_Command:
     __slots__ = ('client', 'name', 'data', 'categories')
 
@@ -181,9 +211,9 @@ class Normal_Command:
         if roles[0] not in ctx.author.roles:
             # 送信する文章指定。
             content = (
-                '{0}さんの'
-                'アカウントが登録されました！{1}の'
-                '{2}個のチャンネルが利用できます！'
+                '{0}さんの\n'
+                'アカウントが登録されました！{1}の\n'
+                '{2}個のチャンネルが利用できます！\n'
                 'まずは<#437110659520528395>で自己紹介をしてみてください！'
             ).format(ctx.author.mention, ctx.guild.name, len(ctx.guild.channels))
             # 左から順に、ユーザーのメンション、サーバーの名前、サーバーのチャンネル数に置き換える。
@@ -192,26 +222,7 @@ class Normal_Command:
             # メッセージ送信
             await ctx.send(content)
             member = ctx.author
-            try:
-                zatsudan_forum \
-                    = next(c for c in member.guild.channels
-                           if '雑談フォーラム' in c.name and '2' not in c.name)
-            except StopIteration:
-                pass
-            else:
-                join_messages = data['join_messages']
-                name = member.display_name
-                des1 = random.choice(join_messages).format(
-                    name, member.guild.me.display_name)
-                embed = discord.Embed(
-                    title='{0}さんが参加しました。'.format(name),
-                    colour=0x2E2EFE,
-                    description='```\n{3}\n```\nようこそ{0}さん、よろしくお願いします！\nこのサーバーの現在の人数は{1}です。\n{2}に作られたアカウントです。'
-                    .format(name, member.guild.member_count, member.created_at, des1)
-                )
-                embed.set_thumbnail(url=member.avatar_url)
-
-                await zatsudan_forum.send(embed=embed)
+            await member_join(member)
         else:
             await ctx.send('登録終わってますやんか')
 
@@ -1094,12 +1105,15 @@ class Kouron():
 
 
 class Events():
-    __slots__ = ('client', 'name', 'data', 'DJ', 'beginner_chat', 'Normal_User', 'OverLevel10')
+    __slots__ = ('client', 'name', 'data', 'DJ', 'beginner_chat',
+                 'Normal_User', 'OverLevel10', 'pattern1', 'CHECKMARK',
+                 'authorization')
 
     def __init__(self, client, data: dict, name=None):
         self.client: commands.Bot = client
         self.name = name if name is not None else type(self).__name__
         self.data = data
+        self.CHECKMARK = '\u2705'
 
     async def on_ready(self):
         guild: discord.Guild = client.get_guild(235718949625397251)
@@ -1107,6 +1121,42 @@ class Events():
         self.beginner_chat = client.get_channel(524540064995213312)
         self.Normal_User = guild.get_role(268352600108171274)
         self.OverLevel10 = guild.get_role(448840831655215104)
+        self.authorization = guild.get_channel(504623930020069396)
+        self.pattern1 = re.compile(
+            '<@!(\\d+?)>さんの\\n'
+            'アカウントが登録されました！.+?の\\n'
+            '180個以上のチャンネルが利用できます！\\n'
+            'まずは、 <#437110659520528395> で自己紹介を行ってみてください'
+        )
+
+        # この先Mee6の認証メッセージサーチ
+        history = self.authorization.history(limit=None).filter(self.check_mee6)
+        async for message in history:
+            try:
+                reaction: discord.Reaction \
+                    = next(r for r in message.reactions if r.emoji == self.CHECKMARK)
+            except StopIteration:
+                pass
+            else:
+                if not reaction.me:
+                    await self.mee6_join_message(message)
+
+    @staticmethod
+    def check_mee6(m):
+        return m.author.id == 159985870458322944
+
+    async def mee6_join_message(self, message):
+        match = self.pattern1.search(message.content)
+        if match:
+            member_id = int(match.group(1))
+            member = message.guild.get_member(member_id)
+            if member is not None:
+                await member_join(member)
+            await message.add_reaction(self.CHECKMARK)
+
+    async def on_message(self, message):
+        if self.check_mee6(message):
+            await self.mee6_join_message(message)
 
     async def on_member_join(self, member):
         if 'discord.gg' in member.display_name:
@@ -1233,8 +1283,12 @@ async def skyline_update():
             feed = await client.loop.run_in_executor(t, functools.partial(feedparser.parse, 'https://github.com/Kesigomon/Skyline_py/commits/master.atom'))
         entry = feed.entries[0]
         if entry.link != message.embeds[0].url:
-            embed = discord.Embed(title=entry.link.replace('https://github.com/Kesigomon/Skyline_py/commit/', ''),
-                                  description=entry.title, timestamp=datetime.datetime(*entry.updated_parsed[0:7]), url=entry.link)
+            embed = discord.Embed(
+                title=entry.link.replace('https://github.com/Kesigomon/Skyline_py/commit/', ''),
+                description=entry.title,
+                timestamp=datetime.datetime(*entry.updated_parsed[0:7]),
+                url=entry.link
+            )
             embed.set_author(name=entry.author, url=entry.author_detail.href,
                              icon_url=entry.media_thumbnail[0]['url'])
             await webhook.send(embed=embed)
@@ -1255,7 +1309,7 @@ client.add_cog(DM_Command(client, 'DM用コマンド'))
 client.add_cog(Joke_Command(client, data, 'ネタコマンド'))
 client.add_cog(Role_panel(client, 449185870684356608, '役職パネル'))
 client.add_cog(Manage_channel(client, '自由チャンネル編集コマンド'))
-# client.add_cog(Emergency_call(client, '緊急呼び出しコマンド'))
+client.add_cog(Emergency_call(client, '緊急呼び出しコマンド'))
 client.add_cog(Categor_recover(client, 'カテゴリーリカバリー'))
 client.add_cog(Kouron(client, '口論コマンド'))
 client.add_cog(Events(client, data, '参加・退出通知、VC通知'))
