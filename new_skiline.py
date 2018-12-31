@@ -118,7 +118,7 @@ async def member_join(member: discord.Member):
                 '```\n{3}\n```\n'
                 'ようこそ{0}さん、よろしくお願いします！\n'
                 'このサーバーの現在の人数は{1}です。\n'
-                'n{2}に作られたアカウントです。'
+                '{2}に作られたアカウントです。'
             ).format(name, member.guild.member_count, member.created_at, des1)
         )
         embed.set_thumbnail(url=member.avatar_url)
@@ -1244,23 +1244,24 @@ class Events():
                 await member.remove_roles(self.DJ)  # DJ役職を解除
 
     async def on_member_update(self, before: discord.Member, after: discord.Member):
-        if before.roles != after.roles:
-            if (
-                self.Normal_User in after.roles
-                and self.OverLevel10 not in after.roles
-            ):
-                await self.beginner_chat.set_permissions(
-                    after,
-                    overwrite=discord.PermissionOverwrite.from_pair(
-                        discord.Permissions(37080128),
-                        discord.Permissions(2 ** 53 - 37080129)
-                    )
-                )
-            else:
-                await self.beginner_chat.set_permissions(
-                    after,
-                    overwrite=None
-                )
+        # if before.roles != after.roles:
+        #     if (
+        #         self.Normal_User in after.roles
+        #         and self.OverLevel10 not in after.roles
+        #     ):
+        #         await self.beginner_chat.set_permissions(
+        #             after,
+        #             overwrite=discord.PermissionOverwrite.from_pair(
+        #                 discord.Permissions(37080128),
+        #                 discord.Permissions(2 ** 53 - 37080129)
+        #             )
+        #         )
+        #     else:
+        #         await self.beginner_chat.set_permissions(
+        #             after,
+        #             overwrite=None
+        #         )
+        pass
 
 
 @client.listen('on_ready')
