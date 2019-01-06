@@ -207,7 +207,7 @@ class Normal_Command:
 
     @commands.command(check=[zatsudan_forum_check])
     async def agree(self, ctx):
-        roles = [ctx.guild.get_role(i) for i in (515467423101747200, 515467425429585941)]
+        roles = [ctx.guild.get_role(i) for i in (515467427459629056, 515467425429585941)]
         if roles[0] not in ctx.author.roles:
             # 送信する文章指定。
             content = (
