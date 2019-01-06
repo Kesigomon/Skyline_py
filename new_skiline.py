@@ -727,7 +727,6 @@ class Manage_channel():
         'create_instant_invite': '招待を作成',
         'manage_channels': 'チャンネルの管理',
         'manage_roles': '権限の管理',
-        'manage_webhook': 'Webhookの管理',
     }
     permissions_jp_text = {
         'read_messages': 'メッセージを読む',
