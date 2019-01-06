@@ -93,7 +93,7 @@ firstlaunch = True
 
 
 async def zatsudan_forum_check(ctx):
-    return ctx.guild is not None and ctx.guild.id == 235718949625397251
+    return ctx.guild is not None and ctx.guild.id == 515467348581416970
 
 
 async def member_join(member: discord.Member):
@@ -207,7 +207,7 @@ class Normal_Command:
 
     @commands.command(check=[zatsudan_forum_check])
     async def agree(self, ctx):
-        roles = [ctx.guild.get_role(i) for i in (268352600108171274, 499886891563483147)]
+        roles = [ctx.guild.get_role(i) for i in (515467423101747200, 515467425429585941)]
         if roles[0] not in ctx.author.roles:
             # 送信する文章指定。
             content = (
@@ -239,7 +239,7 @@ class Normal_Command:
             await ctx.send('作成しました。')
 
     async def _free_channel_create(self, ctx, name, category_n=None, VC=False):
-        if 448842082187214864 in (r.id for r in ctx.author.roles):
+        if 515467423101747200 in (r.id for r in ctx.author.roles):
             if category_n is None:
                 category_n = 1
                 while len(self.categories[category_n].channels) >= 50:  # チャンネル数50以上のカテゴリがあれば次のカテゴリへ
@@ -255,9 +255,9 @@ class Normal_Command:
                     discord.PermissionOverwrite.from_pair(discord.Permissions(603318609), discord.Permissions.none()),
                 guild.default_role:
                     discord.PermissionOverwrite.from_pair(discord.Permissions.none(), discord.Permissions.all()),
-                guild.get_role(412567728067575809):
+                guild.get_role(515467411898761216):
                     discord.PermissionOverwrite.from_pair(discord.Permissions.none(), discord.Permissions.all()),
-                guild.get_role(499886891563483147):
+                guild.get_role(515467427459629056):
                     discord.PermissionOverwrite.from_pair(discord.Permissions(37080128), discord.Permissions(2 ** 53 - 37080129)),
             }
             if VC:
@@ -308,14 +308,14 @@ class Staff_Command:
         role_ids = [r.id for r in ctx.author.roles]
         return (
             any(x in role_ids for x in
-                (429281099672322056, 268352165175623680, 450624921878659084)
+                (515467407381364738, 515467410174902272, 515467421323100160)
                 )
             or await self.client.is_owner(ctx.author)
         )
 
     async def on_ready(self):
         self.limit_role: discord.Role = client.get_guild(
-            235718949625397251).get_role(412567728067575809)
+            515467348581416970).get_role(515467411898761216)
 
     @commands.command(brief='制限付きユーザーを付けます', check=[zatsudan_forum_check])
     async def limit(self, ctx, member: discord.Member):
@@ -337,7 +337,7 @@ class Owners_Command:
         return ctx.guild is not None and (await self.client.is_owner(ctx.author) or ctx.author == ctx.guild.owner)
 
     async def on_ready(self):
-        self.index_index = client.get_channel(500274844253028353)
+        self.index_index = client.get_channel(515467529167044608)
 
     # インデックスチャンネルをサーチ。なければNone
     def _create_category_find_index_channel(self, category) -> discord.TextChannel:
@@ -574,7 +574,7 @@ class Role_panel():  # 役職パネルの機能
         role_ids = [r.id for r in ctx.author.roles]
         return (
             await zatsudan_forum_check(ctx)
-            and (any(x in role_ids for x in (429281099672322056, 268352165175623680, 450624921878659084))
+            and (any(x in role_ids for x in (515467407381364738, 515467410174902272, 515467421323100160))
                  or await client.is_owner(ctx.author))  # マネージメント、サブオーナー、オーナーズが使える感じ
         )
 
@@ -726,6 +726,7 @@ class Manage_channel():
         'create_instant_invite': '招待を作成',
         'manage_channels': 'チャンネルの管理',
         'manage_roles': '権限の管理',
+        'manage_webhook': 'Webhookの管理',
     }
     permissions_jp_text = {
         'read_messages': 'メッセージを読む',
@@ -989,7 +990,7 @@ class Emergency_call():
 
     async def __local_check(self, ctx):
         role_ids = [r.id for r in ctx.author.roles]
-        return (any(x in role_ids for x in (429281099672322056, 268352165175623680, 482009178940899328)))
+        return (any(x in role_ids for x in (515467407381364738, 515467410174902272, 515467421323100160, 515467419364491266)))
 
     async def on_command_error(self, ctx, error):
         if ctx.cog is self:
@@ -1116,12 +1117,12 @@ class Events():
         self.CHECKMARK = '\u2705'
 
     async def on_ready(self):
-        guild: discord.Guild = client.get_guild(235718949625397251)
-        self.DJ = guild.get_role(470543155612221470)
-        self.beginner_chat = client.get_channel(524540064995213312)
-        self.Normal_User = guild.get_role(268352600108171274)
-        self.OverLevel10 = guild.get_role(448840831655215104)
-        self.authorization = guild.get_channel(504623930020069396)
+        guild: discord.Guild = client.get_guild(515467348581416970)
+        self.DJ = guild.get_role(515467441959337984)
+        # self.beginner_chat = client.get_channel(524540064995213312)
+        self.Normal_User = guild.get_role(515467427459629056)
+        self.OverLevel10 = guild.get_role(515467423101747200)
+        self.authorization = guild.get_channel(515467539170721802)
         self.pattern1 = re.compile(
             '<@!(\\d+?)>さんの\\n'
             'アカウントが登録されました！.+?の\\n'
@@ -1224,7 +1225,7 @@ class Events():
                 colour=0x00af00
             )
             await text_channel.send(embed=embed, delete_after=180)
-            if after.channel.id == 445925012340473877:  # 音楽鑑賞VCの場合
+            if after.channel.id == 515467651691315220:  # 音楽鑑賞VCの場合
                 await member.add_roles(self.DJ)  # DJ役職を付与
         if (
             before.channel is not None
@@ -1240,7 +1241,7 @@ class Events():
                 colour=0xaf0000
             )
             await text_channel.send(embed=embed, delete_after=180)
-            if before.channel.id == 445925012340473877:  # 音楽鑑賞VCの場合
+            if before.channel.id == 515467651691315220:  # 音楽鑑賞VCの場合
                 await member.remove_roles(self.DJ)  # DJ役職を解除
 
     async def on_member_update(self, before: discord.Member, after: discord.Member):
@@ -1269,7 +1270,7 @@ async def on_ready():
     global firstlaunch
     if firstlaunch:
         firstlaunch = False
-        client.loop.create_task(skyline_update())
+        # client.loop.create_task(skyline_update())
     print(client.user.name, client.user.id, '起動しました。', sep=':')
 
 
