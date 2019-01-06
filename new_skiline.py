@@ -258,7 +258,7 @@ class Normal_Command:
                     discord.PermissionOverwrite.from_pair(discord.Permissions.none(), discord.Permissions.all()),
                 guild.get_role(515467411898761216):
                     discord.PermissionOverwrite.from_pair(discord.Permissions.none(), discord.Permissions.all()),
-                guild.get_role(515467427459629056):
+                guild.get_role(515467425429585941):
                     discord.PermissionOverwrite.from_pair(discord.Permissions(37080128), discord.Permissions(2 ** 53 - 37080129)),
             }
             if VC:
