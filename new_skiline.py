@@ -1291,7 +1291,11 @@ async def skyline_update():
             )
             feed = await client.loop.run_in_executor(t, partial1)
         entry = feed.entries[0]
-        if entry.link != message.embeds[0].url:
+        try:
+            flag = entry.link != message.embeds[0].url
+        except UnboundLocalError:
+            flag = True
+        if flag:
             embed = discord.Embed(
                 title=entry.link.replace('https://github.com/Kesigomon/Skyline_py/commit/', ''),
                 description=entry.title,
@@ -1355,7 +1359,7 @@ client.add_cog(Role_panel(client, 515467531176116224, '役職パネル'))
 client.add_cog(Manage_channel(client, '自由チャンネル編集コマンド'))
 client.add_cog(Emergency_call(client, '緊急呼び出しコマンド'))
 client.add_cog(Categor_recover(client, 'カテゴリーリカバリー'))
-client.add_cog(Kouron(client, '口論コマンド'))
+# client.add_cog(Kouron(client, '口論コマンド'))
 client.add_cog(Events(client, data, '参加・退出通知、VC通知'))
 if __name__ == '__main__':
     token = ''
