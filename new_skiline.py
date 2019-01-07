@@ -1282,7 +1282,7 @@ async def skyline_update():
     webhooks = await channel.webhooks()
     webhook: discord.Webhook = webhooks[0]
     while not client.is_closed():
-        async for message in channel.history().filter(lambda m: m.author.id == 498275277269499904):
+        async for message in channel.history().filter(lambda m: m.author.id == webhook.id):
             break
         with ThreadPoolExecutor(max_workers=1) as t:
             partial1 = functools.partial(
