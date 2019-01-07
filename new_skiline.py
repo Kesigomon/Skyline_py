@@ -240,7 +240,7 @@ class Normal_Command:
             await ctx.send('作成しました。')
 
     async def _free_channel_create(self, ctx, name, category_n=None, VC=False):
-        if 515467423101747200 in (r.id for r in ctx.author.roles):
+        if 515467423101747200 in (r.id for r in ctx.author.roles) or True:  # 一時的に全員使用可能(or True)
             if category_n is None:
                 category_n = 1
                 while len(self.categories[category_n].channels) >= 50:  # チャンネル数50以上のカテゴリがあれば次のカテゴリへ
@@ -1270,19 +1270,26 @@ async def on_ready():
     global firstlaunch
     if firstlaunch:
         firstlaunch = False
-        # client.loop.create_task(skyline_update())
+        client.loop.create_task(skyline_update())
+        client.loop.create_task(
+            task_bump(client, client.get_channel(515467856239132672))
+        )
     print(client.user.name, client.user.id, '起動しました。', sep=':')
 
 
 async def skyline_update():
-    channel = client.get_channel(498275174123307028)
+    channel = client.get_channel(515468115535200256)
     webhooks = await channel.webhooks()
     webhook: discord.Webhook = webhooks[0]
     while not client.is_closed():
         async for message in channel.history().filter(lambda m: m.author.id == 498275277269499904):
             break
         with ThreadPoolExecutor(max_workers=1) as t:
-            feed = await client.loop.run_in_executor(t, functools.partial(feedparser.parse, 'https://github.com/Kesigomon/Skyline_py/commits/master.atom'))
+            partial1 = functools.partial(
+                feedparser.parse,
+                'https://github.com/Kesigomon/Skyline_py/commits/master.atom'
+            )
+            feed = await client.loop.run_in_executor(t, partial1)
         entry = feed.entries[0]
         if entry.link != message.embeds[0].url:
             embed = discord.Embed(
@@ -1295,6 +1302,41 @@ async def skyline_update():
                              icon_url=entry.media_thumbnail[0]['url'])
             await webhook.send(embed=embed)
         await asyncio.sleep(60)
+
+
+async def task_bump(client, channel):
+    disboard_bot_id = 302050872383242240
+    Interval = datetime.timedelta(hours=2)
+    disboard_bot = await client.get_user_info(disboard_bot_id)
+
+    def check1(m):
+        return m.author == disboard_bot and ':thumbsup:' in m.embeds[0].description
+
+    while not client.is_closed():
+        async for x in channel.history():
+            if check1(x):
+                break
+        else:
+            del x
+        try:
+            TD1 = datetime.datetime.utcnow() - x.created_at
+            if TD1 >= Interval:
+                await channel.send(
+                    '既に2時間以上経っていますよ\n'
+                    'SKYLINEは!disboard bumpするといいと思います'
+                )
+            else:
+                await asyncio.sleep((Interval - TD1).total_seconds())
+                await channel.send(
+                    '2時間経ちましたよ\n'
+                    'SKYLINEは!disboard bumpするといいと思います'
+                )
+        except NameError:
+            await channel.send(
+                'このサーバーで一度もコマンドを実行していませんね\n'
+                'SKYLINEは!disboard bumpするといいと思います'
+            )
+        await client.wait_for(event='message', check=check1)
 
 
 @client.event
