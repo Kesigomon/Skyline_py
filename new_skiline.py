@@ -98,12 +98,7 @@ async def zatsudan_forum_check(ctx):
 
 async def member_join(member: discord.Member):
     try:
-        Channel_list = [
-            c for c in member.guild.channels
-            if '雑談フォーラム' in c.name
-        ]
-        Channel_list.sort(key=lambda c: c.position)
-        zatsudan_forum = Channel_list[0]
+        zatsudan_forum = member.guild.get_channel(515467559051591681)
     except IndexError:
         pass
     else:
@@ -1184,12 +1179,7 @@ class Events():
         filtered = list(filter(check, audit_logs))
         if not filtered:
             try:
-                Channel_list = [
-                    c for c in member.guild.channels
-                    if '雑談フォーラム' in c.name
-                ]
-                Channel_list.sort(key=lambda c: c.position)
-                zatsudan_forum = Channel_list[0]
+                zatsudan_forum = member.guild.get_channel(515467559051591681)
                 new_member = next(c for c in member.guild.channels if c.name == 'ニューメンバー')
             except (StopIteration, IndexError):
                 pass
