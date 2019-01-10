@@ -1258,6 +1258,82 @@ class Events():
         pass
 
 
+class Level_counter():
+    __slots__ = ('exp', 'count', 'limit')
+
+    def __init__(self, exp=0, count=0):
+        self.exp = exp
+        self.count = count
+        self.limit = False
+
+    @staticmethod
+    def func1(n):
+        return 5 * n * (2 * n**2 + 33 * n + 151) / 6
+
+    @property
+    def level(self):
+        return next(
+            n for n in itertools.count()
+            if self.func1(n) <= self.exp < self.func1(n + 1)
+        )
+
+    def unlimit(self):
+        self.limit = False
+
+    async def message(self):
+        loop = asyncio.get_running_loop()
+        self.count += 1
+        if not self.limit:
+            self.limit = True
+            loop.call_later(60, self.unlimit)
+            self.exp += random.randint(10, 40)
+        else:
+            self.exp += random.randint(1, 5)
+
+
+class Level():  # レベルシステム（仮運用）
+    __slots__ = ('client', 'channel', 'name', 'data')
+
+    def __init__(self, client, name=None,):
+        self.client = client
+        self.name = name if name is not None else type(self).__name__
+        self.data = {}
+
+    async def on_ready(self):
+        print('ready!')
+
+    async def on_message(self, message):
+        if message.author.bot or self.client.user == message.author:
+            return
+        member = message.author
+        if message.author not in self.data:
+            self.data.update({member: Level_counter()})
+        sub_data = self.data[member]
+        old_level = sub_data.level
+        await sub_data.message()
+        new_level = sub_data.level
+        if new_level != old_level:
+            content = (
+                '＊{0}のレベルが{1}になった\n'
+                '＊だが、**SAVE**の方法が見つかっていないため、レベルのデータは**SAVE**されない。'
+            ).format(message.author.mention, new_level)
+            await message.channel.send(content)
+
+    @commands.command()
+    async def rank(self, ctx, member: discord.Member = None):
+        if member is None:
+            member = ctx.author
+        try:
+            data: Level_counter = self.data[member]
+        except KeyError:
+            await ctx.send('＊あなたのデータはまだできていない。\n＊発言をすると、データが作られる。')
+        else:
+            content = (
+                '＊　{0}　ー　LV　{1}　EXP　{2}'
+            ).format(member.display_name, data.level, data.exp)
+            await ctx.send(content)
+
+
 @client.listen('on_ready')
 async def on_ready():
     global firstlaunch
@@ -1305,6 +1381,7 @@ async def task_bump(client, channel):
     disboard_bot_id = 302050872383242240
     Interval = datetime.timedelta(hours=2)
     disboard_bot = await client.get_user_info(disboard_bot_id)
+    mention = '<@&515467430018154507>'
 
     def check1(m):
         return m.author == disboard_bot and ':thumbsup:' in m.embeds[0].description
@@ -1319,19 +1396,22 @@ async def task_bump(client, channel):
             TD1 = datetime.datetime.utcnow() - x.created_at
             if TD1 >= Interval:
                 await channel.send(
-                    '既に2時間以上経っていますよ\n'
-                    'SKYLINEは!disboard bumpするといいと思います'
+                    mention
+                    + '既に2時間以上経っていますよ\n'
+                    + 'SKYLINEは!disboard bumpするといいと思います'
                 )
             else:
                 await asyncio.sleep((Interval - TD1).total_seconds())
                 await channel.send(
-                    '2時間経ちましたよ\n'
-                    'SKYLINEは!disboard bumpするといいと思います'
+                    mention
+                    + '2時間経ちましたよ\n'
+                    + 'SKYLINEは!disboard bumpするといいと思います'
                 )
         except NameError:
             await channel.send(
-                'このサーバーで一度もコマンドを実行していませんね\n'
-                'SKYLINEは!disboard bumpするといいと思います'
+                mention
+                + 'このサーバーで一度もコマンドを実行していませんね\n'
+                + 'SKYLINEは!disboard bumpするといいと思います'
             )
         await client.wait_for(event='message', check=check1)
 
@@ -1354,6 +1434,7 @@ client.add_cog(Emergency_call(client, '緊急呼び出しコマンド'))
 client.add_cog(Categor_recover(client, 'カテゴリーリカバリー'))
 # client.add_cog(Kouron(client, '口論コマンド'))
 client.add_cog(Events(client, data, '参加・退出通知、VC通知'))
+client.add_cog(Level(client, name='レベルシステム'))
 if __name__ == '__main__':
     token = ''
     client.run(token)
