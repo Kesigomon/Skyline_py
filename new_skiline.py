@@ -1334,14 +1334,15 @@ class Level():  # レベルシステム（仮運用）
         member_id = str(member.id)
         if member_id not in self.data:
             self.data.update({member_id: Level_counter()})
-        sub_data = self.data[member_id]
+        sub_data: Level_counter = self.data[member_id]
         old_level = sub_data.level
         await sub_data.message()
         new_level = sub_data.level
         if new_level != old_level:
             content = (
                 '＊{0}のレベルが{1}になった。\n'
-            ).format(message.author.mention, new_level)
+                '次のレベルまで{2}EXP。'
+            ).format(message.author.mention, new_level, sub_data.max_exp)
             await message.channel.send(content)
 
     @commands.command()
@@ -1355,7 +1356,7 @@ class Level():  # レベルシステム（仮運用）
             await ctx.send('＊あなたのデータはまだできていない。\n＊発言をすると、データが作られる。')
         else:
             content = (
-                '＊　{0}　ー　LV　{1}　EXP　{2}'
+                '＊　{0}　ー　LV　{1}　EXP　{2}\n'
                 '＊次のレベルまで{3}EXP。'
             ).format(member.display_name, data.level, data.exp, data.next_exp)
             await ctx.send(content)
