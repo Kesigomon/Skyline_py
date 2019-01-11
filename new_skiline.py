@@ -1358,7 +1358,7 @@ class Level():  # レベルシステム（仮運用）
 
     async def _save(self):
         data_dict = {
-            key.id: {'exp': value.exp, 'count': value.count}
+            key: {'exp': value.exp, 'count': value.count}
             for key, value in self.data.items()
         }
         text = json.dumps(data_dict, indent=4)
