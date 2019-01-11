@@ -1138,12 +1138,8 @@ class Events():
         runner = aiohttp_web.AppRunner(app)
         await runner.setup()
         port = int(os.environ.get('PORT', 52524))
-        self.webhook_site = aiohttp_web.TCPSite(runner, port)
+        self.webhook_site = aiohttp_web.TCPSite(runner, port=port)
         loop.create_task(self.webhook_site.start())
-
-    async def on_message(self, message):
-        if self.check_mee6(message):
-            await self.mee6_join_message(message)
 
     async def on_member_join(self, member):
         if 'discord.gg' in member.display_name:
@@ -1341,7 +1337,7 @@ class Level():  # レベルシステム（仮運用）
             for key, value in self.data.items()
         }
         with open('level.json', 'wt', encoding='utf-8') as f:
-            json.dump(f, write_data, indent=4)
+            json.dump(f, data_dict, indent=4)
             file = discord.File(f)
             await self.channel.send(file=file)
 
