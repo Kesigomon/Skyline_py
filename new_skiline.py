@@ -1308,7 +1308,7 @@ class Level():  # レベルシステム（仮運用）
             def func1(m: discord.Message):
                 return(
                     m.author == self.client.user
-                    and m.attachaments
+                    and m.attachments
                     and m.attachments[0].filename == self.filename
                 )
 
