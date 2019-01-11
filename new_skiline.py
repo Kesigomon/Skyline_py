@@ -7,9 +7,12 @@ import functools
 import yaml
 import inspect
 import itertools
+import io
+import json
 from concurrent.futures import ThreadPoolExecutor
 
 import aiohttp
+from aiohttp import web as aiohttp_web
 import discord
 import feedparser
 from discord.ext import commands
@@ -981,7 +984,7 @@ class Emergency_call():
     def __init__(self, client, name=None):
         self.client: commands.Bot = client
         self.name = name if name is not None else type(self).__name__
-        self.url = os.environ['emergency_call_url']
+        self.url = os.environ.get('emergency_call_url', '')
 
     async def __local_check(self, ctx):
         role_ids = [r.id for r in ctx.author.roles]
@@ -1005,9 +1008,9 @@ class Emergency_call():
         await message.delete()
         if reaction.emoji == '\u2705':
             Data = {'value1': str(ctx.author), 'value2': ctx.channel.name, 'value3': ctx.guild.name}
-            async with aiohttp.ClientSession() as session:
-                async with session.post(self.url, data=Data):
-                    pass
+            session = client.http._session
+            async with session.post(self.url, data=Data):
+                pass
             await ctx.send('エマージェンシーコールを発動しました')
         else:
             await ctx.send('キャンセルしました')
@@ -1102,53 +1105,41 @@ class Kouron():
 
 class Events():
     __slots__ = ('client', 'name', 'data', 'DJ', 'beginner_chat',
-                 'Normal_User', 'OverLevel10', 'pattern1', 'CHECKMARK',
-                 'authorization')
+                 'Normal_User', 'OverLevel10',
+                 'webhook_site')
 
     def __init__(self, client, data: dict, name=None):
         self.client: commands.Bot = client
         self.name = name if name is not None else type(self).__name__
         self.data = data
-        self.CHECKMARK = '\u2705'
 
     async def on_ready(self):
+        loop = self.client.loop
         guild: discord.Guild = client.get_guild(515467348581416970)
         self.DJ = guild.get_role(515467441959337984)
         # self.beginner_chat = client.get_channel(524540064995213312)
         self.Normal_User = guild.get_role(515467427459629056)
         self.OverLevel10 = guild.get_role(515467423101747200)
-        self.authorization = guild.get_channel(515467539170721802)
-        self.pattern1 = re.compile(
-            '<@!(\\d+?)>さんの\\n'
-            'アカウントが登録されました！.+?の\\n'
-            '180個以上のチャンネルが利用できます！\\n'
-            'まずは、 <#437110659520528395> で自己紹介を行ってみてください'
-        )
 
-        # この先Mee6の認証メッセージサーチ
-        history = self.authorization.history(limit=None).filter(self.check_mee6)
-        async for message in history:
+        #  Webhookの受信準備
+        app = aiohttp_web.Application()
+        members = inspect.getmembers(self, inspect.iscoroutinefunction)
+        for name, member in members:
             try:
-                reaction: discord.Reaction \
-                    = next(r for r in message.reactions if r.emoji == self.CHECKMARK)
-            except StopIteration:
+                splited = name.split('_')
+                if splited[0] == 'webhook':
+                    app.router.add_route(
+                        method=splited[1],
+                        path='/'.join([''] + splited[2:]),
+                        handler=member
+                    )
+            except IndexError:
                 pass
-            else:
-                if not reaction.me:
-                    await self.mee6_join_message(message)
-
-    @staticmethod
-    def check_mee6(m):
-        return m.author.id == 159985870458322944
-
-    async def mee6_join_message(self, message):
-        match = self.pattern1.search(message.content)
-        if match:
-            member_id = int(match.group(1))
-            member = message.guild.get_member(member_id)
-            if member is not None:
-                await member_join(member)
-            await message.add_reaction(self.CHECKMARK)
+        runner = aiohttp_web.AppRunner(app)
+        await runner.setup()
+        port = int(os.environ.get('PORT', 52524))
+        self.webhook_site = aiohttp_web.TCPSite(runner, port)
+        loop.create_task(self.webhook_site.start())
 
     async def on_message(self, message):
         if self.check_mee6(message):
@@ -1257,6 +1248,13 @@ class Events():
         #         )
         pass
 
+    async def webhook_post_github(self, request: aiohttp_web.Request):
+        data = await request.json()
+        stream = io.StringIO(json.dumps(data, indent=4), encoding='utf-8')
+        file = discord.File(stream, 'github.json')
+        await self.client.get_channel(531377173869625345).send(file=file)
+        return aiohttp_web.StreamResponse()
+
 
 class Level_counter():
     __slots__ = ('exp', 'count', 'limit')
@@ -1292,15 +1290,19 @@ class Level_counter():
 
 
 class Level():  # レベルシステム（仮運用）
-    __slots__ = ('client', 'channel', 'name', 'data')
+    __slots__ = ('client', 'channel', 'name', 'data', 'firstlaunch')
 
     def __init__(self, client, name=None,):
         self.client = client
         self.name = name if name is not None else type(self).__name__
         self.data = {}
+        self.firstlaunch = True
 
     async def on_ready(self):
-        print('ready!')
+        loop = self.client.loop
+        self.channel = self.client.get_channel(531377173869625345)
+        if self.firstlaunch:
+            loop.create_task(self.autosave_task())
 
     async def on_message(self, message):
         if message.author.bot or self.client.user == message.author:
@@ -1315,7 +1317,7 @@ class Level():  # レベルシステム（仮運用）
         if new_level != old_level:
             content = (
                 '＊{0}のレベルが{1}になった\n'
-                '＊だが、**SAVE**の方法が見つかっていないため、レベルのデータは**SAVE**されない。'
+                '＊だが、**LOAD**のソースがないため、レベルのデータは**LOAD**されない。'
             ).format(message.author.mention, new_level)
             await message.channel.send(content)
 
@@ -1332,6 +1334,40 @@ class Level():  # レベルシステム（仮運用）
                 '＊　{0}　ー　LV　{1}　EXP　{2}'
             ).format(member.display_name, data.level, data.exp)
             await ctx.send(content)
+
+    async def _save(self):
+        data_dict = {
+            key.id: {'exp': value.exp, 'count': value.count}
+            for key, value in self.data.items()
+        }
+        with open('level.json', 'wt', encoding='utf-8') as f:
+            json.dump(f, write_data, indent=4)
+            file = discord.File(f)
+            await self.channel.send(file=file)
+
+    async def autosave_task(self):
+        while not self.client.is_closed():
+            now = datetime.datetime.now()
+            nexttime = now.replace(minute=59, second=0, microsecond=0)
+            if now.minute == 59:
+                nexttime += datetime.timedelta(hours=1)
+            second = (nexttime - now).total_seconds()
+            await asyncio.sleep(second)
+            await self._save()
+
+    @commands.command()
+    async def save_level(self, ctx):
+        if await self.client.is_owner(ctx.author):
+            await ctx.send('＊（コマンドを打っていたら、ケツイがみなぎった。）')
+            try:
+                await self._save()
+            except Exception:
+                await ctx.send('＊セーブに失敗したようだ。（ログを確認してね）')
+                raise
+            else:
+                await ctx.send('セーブしました。')
+        else:
+            await ctx.send('＊ケツイがまだ足りないようだ。')
 
 
 @client.listen('on_ready')
