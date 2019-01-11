@@ -1336,8 +1336,7 @@ class Level():  # レベルシステム（仮運用）
         new_level = sub_data.level
         if new_level != old_level:
             content = (
-                '＊{0}のレベルが{1}になった\n'
-                '＊だが、**LOAD**のソースがないため、レベルのデータは**LOAD**されない。'
+                '＊{0}のレベルが{1}になった。\n'
             ).format(message.author.mention, new_level)
             await message.channel.send(content)
 
@@ -1353,7 +1352,8 @@ class Level():  # レベルシステム（仮運用）
         else:
             content = (
                 '＊　{0}　ー　LV　{1}　EXP　{2}'
-            ).format(member.display_name, data.level, data.exp)
+                '＊次のレベルまで{3}EXP。'
+            ).format(member.display_name, data.level, data.exp, data.next_exp)
             await ctx.send(content)
 
     async def _save(self):
