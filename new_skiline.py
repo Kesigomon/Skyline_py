@@ -1316,7 +1316,11 @@ class Level():  # レベルシステム（仮運用）
             async for message in self.channel.history().filter(func1):
                 await message.attachments[0].save(data)
                 break
-            self.data: dict = json.loads(data.read().decode('UTF-8'))
+            sub_data: dict = json.loads(data.read().decode('UTF-8'))
+            self.data = {
+                key: Level_counter(**value)
+                for key, value in sub_data.items()
+            }
             loop.create_task(self.autosave_task())
 
     async def on_message(self, message):
