@@ -1265,6 +1265,10 @@ class Level_counter():
         return 5 * n * (2 * n**2 + 33 * n + 151) / 6
 
     @property
+    def next_exp(self):
+        return func1(self.level) - exp
+
+    @property
     def level(self):
         return next(
             n for n in itertools.count()
@@ -1297,17 +1301,32 @@ class Level():  # レベルシステム（仮運用）
 
     async def on_ready(self):
         loop = self.client.loop
-        self.channel = self.client.get_channel(531377173869625345)
+        self.channel: discord.TextChannel \
+            = self.client.get_channel(531377173869625345)
         if self.firstlaunch:
+
+            def func1(m: discord.Message):
+                return(
+                    m.author == self.client.user
+                    and m.attachaments
+                    and m.attachments[0].filename == self.filename
+                )
+
+            data = io.BytesIO()
+            async for message in self.channel.history().filter(func1):
+                await message.attachments[0].save(data)
+                break
+            self.data: dict = json.loads(data.read().decode('UTF-8'))
             loop.create_task(self.autosave_task())
 
     async def on_message(self, message):
         if message.author.bot or self.client.user == message.author:
             return
         member = message.author
-        if message.author not in self.data:
-            self.data.update({member: Level_counter()})
-        sub_data = self.data[member]
+        member_id = str(member.id)
+        if member_id not in self.data:
+            self.data.update({member_id: Level_counter()})
+        sub_data = self.data[member_id]
         old_level = sub_data.level
         await sub_data.message()
         new_level = sub_data.level
@@ -1316,14 +1335,15 @@ class Level():  # レベルシステム（仮運用）
                 '＊{0}のレベルが{1}になった\n'
                 '＊だが、**LOAD**のソースがないため、レベルのデータは**LOAD**されない。'
             ).format(message.author.mention, new_level)
-            # await message.channel.send(content)
+            await message.channel.send(content)
 
     @commands.command()
     async def rank(self, ctx, member: discord.Member = None):
         if member is None:
             member = ctx.author
+        member_id = str(member.id)
         try:
-            data: Level_counter = self.data[member]
+            data: Level_counter = self.data[member_id]
         except KeyError:
             await ctx.send('＊あなたのデータはまだできていない。\n＊発言をすると、データが作られる。')
         else:
