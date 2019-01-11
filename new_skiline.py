@@ -1287,6 +1287,7 @@ class Level_counter():
 
 class Level():  # レベルシステム（仮運用）
     __slots__ = ('client', 'channel', 'name', 'data', 'firstlaunch')
+    filename = 'Level.json'
 
     def __init__(self, client, name=None,):
         self.client = client
@@ -1315,7 +1316,7 @@ class Level():  # レベルシステム（仮運用）
                 '＊{0}のレベルが{1}になった\n'
                 '＊だが、**LOAD**のソースがないため、レベルのデータは**LOAD**されない。'
             ).format(message.author.mention, new_level)
-            await message.channel.send(content)
+            # await message.channel.send(content)
 
     @commands.command()
     async def rank(self, ctx, member: discord.Member = None):
@@ -1336,10 +1337,10 @@ class Level():  # レベルシステム（仮運用）
             key.id: {'exp': value.exp, 'count': value.count}
             for key, value in self.data.items()
         }
-        with open('level.json', 'wt', encoding='utf-8') as f:
-            json.dump(f, data_dict, indent=4)
-            file = discord.File(f)
-            await self.channel.send(file=file)
+        text = json.dumps(data_dict, indent=4)
+        stream = io.BytesIO(text.encode('utf-8'))
+        file = discord.File(stream, filename=self.filename)
+        await self.channel.send(file=file)
 
     async def autosave_task(self):
         while not self.client.is_closed():
@@ -1357,9 +1358,9 @@ class Level():  # レベルシステム（仮運用）
             await ctx.send('＊（コマンドを打っていたら、ケツイがみなぎった。）')
             try:
                 await self._save()
-            except Exception:
+            except Exception as e:
                 await ctx.send('＊セーブに失敗したようだ。（ログを確認してね）')
-                raise
+                raise e
             else:
                 await ctx.send('セーブしました。')
         else:
