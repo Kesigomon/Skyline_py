@@ -1266,7 +1266,11 @@ class Level_counter():
 
     @property
     def next_exp(self):
-        return self.func1(self.level) - self.exp
+        return self.func1(self.level + 1) - self.exp
+    
+    @property
+    def max_exp(self):
+        return self.func1(self.level + 1) - self.func1(self.level)
 
     @property
     def level(self):
