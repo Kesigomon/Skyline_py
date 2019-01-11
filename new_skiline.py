@@ -1266,7 +1266,7 @@ class Level_counter():
 
     @property
     def next_exp(self):
-        return func1(self.level) - exp
+        return self.func1(self.level) - self.exp
 
     @property
     def level(self):
