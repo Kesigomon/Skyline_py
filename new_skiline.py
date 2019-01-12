@@ -1432,7 +1432,7 @@ class Level():  # レベルシステム（仮運用）
                 subdata.sort(key=lambda i: i[1].exp, reverse=True)
                 for page in itertools.count():
                     sub_subdata = subdata[page * 10:(page + 1) * 10]
-                    if not subdata:
+                    if not sub_subdata:
                         break
                     embed = discord.Embed(title='ランキング')
                     [
