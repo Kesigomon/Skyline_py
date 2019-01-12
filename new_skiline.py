@@ -1399,12 +1399,12 @@ class Level():  # レベルシステム（仮運用）
     @commands.command()
     async def levels(self, ctx, page: int = 1):
         subdata = [(key, value) for key, value in self.data.items()]
-        subdata.sort(key=lambda k, v: v.exp, reverse=True)
+        subdata.sort(key=lambda i: i[1].exp, reverse=True)
         subdata = subdata[(page - 1) * 10:page * 10]
         embed = discord.Embed(title='ランキング')
         [
             embed.add_field(
-                name='{0}位 ({1.level}LV {1.exp}EXP)'.format(count, value),
+                name='{0}位 (LV{1.level} {1.exp}EXP)'.format(count, value),
                 value='<@{0}>'.format(key)
             )
             for count, (key, value) in enumerate(subdata, (page - 1) * 10 + 1)
