@@ -1106,7 +1106,7 @@ class Kouron():
 class Events():
     __slots__ = ('client', 'name', 'data', 'DJ', 'beginner_chat',
                  'Normal_User', 'OverLevel10',
-                 'webhook_site')
+                 'webhook_site', 'webhook_app', 'webhook_runner')
 
     def __init__(self, client, data: dict, name=None):
         self.client: commands.Bot = client
@@ -1122,24 +1122,25 @@ class Events():
         self.OverLevel10 = guild.get_role(515467423101747200)
 
         #  Webhookの受信準備
-        app = aiohttp_web.Application()
+        self.webhook_app = aiohttp_web.Application()
         members = inspect.getmembers(self, inspect.iscoroutinefunction)
         for name, member in members:
             try:
                 splited = name.split('_')
                 if splited[0] == 'webhook':
-                    app.router.add_route(
+                    self.webhook_app.router.add_route(
                         method=splited[1],
                         path='/'.join([''] + splited[2:]),
                         handler=member
                     )
             except IndexError:
                 pass
-        runner = aiohttp_web.AppRunner(app)
-        await runner.setup()
+        self.webhook_runner = aiohttp_web.AppRunner(self.webhook_app)
+        await self.webhook_runner.setup()
         port = int(os.environ.get('PORT', 52524))
-        self.webhook_site = aiohttp_web.TCPSite(runner, port=port)
-        loop.create_task(self.webhook_site.start())
+        self.webhook_site = aiohttp_web.TCPSite(self.webhook_runner, port=port)
+        await self.webhook_site.start()
+        print(self.webhook_site.name)
 
     async def on_member_join(self, member):
         if 'discord.gg' in member.display_name:
@@ -1246,7 +1247,7 @@ class Events():
 
     async def webhook_post_github(self, request: aiohttp_web.Request):
         data = await request.json()
-        stream = io.StringIO(json.dumps(data, indent=4), encoding='utf-8')
+        stream = io.StringIO(json.dumps(data, indent=4))
         file = discord.File(stream, 'github.json')
         await self.client.get_channel(531377173869625345).send(file=file)
         return aiohttp_web.StreamResponse()
@@ -1267,7 +1268,7 @@ class Level_counter():
     @property
     def next_exp(self):
         return self.func1(self.level + 1) - self.exp
-    
+
     @property
     def max_exp(self):
         return self.func1(self.level + 1) - self.func1(self.level)
@@ -1393,6 +1394,20 @@ class Level():  # レベルシステム（仮運用）
                 await ctx.send('セーブしました。')
         else:
             await ctx.send('＊ケツイがまだ足りないようだ。')
+
+    @commands.command()
+    async def levels(self, ctx, page: int = 1):
+        subdata = [(key, value) for key, value in self.data.items()]
+        subdata.sort(key=lambda k, v: v.exp, reverse=True)
+        subdata = subdata[(page - 1) * 10:page * 10]
+        embed = discord.Embed(title='ランキング')
+        [
+            embed.add_field(
+                name='{0}位 ({1}LV {1.}EXP)'.format(count),
+                value=''
+            )
+            for count, (key, value) in enumerate(subdata, (page - 1) * 10 + 1)
+        ]
 
 
 @client.listen('on_ready')
