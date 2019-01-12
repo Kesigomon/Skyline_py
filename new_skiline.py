@@ -1106,12 +1106,14 @@ class Kouron():
 class Events():
     __slots__ = ('client', 'name', 'data', 'DJ', 'beginner_chat',
                  'Normal_User', 'OverLevel10',
-                 'webhook_site', 'webhook_app', 'webhook_runner')
+                 'webhook_site', 'webhook_app', 'webhook_runner',
+                 'saves')
 
-    def __init__(self, client, data: dict, name=None):
+    def __init__(self, client, data: dict, name=None, saves=None):
         self.client: commands.Bot = client
         self.name = name if name is not None else type(self).__name__
         self.data = data
+        self.saves = saves if saves is not None else []
 
     async def on_ready(self):
         loop = self.client.loop
@@ -1245,11 +1247,19 @@ class Events():
         #         )
         pass
 
+    async def save_all(self):
+        for func in self.saves:
+            try:
+                await func()
+            except Exception:
+                pass
+
     async def webhook_post_github(self, request: aiohttp_web.Request):
         data = await request.json()
         stream = io.StringIO(json.dumps(data, indent=4))
         file = discord.File(stream, 'github.json')
         await self.client.get_channel(531377173869625345).send(file=file)
+        await self.save_all()
         return aiohttp_web.StreamResponse()
 
 
@@ -1295,7 +1305,8 @@ class Level_counter():
 
 
 class Level():  # レベルシステム（仮運用）
-    __slots__ = ('client', 'channel', 'name', 'data', 'firstlaunch')
+    __slots__ = ('client', 'channel', 'name', 'data', 'firstlaunch', 'ranking_limiter',
+                 'cache_messages', 'ranking_channel')
     filename = 'Level.json'
 
     def __init__(self, client, name=None,):
@@ -1303,11 +1314,25 @@ class Level():  # レベルシステム（仮運用）
         self.name = name if name is not None else type(self).__name__
         self.data = {}
         self.firstlaunch = True
+        self.ranking_limiter = False
+        self.cache_messages = []
 
     async def on_ready(self):
         loop = self.client.loop
         self.channel: discord.TextChannel \
             = self.client.get_channel(531377173869625345)
+        self.ranking_channel: discord.TextChannel \
+            = self.client.get_channel(533636280593154048)
+
+        def func3(m: discord.Message):
+            return(
+                m.author == self.client.user
+                and m.embeds
+            )
+
+        self.cache_messages = await self.ranking_channel.history(limit=None)\
+            .filter(func3).flatten()
+        self.cache_messages.sort(key=lambda m: m.created_at)
         if self.firstlaunch:
 
             def func1(m: discord.Message):
@@ -1339,6 +1364,7 @@ class Level():  # レベルシステム（仮運用）
         old_level = sub_data.level
         await sub_data.message()
         new_level = sub_data.level
+        self.client.loop.create_task(self.update_ranking())
         if new_level != old_level:
             content = (
                 '＊{0}のレベルが{1}になった。\n'
@@ -1396,20 +1422,37 @@ class Level():  # レベルシステム（仮運用）
         else:
             await ctx.send('＊ケツイがまだ足りないようだ。')
 
-    @commands.command()
-    async def levels(self, ctx, page: int = 1):
-        subdata = [(key, value) for key, value in self.data.items()]
-        subdata.sort(key=lambda i: i[1].exp, reverse=True)
-        subdata = subdata[(page - 1) * 10:page * 10]
-        embed = discord.Embed(title='ランキング')
-        [
-            embed.add_field(
-                name='{0}位 (LV{1.level} {1.exp}EXP)'.format(count, value),
-                value='<@{0}>'.format(key)
-            )
-            for count, (key, value) in enumerate(subdata, (page - 1) * 10 + 1)
-        ]
-        await ctx.send(embed=embed)
+    async def update_ranking(self):
+        if not self.ranking_limiter:
+            self.ranking_limiter = True
+            try:
+                guild = self.ranking_channel.guild
+                subdata = [(key, value) for key, value in self.data.items()
+                           if guild.get_member(int(key)) is not None]
+                subdata.sort(key=lambda i: i[1].exp, reverse=True)
+                for page in itertools.count():
+                    sub_subdata = subdata[page * 10:(page + 1) * 10]
+                    if not subdata:
+                        break
+                    embed = discord.Embed(title='ランキング')
+                    [
+                        embed.add_field(
+                            name='{0}位 (LV{1.level} {1.exp}EXP)'.format(count, value),
+                            value='<@{0}>'.format(key),
+                            inline=False
+                        )
+                        for count, (key, value) in enumerate(sub_subdata, page * 10 + 1)
+                    ]
+                    try:
+                        message = self.cache_messages[page]
+                    except IndexError:
+                        message = await self.ranking_channel.send(embed=embed)
+                        self.cache_messages.append(message)
+                    else:
+                        await message.edit(embed=embed)
+            finally:
+                await asyncio.sleep(5)
+                self.ranking_limiter = False
 
 
 @client.listen('on_ready')
@@ -1497,7 +1540,8 @@ async def task_bump(client, channel):
 @client.event
 async def on_command(ctx):
     print('{0.author.name}は{0.command.name}を{0.channel.name}で使用しました'.format(ctx))
-
+level = Level(client, name='レベルシステム')
+saves = [level._save]
 with open(os.path.dirname(__file__) + os.sep + 'config.yaml', encoding='utf-8') as f:
     data = yaml.load(f)
 client.add_cog(Normal_Command(client, data, '普通のコマンド'))
@@ -1511,8 +1555,8 @@ client.add_cog(Manage_channel(client, '自由チャンネル編集コマンド')
 client.add_cog(Emergency_call(client, '緊急呼び出しコマンド'))
 client.add_cog(Categor_recover(client, 'カテゴリーリカバリー'))
 # client.add_cog(Kouron(client, '口論コマンド'))
-client.add_cog(Events(client, data, '参加・退出通知、VC通知'))
-client.add_cog(Level(client, name='レベルシステム'))
+client.add_cog(Events(client, data, '参加・退出通知、VC通知', saves=saves))
+client.add_cog(level)
 if __name__ == '__main__':
     token = ''
     client.run(token)
