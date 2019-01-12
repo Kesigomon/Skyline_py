@@ -1405,10 +1405,11 @@ class Level():  # レベルシステム（仮運用）
         [
             embed.add_field(
                 name='{0}位 ({1}LV {1.}EXP)'.format(count),
-                value=''
+                value='<@{0}>'.format(key)
             )
             for count, (key, value) in enumerate(subdata, (page - 1) * 10 + 1)
         ]
+        await ctx.send(embed=embed)
 
 
 @client.listen('on_ready')
