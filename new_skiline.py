@@ -1431,7 +1431,7 @@ class Level():  # レベルシステム（仮運用）
                            if guild.get_member(int(key)) is not None]
                 subdata.sort(key=lambda i: i[1].exp, reverse=True)
                 for page in itertools.count():
-                    sub_subdata = subdata[page * 25:(page + 1) * 15]
+                    sub_subdata = subdata[page * 25:(page + 1) * 25]
                     if not sub_subdata:
                         break
                     embed = discord.Embed(title='ランキング')
