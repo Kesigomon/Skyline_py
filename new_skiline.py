@@ -1431,7 +1431,7 @@ class Level():  # レベルシステム（仮運用）
                            if guild.get_member(int(key)) is not None]
                 subdata.sort(key=lambda i: i[1].exp, reverse=True)
                 for page in itertools.count():
-                    sub_subdata = subdata[page * 10:(page + 1) * 10]
+                    sub_subdata = subdata[page * 25:(page + 1) * 15]
                     if not sub_subdata:
                         break
                     embed = discord.Embed(title='ランキング')
@@ -1441,7 +1441,7 @@ class Level():  # レベルシステム（仮運用）
                             value='<@{0}>'.format(key),
                             inline=False
                         )
-                        for count, (key, value) in enumerate(sub_subdata, page * 10 + 1)
+                        for count, (key, value) in enumerate(sub_subdata, page * 25 + 1)
                     ]
                     try:
                         message = self.cache_messages[page]
@@ -1450,8 +1450,9 @@ class Level():  # レベルシステム（仮運用）
                         self.cache_messages.append(message)
                     else:
                         await message.edit(embed=embed)
-                for message in self.cache_messages[page + 1:]:
+                for message in self.cache_messages[page:]:
                     await message.delete()
+                del self.cache_messages[page:]
             finally:
                 await asyncio.sleep(5)
                 self.ranking_limiter = False
