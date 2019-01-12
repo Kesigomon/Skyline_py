@@ -1138,7 +1138,7 @@ class Events():
         self.webhook_runner = aiohttp_web.AppRunner(self.webhook_app)
         await self.webhook_runner.setup()
         port = int(os.environ.get('PORT', 52524))
-        self.webhook_site = aiohttp_web.TCPSite(self.webhook_runner, port=port)
+        self.webhook_site = aiohttp_web.TCPSite(self.webhook_runner, port=port, reuse_address=True, reuse_port=True)
         await self.webhook_site.start()
         print(self.webhook_site.name)
 
@@ -1342,7 +1342,7 @@ class Level():  # レベルシステム（仮運用）
         if new_level != old_level:
             content = (
                 '＊{0}のレベルが{1}になった。\n'
-                '次のレベルまで{2}EXP。'
+                '＊次のレベルまで{2}EXP。'
             ).format(message.author.mention, new_level, sub_data.max_exp)
             await message.channel.send(content)
 
@@ -1404,7 +1404,7 @@ class Level():  # レベルシステム（仮運用）
         embed = discord.Embed(title='ランキング')
         [
             embed.add_field(
-                name='{0}位 ({1}LV {1.}EXP)'.format(count),
+                name='{0}位 ({1.level}LV {1.exp}EXP)'.format(count, value),
                 value='<@{0}>'.format(key)
             )
             for count, (key, value) in enumerate(subdata, (page - 1) * 10 + 1)
