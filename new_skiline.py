@@ -1450,6 +1450,8 @@ class Level():  # レベルシステム（仮運用）
                         self.cache_messages.append(message)
                     else:
                         await message.edit(embed=embed)
+                for message in self.cache_messages[page + 1:]:
+                    await message.delete()
             finally:
                 await asyncio.sleep(5)
                 self.ranking_limiter = False
