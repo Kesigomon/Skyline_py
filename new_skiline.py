@@ -1305,7 +1305,7 @@ class Level_counter():
 
 
 class Level():  # レベルシステム（仮運用）
-    __slots__ = ('client', 'channel', 'name', 'data', 'firstlaunch', 'ranking_limiter',
+    __slots__ = ('client', 'save_channel', 'name', 'data', 'firstlaunch', 'ranking_limiter',
                  'cache_messages', 'ranking_channel')
     filename = 'Level.json'
 
@@ -1319,7 +1319,7 @@ class Level():  # レベルシステム（仮運用）
 
     async def on_ready(self):
         loop = self.client.loop
-        self.channel: discord.TextChannel \
+        self.save_channel: discord.TextChannel \
             = self.client.get_channel(531377173869625345)
         self.ranking_channel: discord.TextChannel \
             = self.client.get_channel(533636280593154048)
@@ -1396,15 +1396,20 @@ class Level():  # レベルシステム（仮運用）
         text = json.dumps(data_dict, indent=4)
         stream = io.BytesIO(text.encode('utf-8'))
         file = discord.File(stream, filename=self.filename)
-        await self.channel.send(file=file)
+        await self.save_channel.send(file=file)
 
     async def autosave_task(self):
         while not self.client.is_closed():
             now = datetime.datetime.now()
-            nexttime = now.replace(minute=59, second=0, microsecond=0)
-            if now.minute == 59:
+            nexttime = now.replace(minute=58, second=0, microsecond=0)
+            if now.minute == 58:
                 nexttime += datetime.timedelta(hours=1)
             second = (nexttime - now).total_seconds()
+            content = (
+                '現在の時刻は{0}、次の自動SAVEは{1}'
+                '自動セーブまであと{2}'
+            ).format(now, nexttime, second)
+            self.client.loop.create_task(self.save_channel.send(content=content))
             await asyncio.sleep(second)
             await self._save()
 
