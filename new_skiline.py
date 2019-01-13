@@ -1343,7 +1343,7 @@ class Level():  # レベルシステム（仮運用）
                 )
 
             data = io.BytesIO()
-            async for message in self.channel.history(limit=None).filter(func1):
+            async for message in self.save_channel.history(limit=None).filter(func1):
                 await message.attachments[0].save(data)
                 break
             sub_data: dict = json.loads(data.read().decode('UTF-8'))
