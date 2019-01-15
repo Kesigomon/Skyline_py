@@ -12,7 +12,7 @@ import json
 from concurrent.futures import ThreadPoolExecutor
 
 import aiohttp
-from aiohttp import web as aiohttp_web
+import aiohttp.web
 import discord
 import feedparser
 from discord.ext import commands
@@ -251,7 +251,7 @@ class Normal_Command:
                 self.client.user:
                     discord.PermissionOverwrite.from_pair(discord.Permissions.all(), discord.Permissions.none()),
                 ctx.author:
-                    discord.PermissionOverwrite.from_pair(discord.Permissions(603318609), discord.Permissions.none()),
+                    discord.PermissionOverwrite.from_pair(discord.Permissions(66448721), discord.Permissions.none()),
                 guild.default_role:
                     discord.PermissionOverwrite.from_pair(discord.Permissions.none(), discord.Permissions.all()),
                 guild.get_role(515467411898761216):
@@ -1124,7 +1124,7 @@ class Events():
         self.OverLevel10 = guild.get_role(515467423101747200)
 
         #  Webhookの受信準備
-        self.webhook_app = aiohttp_web.Application()
+        self.webhook_app = aiohttp.web.Application()
         members = inspect.getmembers(self, inspect.iscoroutinefunction)
         for name, member in members:
             try:
@@ -1137,10 +1137,10 @@ class Events():
                     )
             except IndexError:
                 pass
-        self.webhook_runner = aiohttp_web.AppRunner(self.webhook_app)
+        self.webhook_runner = aiohttp.web.AppRunner(self.webhook_app)
         await self.webhook_runner.setup()
         port = int(os.environ.get('PORT', 52524))
-        self.webhook_site = aiohttp_web.TCPSite(self.webhook_runner, port=port, reuse_address=True, reuse_port=True)
+        self.webhook_site = aiohttp.web.TCPSite(self.webhook_runner, port=port, reuse_address=True, reuse_port=True)
         await self.webhook_site.start()
         print(self.webhook_site.name)
 
@@ -1254,13 +1254,13 @@ class Events():
             except Exception:
                 pass
 
-    async def webhook_post_github(self, request: aiohttp_web.Request):
+    async def webhook_post_github(self, request: aiohttp.web.Request):
         data = await request.json()
         stream = io.StringIO(json.dumps(data, indent=4))
         file = discord.File(stream, 'github.json')
         await self.client.get_channel(531377173869625345).send(file=file)
         await self.save_all()
-        return aiohttp_web.StreamResponse()
+        return aiohttp.web.StreamResponse()
 
 
 class Level_counter():
