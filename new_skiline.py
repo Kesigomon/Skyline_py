@@ -994,7 +994,10 @@ class Emergency_call():
 
     async def __local_check(self, ctx):
         role_ids = [r.id for r in ctx.author.roles]
-        return (any(x in role_ids for x in (515467407381364738, 515467410174902272, 515467421323100160, 515467419364491266)))
+        return (
+            515467410174902272 in role_ids
+            or ctx.author.id in (328505715532759043, 441157692464300032)
+        )
 
     async def on_command_error(self, ctx, error):
         if ctx.cog is self:
