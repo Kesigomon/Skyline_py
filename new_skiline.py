@@ -61,7 +61,7 @@ class MyFormatter(commands.HelpFormatter):
             cog = instance.name if instance is not None else None
             # we insert the zero width space there to give it approximate
             # last place sorting position.
-            return cog + ':' if cog is not None else '\u200bNo Category:'
+            return cog + ':' if cog is not None else '\u200bカテゴリなし:'
 
         filtered = await self.filter_command_list()
         if self.is_bot():
@@ -281,7 +281,7 @@ class Bot_Owner_Command:
     @commands.command(hidden=True)
     async def stop(self, ctx):
         await ctx.send('停止しまーす')
-        await client.close()
+        await self.client.close()
 
     @commands.command(hidden=True)
     async def say(self, ctx, *, arg):
@@ -313,7 +313,7 @@ class Staff_Command:
         )
 
     async def on_ready(self):
-        self.limit_role: discord.Role = client.get_guild(
+        self.limit_role: discord.Role = self.client.get_guild(
             515467348581416970).get_role(515467411898761216)
 
     @commands.command(brief='制限付きユーザーを付けます', check=[zatsudan_forum_check])
@@ -336,7 +336,7 @@ class Owners_Command:
         return ctx.guild is not None and (await self.client.is_owner(ctx.author) or ctx.author == ctx.guild.owner)
 
     async def on_ready(self):
-        self.index_index = client.get_channel(515467529167044608)
+        self.index_index = self.client.get_channel(515467529167044608)
 
     # インデックスチャンネルをサーチ。なければNone
     def _create_category_find_index_channel(self, category) -> discord.TextChannel:
@@ -427,7 +427,7 @@ class Owners_Command:
                 if ctx is not None:
                     await ctx.send('インデックスチャンネルが見つかりませんでした。')
             else:
-                await index_channel.purge(check=lambda m: m.author == client.user and m.embeds)
+                await index_channel.purge(check=lambda m: m.author == self.client.user and m.embeds)
                 await self._create_category_index1(category)
                 tasks = [self.client.loop.create_task(self._create_category_index2(channel)) for channel in
                          sorted((c for c in category.channels if isinstance(c, discord.TextChannel) and c != index_channel), key=lambda c:c.position)]
@@ -473,7 +473,7 @@ class DM_Command:
 
     async def on_message(self, message: discord.Message):
         if isinstance(message.channel, discord.DMChannel) and message.author in self.users\
-                and not message.content.startswith(client.command_prefix + 'target'):
+                and not message.content.startswith(self.client.command_prefix + 'target'):
             await self.users[message.author].send(message.content)
 
     @commands.command()
@@ -499,7 +499,7 @@ class Joke_Command:
         await ctx.send(random.choice(self.data['hyouga']))
 
     async def on_message(self, message):
-        if message.author == client.user:
+        if message.author == self.client.user:
             return
         if message.content == '\\せやな':
             await message.channel.send('わかる（天下無双）')
@@ -574,14 +574,14 @@ class Role_panel():  # 役職パネルの機能
         return (
             await zatsudan_forum_check(ctx)
             and (any(x in role_ids for x in (515467407381364738, 515467410174902272, 515467421323100160))
-                 or await client.is_owner(ctx.author))  # マネージメント、サブオーナー、オーナーズが使える感じ
+                 or await self.client.is_owner(ctx.author))  # マネージメント、サブオーナー、オーナーズが使える感じ
         )
 
     async def on_ready(self):
         self.channel: discord.TextChannel = self.client.get_channel(self.channel_id)
         async for message in self.channel.history().filter(lambda m: m.author == self.client.user):
             for reaction in message.reactions:
-                async for user in reaction.users().filter(lambda u: u != client.user):
+                async for user in reaction.users().filter(lambda u: u != self.client.user):
                     self.client.loop.create_task(message.remove_reaction(reaction, user))
             self.client._connection._messages.append(message)
 
@@ -683,14 +683,14 @@ class Role_panel():  # 役職パネルの機能
                     description=content
                 )
                 m = await self.channel.send(embed=embed)
-                [client.loop.create_task(m.add_reaction(chr(0x0001f1e6 + i)))
+                [self.client.loop.create_task(m.add_reaction(chr(0x0001f1e6 + i)))
                  for i in range(len(roles))]
 
     async def on_reaction_add(self, reaction, user):
-        if user == client.user:
+        if user == self.client.user:
             return
         message = reaction.message
-        if message.channel == self.channel and message.author == client.user:
+        if message.channel == self.channel and message.author == self.client.user:
             await message.remove_reaction(reaction, user)
             if '役職パネル' in message.embeds[0].title:
                 match2 = re.search(reaction.emoji + r':<@&(\d*)>', message.embeds[0].description)
@@ -709,8 +709,8 @@ class Role_panel():  # 役職パネルの機能
         cache = self.client._connection._messages
         if payload.channel_id != self.channel.id or payload.message_id in (m.id for m in cache):
             return
-        user = client.get_guild(payload.guild_id).get_member(payload.user_id)
-        message = await client.get_channel(payload.channel_id).get_message(payload.message_id)
+        user = self.client.get_guild(payload.guild_id).get_member(payload.user_id)
+        message = await self.client.get_channel(payload.channel_id).get_message(payload.message_id)
         cache.append(message)
         if payload.emoji.is_unicode_emoji():
             reaction = next(r for r in message.reactions if r.emoji == payload.emoji.name)
@@ -720,7 +720,7 @@ class Role_panel():  # 役職パネルの機能
 
 
 class Manage_channel():
-    __slots__ = ('client', 'name')
+    __slots__ = ('client', 'name', 'staff')
     permissions_jp = {
         'create_instant_invite': '招待を作成',
         'manage_channels': 'チャンネルの管理',
@@ -755,6 +755,10 @@ class Manage_channel():
         if self is ctx.cog:
             ctx
 
+    def on_ready(self):
+        self.staff = [self.client.get_guild(515467348581416970).get_guild(i)
+                      for i in (515467410174902272, 515467421323100160)]
+
     @commands.command()
     async def cedit(self, ctx, *args):
         EMOJI_K = 0x1f1e6  # 絵文字定数(これを足したり引いたりするとリアクション的にうまくいく)
@@ -773,7 +777,9 @@ class Manage_channel():
         if (
             ctx.author in [i[0] for i in channel.overwrites]
             and channel.overwrites_for(ctx.author).manage_roles is not False
-        ) or await self.client.is_owner(ctx.author):
+        ) \
+                or await self.client.is_owner(ctx.author)\
+                or any(r in ctx.author.roles for r in self.staff):
             all_commands = (
                 '新規に役職を追加設定',
                 '新規にユーザーを追加設定',
@@ -1008,7 +1014,7 @@ class Emergency_call():
         await message.delete()
         if reaction.emoji == '\u2705':
             Data = {'value1': str(ctx.author), 'value2': ctx.channel.name, 'value3': ctx.guild.name}
-            session = client.http._session
+            session = self.client.http._session
             async with session.post(self.url, data=Data):
                 pass
             await ctx.send('エマージェンシーコールを発動しました')
@@ -1117,7 +1123,7 @@ class Events():
 
     async def on_ready(self):
         loop = self.client.loop
-        guild: discord.Guild = client.get_guild(515467348581416970)
+        guild: discord.Guild = self.client.get_guild(515467348581416970)
         self.DJ = guild.get_role(515467441959337984)
         # self.beginner_chat = client.get_channel(524540064995213312)
         self.Normal_User = guild.get_role(515467427459629056)
