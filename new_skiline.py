@@ -755,7 +755,7 @@ class Manage_channel():
         if self is ctx.cog:
             ctx
 
-    def on_ready(self):
+    async def on_ready(self):
         self.staff = [self.client.get_guild(515467348581416970).get_guild(i)
                       for i in (515467410174902272, 515467421323100160)]
 
