@@ -1273,7 +1273,7 @@ class Events():
 
 
 class Level_counter():
-    __slots__ = ('exp', 'count', 'limit')
+    __slots__ = ('exp', 'count', 'limit', 'rank')
 
     def __init__(self, exp=0, count=0):
         self.exp = exp
@@ -1308,14 +1308,14 @@ class Level_counter():
         if not self.limit:
             self.limit = True
             loop.call_later(60, self.unlimit)
-            self.exp += random.randint(10, 40)
+            self.exp += random.randint(20, 40)
         else:
-            self.exp += random.randint(1, 5)
+            self.exp += 1
 
 
 class Level():  # レベルシステム（仮運用）
     __slots__ = ('client', 'save_channel', 'name', 'data', 'firstlaunch', 'ranking_limiter',
-                 'cache_messages', 'ranking_channel')
+                 'cache_messages', 'ranking_channel', 'role_dict')
     filename = 'Level.json'
 
     def __init__(self, client, name=None,):
@@ -1332,6 +1332,17 @@ class Level():  # レベルシステム（仮運用）
             = self.client.get_channel(531377173869625345)
         self.ranking_channel: discord.TextChannel \
             = self.client.get_channel(533636280593154048)
+        guild: discord.Guild = self.ranking_channel.guild
+        self.role_dict = {
+            i[0]: guild.get_role(i[1]) for i in (
+                (50, 532121179457060876),
+                (40, 532120974942797835),
+                (30, 532119101309452289),
+                (20, 532118646877585409),
+                (10, 532118282950672384),
+                (5, 532118079958679552),
+            )
+        }
 
         def func3(m: discord.Message):
             return(
@@ -1380,6 +1391,7 @@ class Level():  # レベルシステム（仮運用）
                 '＊次のレベルまで{2}EXP。'
             ).format(message.author.mention, new_level, sub_data.max_exp)
             await message.channel.send(content)
+            await self.update_level(message.author, new_level)
 
     @commands.command()
     async def rank(self, ctx, member: discord.Member = None):
@@ -1396,10 +1408,11 @@ class Level():  # レベルシステム（仮運用）
                 '＊次のレベルまで{3}EXP。'
             ).format(member.display_name, data.level, data.exp, data.next_exp)
             await ctx.send(content)
+            await self.update_level(member, data.level)
 
     async def _save(self):
         data_dict = {
-            key: {'exp': value.exp, 'count': value.count}
+            key: {'exp': value.exp, 'count': value.count, 'rank': value.rank}
             for key, value in self.data.items()
         }
         text = json.dumps(data_dict, indent=4)
@@ -1436,6 +1449,11 @@ class Level():  # レベルシステム（仮運用）
         else:
             await ctx.send('＊ケツイがまだ足りないようだ。')
 
+    async def update_level(self, member, level):
+        for key, value in self.role_dict.items():
+            if level >= key:
+                await member.add_roles(value)
+
     async def update_ranking(self):
         if not self.ranking_limiter:
             self.ranking_limiter = True
@@ -1444,6 +1462,7 @@ class Level():  # レベルシステム（仮運用）
                 subdata = [(key, value) for key, value in self.data.items()
                            if guild.get_member(int(key)) is not None]
                 subdata.sort(key=lambda i: i[1].exp, reverse=True)
+                [setattr(d[1], 'rank', i) for i, d in enumerate(subdata, 1)]
                 for page in itertools.count():
                     sub_subdata = subdata[page * 25:(page + 1) * 25]
                     if not sub_subdata:
