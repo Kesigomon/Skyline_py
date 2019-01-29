@@ -1432,7 +1432,7 @@ class Level():  # レベルシステム（仮運用）
             data.exp += delta_exp
             new_level = data.level
             description = (
-                '＊{0.mention}のEXPを{2}{3}\n'
+                '＊{0.mention}のEXPを{2}\n'
                 '＊現在のEXPは{1.exp}だ。\n'
             ).format(member, data, (str(delta_exp) + '上げた' if delta_exp >= 0 else str(-delta_exp) + '下げた'))
             if old_level > new_level:
