@@ -1245,11 +1245,11 @@ class Events():
 class Level_counter():
     __slots__ = ('exp', 'count', 'limit', 'rank')
 
-    def __init__(self, exp=0, count=0):
+    def __init__(self, exp=0, count=0, rank=-1):
         self.exp = exp
         self.count = count
         self.limit = False
-        self.rank = -1
+        self.rank = rank
 
     @staticmethod
     def func1(n):
