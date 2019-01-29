@@ -1349,37 +1349,48 @@ class Level():  # レベルシステム（仮運用）
             return
         member = message.author
         member_id = str(member.id)
-        if member_id not in self.data:
-            self.data.update({member_id: Level_counter()})
-        sub_data: Level_counter = self.data[member_id]
+        sub_data: Level_counter = self.data.setdefault(member_id, Level_counter())
         old_level = sub_data.level
         await sub_data.message()
         new_level = sub_data.level
         self.client.loop.create_task(self.update_ranking())
         if new_level != old_level:
             content = (
-                '＊{0}のレベルが{1}になった。\n'
-                '＊次のレベルまで{2}EXP。'
-            ).format(message.author.mention, new_level, sub_data.max_exp)
+                '＊{0}のLVが{1}になった。\n'
+                '＊次のLVまで{2}EXP。'
+            ).format(member.mention, new_level, sub_data.max_exp)
             await message.channel.send(content)
-            await self.update_level(message.author, new_level)
+            await self.update_level(member, new_level)
 
     @commands.command()
-    async def rank(self, ctx, member: discord.Member = None):
+    async def rank(self, ctx, member: discord.Member = None, content_index: int = None):
         if member is None:
             member = ctx.author
-        member_id = str(member.id)
-        try:
-            data: Level_counter = self.data[member_id]
-        except KeyError:
-            await ctx.send('＊あなたのデータはまだできていない。\n＊発言をすると、データが作られる。')
+        content_list = (
+            '＊次のLVまで{1.next_exp}EXP。',
+            '＊カウント開始してから{1.count}発言。',
+            '＊このサーバーでは{1.rank}位のようだ。'
+        )
+        no_message = False
+        if content_index is None:
+            content2 = random.choice(content_list)
+        elif content_index >= 1:
+            try:
+                content2 = content_list[content_index - 1]
+            except IndexError:
+                no_message = True
         else:
-            content = (
-                '＊　{0}　ー　LV　{1}　EXP　{2}\n'
-                '＊次のレベルまで{3}EXP。'
-            ).format(member.display_name, data.level, data.exp, data.next_exp)
-            await ctx.send(content)
-            await self.update_level(member, data.level)
+            no_message = True
+        if no_message:  # 用意されてないメッセージを指定するとこうなる。
+            content2 = '＊その番号のメッセージは用意されていない。'
+        member_id = str(member.id)
+        data: Level_counter = self.data.setdefault(member_id, Level_counter())
+        content = (
+            '＊　{0}　ー　LV　{1.level}　EXP　{1.exp}\n'
+            + content2
+        ).format(member.display_name, data)
+        await ctx.send(content)
+        await self.update_level(member, data.level)
 
     async def _save(self):
         data_dict = {
@@ -1405,6 +1416,35 @@ class Level():  # レベルシステム（仮運用）
             self.client.loop.create_task(self.save_channel.send(content=content))
             await asyncio.sleep(second)
             await self._save()
+
+    @commands.command()
+    async def adjust_exp(self, ctx, member: discord.Member, delta_exp: int):
+        role_ids = [r.id for r in ctx.author.roles]
+        if (
+            any(x in role_ids for x in
+                (515467407381364738, 515467410174902272, 515467421323100160)
+                )
+            or await self.client.is_owner(ctx.author)
+        ):
+            member_id = str(member.id)
+            data: Level_counter = self.data.setdefault(member_id, Level_counter())
+            old_level = data.level
+            data.exp += delta_exp
+            new_level = data.level
+            description = (
+                '＊{0.mention}のEXPを{1}上げた。\n'
+                '＊現在のEXPは{2.exp}だ。'
+            ).format(member, delta_exp, data)
+            if old_level > new_level:
+                description += '＊LVが{0}下がり、{1}になった。'.format(old_level - new_level, new_level)
+            elif old_level < new_level:
+                description += '＊LVが{0}上がり、{1}になった。'.format(new_level - old_level, new_level)
+            else:
+                description += '＊LVは{0}のままのようだ。'.format(new_level)
+            embed = discord.Embed(description=description)
+            await ctx.send(embed=embed)
+        else:
+            await ctx.send('＊そのコマンドを使うだけのケツイが足りないようだ。')
 
     @commands.command()
     async def save_level(self, ctx):
