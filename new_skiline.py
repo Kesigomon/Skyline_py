@@ -1125,33 +1125,11 @@ class Events():
         self.saves = saves if saves is not None else []
 
     async def on_ready(self):
-        loop = self.client.loop
         guild: discord.Guild = self.client.get_guild(515467348581416970)
         self.DJ = guild.get_role(515467441959337984)
         # self.beginner_chat = client.get_channel(524540064995213312)
         self.Normal_User = guild.get_role(515467427459629056)
         self.OverLevel10 = guild.get_role(515467423101747200)
-
-        #  Webhookの受信準備
-        self.webhook_app = aiohttp.web.Application()
-        members = inspect.getmembers(self, inspect.iscoroutinefunction)
-        for name, member in members:
-            try:
-                splited = name.split('_')
-                if splited[0] == 'webhook':
-                    self.webhook_app.router.add_route(
-                        method=splited[1],
-                        path='/'.join([''] + splited[2:]),
-                        handler=member
-                    )
-            except IndexError:
-                pass
-        self.webhook_runner = aiohttp.web.AppRunner(self.webhook_app)
-        await self.webhook_runner.setup()
-        port = int(os.environ.get('PORT', 52524))
-        self.webhook_site = aiohttp.web.TCPSite(self.webhook_runner, port=port, reuse_address=True, reuse_port=True)
-        await self.webhook_site.start()
-        print(self.webhook_site.name)
 
     async def on_member_join(self, member):
         if 'discord.gg' in member.display_name:
@@ -1263,14 +1241,6 @@ class Events():
             except Exception:
                 pass
 
-    async def webhook_post_github(self, request: aiohttp.web.Request):
-        data = await request.json()
-        stream = io.StringIO(json.dumps(data, indent=4))
-        file = discord.File(stream, 'github.json')
-        await self.client.get_channel(531377173869625345).send(file=file)
-        await self.save_all()
-        return aiohttp.web.StreamResponse()
-
 
 class Level_counter():
     __slots__ = ('exp', 'count', 'limit', 'rank')
@@ -1279,6 +1249,7 @@ class Level_counter():
         self.exp = exp
         self.count = count
         self.limit = False
+        self.rank = -1
 
     @staticmethod
     def func1(n):
@@ -1441,9 +1412,9 @@ class Level():  # レベルシステム（仮運用）
             await ctx.send('＊（コマンドを打っていたら、ケツイがみなぎった。）')
             try:
                 await self._save()
-            except Exception as e:
+            except Exception:
                 await ctx.send('＊セーブに失敗したようだ。（ログを確認してね）')
-                raise e
+                raise
             else:
                 await ctx.send('セーブしました。')
         else:
