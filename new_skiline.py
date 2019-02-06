@@ -1243,13 +1243,21 @@ class Events():
 
 
 class Level_counter():
-    __slots__ = ('exp', 'count', 'limit', 'rank')
+    __slots__ = ('exp', 'count', 'limit', 'rank', 'bot_count')
 
-    def __init__(self, exp=0, count=0, rank=-1):
-        self.exp = exp
-        self.count = count
+    def __init__(self, **kwargs):
+        """
+        Level_counter
+        レベルカウンターです。
+        exp:経験値
+        count:発言回数（Botコマンド以外）
+        bot_count：botのコマンド（と思われる）の使用回数
+        """
+        self.exp = kwargs.get('exp', 0)
+        self.count = kwargs.get('count', 0)
         self.limit = False
-        self.rank = rank
+        self.rank = kwargs.get('rank', 0)
+        self.bot_count = kwargs.get('bot_count', 0)
 
     @staticmethod
     def func1(n):
@@ -1288,6 +1296,7 @@ class Level():  # レベルシステム（仮運用）
     __slots__ = ('client', 'save_channel', 'name', 'data', 'firstlaunch', 'ranking_limiter',
                  'cache_messages', 'ranking_channel', 'role_dict')
     filename = 'Level.json'
+    pattern1 = re.compile(r'^\w*?!', re.ASCII)
 
     def __init__(self, client, name=None,):
         self.client = client
@@ -1350,17 +1359,20 @@ class Level():  # レベルシステム（仮運用）
         member = message.author
         member_id = str(member.id)
         sub_data: Level_counter = self.data.setdefault(member_id, Level_counter())
-        old_level = sub_data.level
-        await sub_data.message()
-        new_level = sub_data.level
-        self.client.loop.create_task(self.update_ranking())
-        if new_level != old_level:
-            content = (
-                '＊{0}のLVが{1}になった。\n'
-                '＊次のLVまで{2}EXP。'
-            ).format(member.mention, new_level, sub_data.max_exp)
-            await message.channel.send(content)
-            await self.update_level(member, new_level)
+        if not self.pattern1.search(message.content):  # BOTコマンドでなければNoneが返る
+            old_level = sub_data.level
+            await sub_data.message()
+            new_level = sub_data.level
+            self.client.loop.create_task(self.update_ranking())
+            if new_level != old_level:
+                content = (
+                    '＊{0}のLVが{1}になった。\n'
+                    '＊次のLVまで{2}EXP。'
+                ).format(member.mention, new_level, sub_data.max_exp)
+                await message.channel.send(content)
+                await self.update_level(member, new_level)
+        else:  # BOTコマンドならこちら
+            sub_data.bot_count += 1
 
     @commands.command()
     async def rank(self, ctx, member: discord.Member = None, content_index: int = None):
@@ -1369,7 +1381,8 @@ class Level():  # レベルシステム（仮運用）
         content_list = (
             '＊次のLVまで{1.next_exp}EXP。',
             '＊カウント開始してから{1.count}発言。',
-            '＊このサーバーでは{1.rank}位のようだ。'
+            '＊このサーバーでは{1.rank}位のようだ。',
+            '＊BOTのコマンド（と思われるもの）を{1.bot_count}使ったようだ。'
         )
         no_message = False
         if content_index is None:
@@ -1394,7 +1407,7 @@ class Level():  # レベルシステム（仮運用）
 
     async def _save(self):
         data_dict = {
-            key: {'exp': value.exp, 'count': value.count, 'rank': value.rank}
+            key: {k1: getattr(value, k1) for k1 in ('exp', 'count', 'rank', 'bot_count', )}
             for key, value in self.data.items()
         }
         text = json.dumps(data_dict, indent=4)
