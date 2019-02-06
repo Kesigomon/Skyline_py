@@ -1375,17 +1375,17 @@ class Level():  # レベルシステム（仮運用）
             sub_data.bot_count += 1
 
     @commands.command()
-    async def rank(self, ctx, member: discord.Member = None, content_index: int = None):
+    async def rank(self, ctx, content_index: int = 0, member: discord.Member = None):
         if member is None:
             member = ctx.author
         content_list = (
             '＊次のLVまで{1.next_exp}EXP。',
             '＊カウント開始してから{1.count}発言。',
             '＊このサーバーでは{1.rank}位のようだ。',
-            '＊BOTのコマンド（と思われるもの）を{1.bot_count}使ったようだ。'
+            '＊BOTのコマンド（と思われるもの）を{1.bot_count}回使ったようだ。'
         )
         no_message = False
-        if content_index is None:
+        if content_index == 0:
             content2 = random.choice(content_list)
         elif content_index >= 1:
             try:
