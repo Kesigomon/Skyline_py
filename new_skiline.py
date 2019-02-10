@@ -628,7 +628,7 @@ class Categor_recover():  # 言わずと知れたカテゴリリカバリ機能
 
 
 class Role_panel():  # 役職パネルの機能
-    __slots__ = ('client', 'channel', 'pattern', 'channel_id', 'name')
+    __slots__ = ('client', 'channel', 'channel_id', 'name')
     pattern = re.compile(r'役職パネル\((.*?)\)')
 
     def __init__(self, client, channel_id, name=None,):
