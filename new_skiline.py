@@ -1059,47 +1059,6 @@ class Manage_channel():
             await ctx.send('あなたはそれをする権限がありません。')
 
 
-class Emergency_call():
-    __slots__ = ('client', 'name', 'data', 'url')
-
-    def __init__(self, client, name=None):
-        self.client: commands.Bot = client
-        self.name = name if name is not None else type(self).__name__
-        self.url = os.environ.get('emergency_call_url', '')
-
-    async def __local_check(self, ctx):
-        role_ids = [r.id for r in ctx.author.roles]
-        return (
-            515467410174902272 in role_ids
-            or ctx.author.id in (328505715532759043, 441157692464300032)
-        )
-
-    async def on_command_error(self, ctx, error):
-        if ctx.cog is self:
-            if isinstance(error, commands.CheckFailure):
-                await ctx.send('あなたはこのコマンドを実行する権限がありません。')
-
-    @commands.command(hidden=True)
-    async def emergency_call(self, ctx):
-        message = await ctx.send('エマージェンシーコールを発動しますか？')
-
-        def check1(reaction, user):
-            return reaction.message.id == message.id and reaction.message.channel == message.channel \
-                and user == ctx.author
-        [self.client.loop.create_task(message.add_reaction(i))
-         for i in ('\u2705', '\u274c')]
-        reaction, _ = await self.client.wait_for('reaction_add', check=check1)
-        await message.delete()
-        if reaction.emoji == '\u2705':
-            Data = {'value1': str(ctx.author), 'value2': ctx.channel.name, 'value3': ctx.guild.name}
-            session = self.client.http._session
-            async with session.post(self.url, data=Data):
-                pass
-            await ctx.send('エマージェンシーコールを発動しました')
-        else:
-            await ctx.send('キャンセルしました')
-
-
 class Kouron():
     __slots__ = ('client', 'role_dict', 'guild', 'ready', 'name')
 
@@ -1687,7 +1646,6 @@ client.add_cog(DM_Command(client, 'DM用コマンド'))
 client.add_cog(Joke_Command(client, data, 'ネタコマンド'))
 client.add_cog(Role_panel(client, 515467531176116224, '役職パネル'))
 client.add_cog(Manage_channel(client, '自由チャンネル編集コマンド'))
-client.add_cog(Emergency_call(client, '緊急呼び出しコマンド'))
 client.add_cog(Categor_recover(client, 'カテゴリーリカバリー'))
 # client.add_cog(Kouron(client, '口論コマンド'))
 client.add_cog(Events(client, data, '参加・退出通知、VC通知', saves=saves))
