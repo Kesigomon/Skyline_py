@@ -358,7 +358,7 @@ class Bot_Owner_Command:
             value = stdout.getvalue()
             try:
                 await ctx.message.add_reaction('\u2705')
-            except:
+            except Exception:
                 pass
 
             if ret is None:
@@ -1394,23 +1394,29 @@ class Level():  # レベルシステム（仮運用）
             loop.create_task(self.autosave_task())
 
     async def on_message(self, message):
-        if message.author.bot or self.client.user == message.author:
+        if (
+            message.author.bot
+            or self.client.user == message.author
+        ):
             return
         member = message.author
         member_id = str(member.id)
         sub_data: Level_counter = self.data.setdefault(member_id, Level_counter())
         if not self.pattern1.search(message.content):  # BOTコマンドでなければNoneが返る
-            old_level = sub_data.level
-            await sub_data.message()
-            new_level = sub_data.level
-            self.client.loop.create_task(self.update_ranking())
-            if new_level != old_level:
-                content = (
-                    '＊{0}のLVが{1}になった。\n'
-                    '＊次のLVまで{2}EXP。'
-                ).format(member.mention, new_level, sub_data.max_exp)
-                await message.channel.send(content)
-                await self.update_level(member, new_level)
+            if message.channel.id != 515467956113768483:  # スパムチャンネル以外で
+                old_level = sub_data.level
+                await sub_data.message()
+                new_level = sub_data.level
+                self.client.loop.create_task(self.update_ranking())
+                if new_level != old_level:
+                    content = (
+                        '＊{0}のLVが{1}になった。\n'
+                        '＊次のLVまで{2}EXP。'
+                    ).format(member.mention, new_level, sub_data.max_exp)
+                    await message.channel.send(content)
+                    await self.update_level(member, new_level)
+            else:  # スパムちゃんねるなら以下
+                sub_data.count += 1
         else:  # BOTコマンドならこちら
             sub_data.bot_count += 1
 
