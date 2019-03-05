@@ -787,25 +787,16 @@ class Manage_channel():
     async def on_ready(self):
         self.staff = [self.client.get_guild(515467348581416970).get_role(i)
                       for i in (515467410174902272, 515467421323100160)]
-        self.categories = [self.client.get_channel(i) for i in self.data['free_categories']]
+        self.categories = [self.client.get_channel(i) for i in self.data['free_categories'][1:]]
 
     async def on_message(self, message):
         channel: discord.TextChannel = message.channel
-        if channel.category is None:  # 一応カテゴリなしなら弾いておく
-            return
-        try:
-            channel_index = self.categories.index(channel.category)
-        except ValueError:
-            pass
-        else:
+        if channel.category is not None and channel.category in self.categories:
             channels = channel.category.text_channels
             channels.sort(key=lambda c: c.position)
-            if channel_index == 0:
-                max_position = channels[0].position
-            else:
-                max_position = channels[1].position + 1
-                if channel.position < max_position:
-                    return
+            max_position = channels[1].position + 1
+            if channel.position < max_position:
+                return
             await channel.edit(position=max(channel.position - 1, max_position))
 
     @commands.command(name='ftcc')
