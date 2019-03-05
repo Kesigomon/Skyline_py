@@ -789,20 +789,20 @@ class Manage_channel():
                       for i in (515467410174902272, 515467421323100160)]
         self.categories = [self.client.get_channel(i) for i in self.data['free_categories']]
 
-    async def on_message(self, message):
-        channel: discord.TextChannel = message.channel
-        try:
-            channel_index = self.categories.index(channel)
-        except ValueError:
-            pass
-        else:
-            if channel_index == 0:
-                max_position = 0
-            else:
-                max_position = 2
-                if channel.position < max_position:
-                    return
-            await channel.edit(position=max(channel.position - 1, max_position))
+    # async def on_message(self, message):
+    #     channel: discord.TextChannel = message.channel
+    #     try:
+    #         channel_index = self.categories.index(channel)
+    #     except ValueError:
+    #         pass
+    #     else:
+    #         if channel_index == 0:
+    #             max_position = 0
+    #         else:
+    #             max_position = 2
+    #             if channel.position < max_position:
+    #                 return
+    #         await channel.edit(position=max(channel.position - 1, max_position))
 
     @commands.command(name='ftcc')
     async def free_text_channel_create(self, ctx, name, category_n=None):
