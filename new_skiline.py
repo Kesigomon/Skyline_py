@@ -778,7 +778,6 @@ class Manage_channel():
         self.client: commands.Bot = client
         self.data = data
         self.name = name if name is not None else type(self).__name__
-        self.categories = []
 
     async def on_command(self, ctx):
         if self is ctx.cog:
