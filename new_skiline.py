@@ -747,7 +747,7 @@ class Role_panel():  # 役職パネルの機能
 
 
 class Manage_channel():
-    __slots__ = ('client', 'name', 'staff', 'categories', 'data')
+    __slots__ = ('client', 'name', 'staff', 'data')
     permissions_jp = {
         'create_instant_invite': '招待を作成',
         'manage_channels': 'チャンネルの管理',
@@ -787,11 +787,18 @@ class Manage_channel():
     async def on_ready(self):
         self.staff = [self.client.get_guild(515467348581416970).get_role(i)
                       for i in (515467410174902272, 515467421323100160)]
-        self.categories = [self.client.get_channel(i) for i in self.data['free_categories'][1:]]
+
+    @property
+    def categories(self):
+        return [
+            i for i in
+            (self.client.get_channel(i) for i in self.data['free_categories'])
+            if i is not None
+        ]
 
     async def on_message(self, message):
         channel: discord.TextChannel = message.channel
-        if channel.category is not None and channel.category in self.categories:
+        if channel.category is not None and channel.category in self.categories[1:]:
             channels = channel.category.text_channels
             channels.sort(key=lambda c: c.position)
             max_position = channels[1].position + 1
