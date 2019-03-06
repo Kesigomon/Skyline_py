@@ -797,13 +797,32 @@ class Manage_channel():
 
     async def on_message(self, message):
         channel: discord.TextChannel = message.channel
-        if channel.category is not None and channel.category in self.categories[1:]:
-            channels = channel.category.text_channels
+        category = channel.category
+        if category is None:
+            return
+        try:
+            index = self.categories.index(category)
+        except ValueError:
+            pass
+        else:
+            if index == 0:  # 個人チャンネルは無視する
+                return
+            channels = category.text_channels
             channels.sort(key=lambda c: c.position)
             max_position = channels[1].position + 1
             if channel.position < max_position:
                 return
-            await channel.edit(position=max(channel.position - 1, max_position))
+            elif channel.position == max_position:
+                if index == 1:  # 最上部は無視
+                    return
+                category2 = self.categories[index - 1]  # 一個上のカテゴリ
+                if len(category2.channels) >= 49:  # チャンネル数オーバーなら入れ替えを行う
+                    channels2 = category2.text_channels
+                    channels2.sort(key=lambda c: c.position)
+                    await channels2[-1].edit(category=category, position=channel.position)
+                await channel.edit(category=category2)
+            else:
+                await channel.edit(position=max(channel.position - 1, max_position))
 
     @commands.command(name='ftcc')
     async def free_text_channel_create(self, ctx, name, category_n=None):
@@ -811,7 +830,7 @@ class Manage_channel():
         if channel is not None:
             await ctx.send(
                 '作成しました。\n{0}\nあと{1}チャンネル作成可能。'
-                .format(channel.mention, 50 - len(channel.category.channels))
+                .format(channel.mention, 49 - len(channel.category.channels))
             )
 
     @commands.command(name='fvcc')
@@ -820,14 +839,14 @@ class Manage_channel():
         if channel is not None:
             await ctx.send(
                 '作成しました。\nあと{0}チャンネル作成可能。'
-                .format(50 - len(channel.category.channels))
+                .format(49 - len(channel.category.channels))
             )
 
     async def _free_channel_create(self, ctx, name, category_n=None, VC=False):
         if 515467423101747200 in (r.id for r in ctx.author.roles) or True:  # 一時的に全員使用可能(or True)
             if category_n is None:
                 category_n = 1
-                while len(self.categories[category_n].channels) >= 50:  # チャンネル数50以上のカテゴリがあれば次のカテゴリへ
+                while len(self.categories[category_n].channels) >= 49:  # チャンネル数49以上のカテゴリがあれば次のカテゴリへ
                     category_n += 1
             else:
                 category_n = int(category_n)
