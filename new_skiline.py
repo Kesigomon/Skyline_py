@@ -815,8 +815,10 @@ class Manage_channel():
             elif channel.position == max_position:
                 if index == 1:  # 最上部は無視
                     return
-                category2 = self.categories[index - 1]  # 一個上のカテゴリ
-                if len(category2.channels) >= 49:  # チャンネル数オーバーなら入れ替えを行う
+                while True:
+                    category2 = self.categories[index - 1]  # 一個上のカテゴリ
+                    if len(category2.channels) < 49:  # チャンネル数オーバーなら入れ替えを行う
+                        break
                     channels2 = category2.text_channels
                     channels2.sort(key=lambda c: c.position)
                     await channels2[-1].edit(category=category, position=channel.position)
@@ -842,15 +844,23 @@ class Manage_channel():
                 .format(49 - len(channel.category.channels))
             )
 
-    async def _free_channel_create(self, ctx, name, category_n=None, VC=False):
+    async def _free_channel_create(self, ctx, name, category_n: int = None, VC=False):
         if 515467423101747200 in (r.id for r in ctx.author.roles) or True:  # 一時的に全員使用可能(or True)
             if category_n is None:
                 category_n = 1
                 while len(self.categories[category_n].channels) >= 49:  # チャンネル数49以上のカテゴリがあれば次のカテゴリへ
                     category_n += 1
-            else:
-                category_n = int(category_n)
             category = self.categories[category_n]
+            if (len(category.channels) >= 50
+                    or (category_n >= 1 and len(category.channels) >= 49)):
+                await ctx.send(textwrap.dedent(
+                    """
+                    チャンネルが一杯でこのカテゴリには作成できません。
+                    別なカテゴリを指定してください。
+                    指定していないときにこのメッセージが出た場合は、運営に連絡してください。
+                    """
+                ))
+                return
             guild = category.guild
             overwrites = {
                 self.client.user:
