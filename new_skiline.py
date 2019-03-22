@@ -285,7 +285,8 @@ class Bot_Owner_Command:
 
         env.update(globals())
         await ctx.send('コマンドをどうぞ')
-        message = await self.client.wait_for('message', check=lambda m: m.author == ctx.author and m.channel == ctx.channel)
+        message = await self.client.wait_for(
+            'message', check=lambda m: m.author == ctx.author and m.channel == ctx.channel)
         body = self.cleanup_code(message.content)
         stdout = io.StringIO()
 
@@ -449,7 +450,10 @@ class Owners_Command:
                 await index_channel.purge(check=lambda m: m.author == self.client.user and m.embeds)
                 await self._create_category_index1(category)
                 tasks = [self.client.loop.create_task(self._create_category_index2(channel)) for channel in
-                         sorted((c for c in category.channels if isinstance(c, discord.TextChannel) and c != index_channel), key=lambda c:c.position)]
+                         sorted(
+                             (c for c in category.channels if isinstance(c, discord.TextChannel) and c != index_channel),
+                             key=lambda c:c.position
+                        )]
                 await asyncio.wait(tasks)
         if not args:
             category = ctx.channel.category
@@ -524,7 +528,7 @@ class Joke_Command:
             await message.channel.send('わかる（天下無双）')
 
 
-class Category_recover():  # 言わずと知れたカテゴリリカバリ機能
+class Category_recover:  # 言わずと知れたカテゴリリカバリ機能
     __slots__ = ('client', 'category_cache', 'name')
 
     def __init__(self, client, name=None):
@@ -780,8 +784,7 @@ class Manage_channel():
         self.name = name if name is not None else type(self).__name__
 
     async def on_command(self, ctx):
-        if self is ctx.cog:
-            ctx
+        pass
 
     async def on_ready(self):
         self.staff = [self.client.get_guild(515467348581416970).get_role(i)
@@ -1382,7 +1385,7 @@ class Level_counter():
 
 class Level():  # レベルシステム（仮運用）
     __slots__ = ('client', 'save_channel', 'name', 'data', 'firstlaunch', 'ranking_limiter',
-                 'cache_messages', 'ranking_channel', 'role_dict')
+                 'cache_messages', 'ranking_channel', 'role_dict', 'save_message', 'guild')
     filename = 'Level.json'
     pattern1 = re.compile(r'^\w*?!', re.ASCII)
 
@@ -1400,7 +1403,10 @@ class Level():  # レベルシステム（仮運用）
             = self.client.get_channel(531377173869625345)
         self.ranking_channel: discord.TextChannel \
             = self.client.get_channel(533636280593154048)
+        self.save_message: discord.Message = \
+            await self.client.get_channel(515468115535200256).get_message(558782351358951426)
         guild: discord.Guild = self.ranking_channel.guild
+        self.guild = guild
         self.role_dict = {
             i[0]: guild.get_role(i[1]) for i in (
                 (50, 532121179457060876),
@@ -1441,6 +1447,9 @@ class Level():  # レベルシステム（仮運用）
             }
             loop.create_task(self.autosave_task())
 
+    def get_data(self, member: discord.Member) -> Level_counter:
+        return self.data.setdefault(str(member.id), Level_counter())
+
     async def on_message(self, message):
         if (
             message.author.bot
@@ -1448,8 +1457,7 @@ class Level():  # レベルシステム（仮運用）
         ):
             return
         member = message.author
-        member_id = str(member.id)
-        sub_data: Level_counter = self.data.setdefault(member_id, Level_counter())
+        sub_data: Level_counter = self.get_data(member)
         if not self.pattern1.search(message.content):  # BOTコマンドでなければNoneが返る
             if message.channel.id != 515467956113768483:  # スパムチャンネル以外で
                 old_level = sub_data.level
@@ -1478,20 +1486,17 @@ class Level():  # レベルシステム（仮運用）
             '＊このサーバーでは{1.rank}位のようだ。',
             '＊BOTのコマンド（と思われるもの）を{1.bot_count}回使ったようだ。'
         )
-        no_message = False
+        no_message = '＊その番号のメッセージは用意されていない。'
         if content_index == 0:
             content2 = random.choice(content_list)
         elif content_index >= 1:
             try:
                 content2 = content_list[content_index - 1]
             except IndexError:
-                no_message = True
+                content2 = no_message
         else:
-            no_message = True
-        if no_message:  # 用意されてないメッセージを指定するとこうなる。
-            content2 = '＊その番号のメッセージは用意されていない。'
-        member_id = str(member.id)
-        data: Level_counter = self.data.setdefault(member_id, Level_counter())
+            content2 = no_message
+        data: Level_counter = self.get_data(member)
         content = (
             '＊　{0}　ー　LV　{1.level}　EXP　{1.exp}\n'
             + content2
@@ -1499,7 +1504,7 @@ class Level():  # レベルシステム（仮運用）
         await ctx.send(content)
         await self.update_level(member, data.level)
 
-    async def _save(self):
+    async def _save(self, member):
         data_dict = {
             key: {k1: getattr(value, k1) for k1 in ('exp', 'count', 'rank', 'bot_count', )}
             for key, value in self.data.items()
@@ -1508,8 +1513,27 @@ class Level():  # レベルシステム（仮運用）
         stream = io.BytesIO(text.encode('utf-8'))
         file = discord.File(stream, filename=self.filename)
         await self.save_channel.send(file=file)
+        # ここからセーブメッセージ変更
+        mes = self.save_message
+        delta = datetime.datetime.utcnow() - member.joined_at
+        q, r = divmod(delta, datetime.timedelta(seconds=60))
+        nick = member.display_name[:6]
+        nick += ' ' * 2 * (6 - len(nick))
+        title = textwrap.dedent(
+            f"""
+            {nick}          LV{self.get_data(member)}       {q}:{r.seconds}
+            {self.guild.name}
+
+            """
+        )
+        embed1 = discord.Embed(title=title + '  セーブ完了', color=0xffff00)
+        embed2 = discord.Embed(title=title + ':hearts: セーブ            戻る', color=0xffffff)
+        await mes.edit(embed=embed1)
+        await asyncio.sleep(2)
+        await mes.edit(embed=embed2)
 
     async def autosave_task(self):
+        member = self.guild.me
         while not self.client.is_closed():
             now = datetime.datetime.now()
             nexttime = now.replace(minute=58, second=0, microsecond=0)
@@ -1522,7 +1546,7 @@ class Level():  # レベルシステム（仮運用）
             ).format(now, nexttime, second)
             self.client.loop.create_task(self.save_channel.send(content=content))
             await asyncio.sleep(second)
-            await self._save()
+            await self._save(member)
 
     @commands.command()
     async def adjust_exp(self, ctx, member: discord.Member, delta_exp: int):
@@ -1533,8 +1557,7 @@ class Level():  # レベルシステム（仮運用）
                 )
             or await self.client.is_owner(ctx.author)
         ):
-            member_id = str(member.id)
-            data: Level_counter = self.data.setdefault(member_id, Level_counter())
+            data: Level_counter = self.get_data(member)
             old_level = data.level
             data.exp += delta_exp
             new_level = data.level
@@ -1558,10 +1581,10 @@ class Level():  # レベルシステム（仮運用）
         if await self.client.is_owner(ctx.author):
             await ctx.send('＊（コマンドを打っていたら、ケツイがみなぎった。）')
             try:
-                await self._save()
+                await self._save(ctx.author)
             except Exception:
                 await ctx.send('＊セーブに失敗したようだ。（ログを確認してね）')
-                raise
+                traceback.print_exc()
             else:
                 await ctx.send('セーブしました。')
         else:
