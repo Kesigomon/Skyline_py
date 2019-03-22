@@ -449,11 +449,12 @@ class Owners_Command:
             else:
                 await index_channel.purge(check=lambda m: m.author == self.client.user and m.embeds)
                 await self._create_category_index1(category)
-                tasks = [self.client.loop.create_task(self._create_category_index2(channel)) for channel in
-                         sorted(
-                             (c for c in category.channels if isinstance(c, discord.TextChannel) and c != index_channel),
-                             key=lambda c:c.position
-                        )]
+                channels = sorted(
+                    (c for c in category.channels if isinstance(c, discord.TextChannel) and c != index_channel),
+                    key=lambda c: c.position
+                )
+                tasks = [self.client.loop.create_task(self._create_category_index2(channel))
+                         for channel in channels]
                 await asyncio.wait(tasks)
         if not args:
             category = ctx.channel.category
@@ -1513,7 +1514,9 @@ class Level():  # レベルシステム（仮運用）
         stream = io.BytesIO(text.encode('utf-8'))
         file = discord.File(stream, filename=self.filename)
         await self.save_channel.send(file=file)
-        # ここからセーブメッセージ変更
+        self.client.loop.create_task(self._change_message)
+
+    async def _change_message(self, member):
         mes = self.save_message
         delta = datetime.datetime.utcnow() - member.joined_at
         q, r = divmod(delta, datetime.timedelta(seconds=60))
