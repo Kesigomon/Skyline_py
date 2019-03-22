@@ -1514,7 +1514,7 @@ class Level():  # レベルシステム（仮運用）
         stream = io.BytesIO(text.encode('utf-8'))
         file = discord.File(stream, filename=self.filename)
         await self.save_channel.send(file=file)
-        self.client.loop.create_task(self._change_message)
+        self.client.loop.create_task(self._change_message(member))
 
     async def _change_message(self, member):
         mes = self.save_message
