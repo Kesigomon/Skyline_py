@@ -1521,7 +1521,7 @@ class Level():  # レベルシステム（仮運用）
         nick += ' ' * 2 * (6 - len(nick))
         title = textwrap.dedent(
             f"""
-            {nick}          LV{self.get_data(member)}       {q}:{r.seconds}
+            {nick}          LV{self.get_data(member).level}       {q}:{r.seconds}
             {self.guild.name}
 
             """
