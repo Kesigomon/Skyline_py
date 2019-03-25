@@ -854,6 +854,8 @@ class Manage_channel():
                 category_n = 1
                 while len(self.categories[category_n].channels) >= 49:  # チャンネル数49以上のカテゴリがあれば次のカテゴリへ
                     category_n += 1
+                    if category_n == len(self.categories) - 1:
+                        break
             category = self.categories[category_n]
             if (len(category.channels) >= 50
                     or (category_n >= 1 and len(category.channels) >= 49)):
@@ -1460,7 +1462,7 @@ class Level():  # レベルシステム（仮運用）
         member = message.author
         sub_data: Level_counter = self.get_data(member)
         if not self.pattern1.search(message.content):  # BOTコマンドでなければNoneが返る
-            if message.channel.id != 515467956113768483:  # スパムチャンネル以外で
+            if message.channel.id not in (515467956113768483, 555687014872383488):  # スパムチャンネル以外で
                 old_level = sub_data.level
                 await sub_data.message()
                 new_level = sub_data.level
