@@ -831,7 +831,7 @@ class Manage_channel():
                 await channel.edit(position=max(channel.position - 1, max_position))
 
     @commands.command(name='ftcc')
-    async def free_text_channel_create(self, ctx, name, category_n=None):
+    async def free_text_channel_create(self, ctx, name, category_n: int = None):
         channel = await self._free_channel_create(ctx, name, category_n, VC=False)
         if channel is not None:
             await ctx.send(
@@ -840,7 +840,7 @@ class Manage_channel():
             )
 
     @commands.command(name='fvcc')
-    async def free_voice_channel_create(self, ctx, name, category_n=None):
+    async def free_voice_channel_create(self, ctx, name, category_n: int = None):
         channel = await self._free_channel_create(ctx, name, category_n, VC=True)
         if channel is not None:
             await ctx.send(
@@ -848,7 +848,7 @@ class Manage_channel():
                 .format(49 - len(channel.category.channels))
             )
 
-    async def _free_channel_create(self, ctx, name, category_n: int = None, VC=False):
+    async def _free_channel_create(self, ctx, name, category_n=None, VC=False):
         if 515467423101747200 in (r.id for r in ctx.author.roles) or True:  # 一時的に全員使用可能(or True)
             if category_n is None:
                 category_n = 1
