@@ -15,8 +15,6 @@ import traceback
 import contextlib
 
 
-import aiohttp
-import aiohttp.web
 import discord
 import feedparser
 from discord.ext import commands
@@ -860,11 +858,11 @@ class Manage_channel():
             if (len(category.channels) >= 50
                     or (category_n >= 1 and len(category.channels) >= 49)):
                 await ctx.send(textwrap.dedent(
-                    """
-                    チャンネルが一杯でこのカテゴリには作成できません。
-                    別なカテゴリを指定してください。
-                    指定していないときにこのメッセージが出た場合は、運営に連絡してください。
-                    """
+                  """
+                チャンネルが一杯でこのカテゴリには作成できません。
+                別なカテゴリを指定してください。
+                指定していないときにこのメッセージが出た場合は、運営に連絡してください。
+                """
                 ))
                 return
             guild = category.guild
