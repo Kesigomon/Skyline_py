@@ -71,33 +71,37 @@ class Events(commands.Cog):
         voice_text_pair = voice_text
         if (
             after.channel is not None
-            and (before.channel is None
-                 or before.channel != after.channel)
-            and str(after.channel.id) in voice_text_pair
+            and (before.channel is None or before.channel != after.channel)
         ):
-            text_channel = self.client.get_channel(
-                voice_text_pair[str(after.channel.id)])
-            embed = discord.Embed(
-                title='ボイスチャンネル入室通知',
-                description='{0}が、入室しました。'.format(member.mention),
-                colour=0x00af00
-            )
-            await text_channel.send(embed=embed, delete_after=180)
-            if after.channel.id == 515467651691315220:  # 音楽鑑賞VCの場合
-                await member.add_roles(self.DJ)  # DJ役職を付与
+            try:
+                text_channel = self.client.get_channel(
+                    voice_text_pair[after.channel.id])
+            except KeyError:
+                pass
+            else:
+                embed = discord.Embed(
+                    title='ボイスチャンネル入室通知',
+                    description='{0}が、入室しました。'.format(member.mention),
+                    colour=0x00af00
+                )
+                await text_channel.send(embed=embed, delete_after=180)
+                if after.channel.id == 515467651691315220:  # 音楽鑑賞VCの場合
+                    await member.add_roles(self.DJ)  # DJ役職を付与
         if (
             before.channel is not None
-            and (after.channel is None
-                 or before.channel != after.channel)
-            and str(before.channel.id) in voice_text_pair
+            and (after.channel is None or before.channel != after.channel)
         ):
-            text_channel = self.client.get_channel(
-                voice_text_pair[str(before.channel.id)])
-            embed = discord.Embed(
-                title='ボイスチャンネル退出通知',
-                description='{0}が、退出しました。'.format(member.mention),
-                colour=0xaf0000
-            )
-            await text_channel.send(embed=embed, delete_after=180)
-            if before.channel.id == 515467651691315220:  # 音楽鑑賞VCの場合
-                await member.remove_roles(self.DJ)  # DJ役職を解除
+            try:
+                text_channel = self.client.get_channel(
+                    voice_text_pair[before.channel.id])
+            except KeyError:
+                pass
+            else:
+                embed = discord.Embed(
+                    title='ボイスチャンネル退出通知',
+                    description='{0}が、退出しました。'.format(member.mention),
+                    colour=0xaf0000
+                )
+                await text_channel.send(embed=embed, delete_after=180)
+                if before.channel.id == 515467651691315220:  # 音楽鑑賞VCの場合
+                    await member.remove_roles(self.DJ)  # DJ役職を解除
