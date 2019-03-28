@@ -1,0 +1,3 @@
+git+https://github.com/Rapptz/discord.py.git@rewrite
+pyyaml
+feedparser
