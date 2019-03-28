@@ -64,7 +64,7 @@ class Level_counter:
 
 class Level(commands.Cog):  # レベルシステム（仮運用）
     __slots__ = ('client', 'save_channel', 'name', 'data', 'firstlaunch', 'ranking_limiter',
-                 'cache_messages', 'ranking_channel', 'role_dict', 'save_message', 'guild')
+                 'cache_messages', 'ranking_channel', 'role_dict', 'save_message', 'guild', 'ready')
     filename = 'Level.json'
     pattern1 = re.compile(r'^\w*?!', re.ASCII)
 
@@ -75,6 +75,7 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
         self.firstlaunch = True
         self.ranking_limiter = False
         self.cache_messages = []
+        self.ready = asyncio.Event(loop=self.client.loop)
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -128,6 +129,7 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
                 for key, value in sub_data.items()
             }
             loop.create_task(self.autosave_task())
+            self.ready.set()
 
     def get_data(self, member: discord.Member) -> Level_counter:
         return self.data.setdefault(str(member.id), Level_counter())
@@ -135,10 +137,11 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
     @commands.Cog.listener()
     async def on_message(self, message):
         if (
-                message.author.bot
-                or self.client.user == message.author
+            message.author.bot
+            or self.client.user == message.author
         ):
             return
+        await self.ready.wait()
         member = message.author
         sub_data: Level_counter = self.get_data(member)
         if not self.pattern1.search(message.content):  # BOTコマンドでなければNoneが返る
@@ -281,6 +284,7 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
                 await member.add_roles(value)
 
     async def update_ranking(self):
+        await self.ready.wait()
         if not self.ranking_limiter:
             self.ranking_limiter = True
             try:
