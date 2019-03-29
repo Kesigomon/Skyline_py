@@ -160,7 +160,7 @@ class Role_panel(commands.Cog):  # 役職パネルの機能
         if payload.channel_id != self.channel.id or payload.message_id in (m.id for m in cache):
             return
         user = self.client.get_guild(payload.guild_id).get_member(payload.user_id)
-        message = await self.client.get_channel(payload.channel_id).get_message(payload.message_id)
+        message = await self.channel.fetch_message(payload.message_id)
         cache.append(message)
         if payload.emoji.is_unicode_emoji():
             reaction = next(r for r in message.reactions if r.emoji == payload.emoji.name)
