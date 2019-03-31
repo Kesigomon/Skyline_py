@@ -41,6 +41,7 @@ class FreeCategory(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
+        self.categories = [self.client.get_channel(i) for i in free_categories]
         await self.update_categories()
 
     async def update_categories(self):
