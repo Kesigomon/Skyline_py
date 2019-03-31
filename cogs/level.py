@@ -128,7 +128,7 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
                 key: Level_counter(**value)
                 for key, value in sub_data.items()
             }
-            loop.create_task(self.autosave_task())
+            loop.create_task(self.autosave())
             self.ready.set()
 
     def get_data(self, member: discord.Member) -> Level_counter:
@@ -222,7 +222,7 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
         await asyncio.sleep(2)
         await mes.edit(embed=embed2)
 
-    async def autosave_task(self):
+    async def autosave(self):
         member = self.guild.me
         while not self.client.is_closed():
             now = datetime.datetime.now()
@@ -235,7 +235,12 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
                 '自動セーブまであと{2}'
             ).format(now, nexttime, second)
             self.client.loop.create_task(self.save_channel.send(content=content))
-            await asyncio.sleep(second)
+            try:
+                await asyncio.wait_for(self.client._closed.wait() ,timeout=second)
+            except asyncio.TimeoutError:
+                pass
+            else:
+                continue
             await self._save(member)
 
     @commands.command()
@@ -319,8 +324,10 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
                     await message.delete()
                 del self.cache_messages[page:]
             finally:
-                await asyncio.sleep(5)
-                self.ranking_limiter = False
+                try:
+                    await asyncio.wait_for(self.client._closed.wait(), timeout=5)
+                except asyncio.TimeoutError:
+                    self.ranking_limiter = False
 
     @commands.Cog.listener()
     async def on_close(self):
