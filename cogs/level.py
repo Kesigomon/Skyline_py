@@ -87,7 +87,7 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
         self.ranking_channel: discord.TextChannel \
             = self.client.get_channel(533636280593154048)
         self.save_message: discord.Message = \
-            await self.client.get_channel(515468115535200256).fetch_message(558782351358951426)
+            await self.client.get_channel(561912707310157839).fetch_message(561913325538246670)
         guild: discord.Guild = self.ranking_channel.guild
         self.guild = guild
         self.role_dict = {
