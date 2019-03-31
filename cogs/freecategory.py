@@ -153,7 +153,7 @@ class FreeCategory(commands.Cog):
                 and channel.overwrites_for(ctx.author).manage_roles is not False
             )  # メンバーの追加設定があり、かつ「権限の管理」がNone
             or await self.client.is_owner(ctx.author)  # オーナー
-            or await is_staff(ctx)  # スタッフチーム
+            or await is_staff(ctx.author)  # スタッフチーム
         ):
             all_commands = (
                 '新規に役職を追加設定',
