@@ -73,11 +73,16 @@ free_categories = [
 
 
 async def is_zatudanfolum(ctx):
-    return ctx.guild is not None and ctx.guild.id == ZATSUDAN_FORUM_ID
+    try:
+        guild = ctx.guild
+    except AttributeError:
+        return False
+    else:
+        return guild is not None and guild.id == ZATSUDAN_FORUM_ID
 
 
-async def is_staff(ctx):
-    if await is_zatudanfolum(ctx):
-        return any(r.id in (515467407381364738, 515467410174902272, 515467421323100160) for r in ctx.author.roles)
+async def is_staff(member):
+    if await is_zatudanfolum(member):
+        return any(r.id in (515467407381364738, 515467410174902272, 515467421323100160) for r in member.roles)
     else:
         return False

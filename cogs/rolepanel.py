@@ -14,7 +14,7 @@ class Role_panel(commands.Cog):  # 役職パネルの機能
         self.name = name if name is not None else type(self).__name__
 
     async def cog_check(self, ctx):
-        return await is_staff(ctx)
+        return await is_staff(ctx.author)
 
     @commands.Cog.listener()
     async def on_ready(self):

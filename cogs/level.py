@@ -11,6 +11,8 @@ import textwrap
 import discord
 from discord.ext import commands
 
+from .general import is_staff
+
 
 class Level_counter:
     __slots__ = ('exp', 'count', 'limit', 'rank', 'bot_count')
@@ -339,5 +341,5 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
                 and self.save_message.id == payload.message_id):
             user = self.guild.get_member(payload.user_id)
             await self.save_message.remove_reaction(payload.emoji, user)
-            if await self.client.is_owner(user):
+            if await is_staff(user):
                 await self._save(user)

@@ -18,7 +18,7 @@ class Staff_Command(commands.Cog):
         self.limit_role: discord.Role = self.guild.get_role(515467411898761216)
 
     async def cog_check(self, ctx):
-        return await is_staff(ctx)
+        return await is_staff(ctx.author)
 
     @commands.command(brief='制限付きユーザーを付けます')
     async def limit(self, ctx, member: discord.Member):
