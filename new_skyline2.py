@@ -15,5 +15,6 @@ class SKYLINE(commands.Bot):
         except AttributeError:
             futs = []
         futs.extend(self.extra_events.get('on_close', []))
-        await asyncio.wait([f() for f in futs])
+        if futs:
+            await asyncio.wait([f() for f in futs])
         await super().close()

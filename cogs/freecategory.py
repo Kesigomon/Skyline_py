@@ -2,10 +2,11 @@ import discord
 from discord.ext import commands
 import textwrap
 from .general import is_staff, free_categories
+import asyncio
 
 
 class FreeCategory(commands.Cog):
-    __slots__ = ('client', 'name', 'staff')
+    __slots__ = ('client', 'name', 'staff', 'categories')
     permissions_jp = {
         'create_instant_invite': '招待を作成',
         'manage_channels': 'チャンネルの管理',
@@ -35,13 +36,22 @@ class FreeCategory(commands.Cog):
     def __init__(self, client, name=None,):
         self.client: commands.Bot = client
         self.name = name if name is not None else type(self).__name__
+        self.categories = []
+        self.update_limiter = False
 
-    @property
-    def categories(self):
-        if self.client.is_ready: # BOTが準備できている場合
-            return [self.client.get_channel(i) for i in free_categories]
-        else:
-            return []
+    @commands.Cog.listener()
+    async def on_ready(self):
+        await self.update_categories()
+
+    async def update_categories(self):
+        if not self.update_limiter:
+            self.update_limiter = True
+            try:
+                await self.client.wait_until_ready()
+                guild = await self.client.fetch_guild(self.categories[0].guild.id)
+                self.categories = [guild.get_channel(i) for i in free_categories]
+            finally:
+                self.update_limiter = False
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -59,10 +69,10 @@ class FreeCategory(commands.Cog):
             channels = category.text_channels
             channels.sort(key=lambda c: c.position)
             max_position = channels[1].position + 1
-            if channel.position < max_position:
+            if channel.position < max_position:  # ここって何？orカテゴリインデックスならスルーする
                 return
-            elif channel.position == max_position:
-                if index == 1:  # 最上部は無視
+            elif channel.position == max_position:  # カテゴリの一番上でさらに発言したときの処理
+                if index == 1:  # 第一カテゴリの一番上ならスルーする
                     return
                 while True:
                     category2 = self.categories[index - 1]  # 一個上のカテゴリ
@@ -74,6 +84,7 @@ class FreeCategory(commands.Cog):
                 await channel.edit(category=category2)
             else:
                 await channel.edit(position=max(channel.position - 1, max_position))
+            await self.update_categories()
 
     @commands.command(name='ftcc')
     async def free_text_channel_create(self, ctx, name, category_n: int = None):
