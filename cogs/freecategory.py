@@ -6,7 +6,7 @@ import asyncio
 
 
 class FreeCategory(commands.Cog):
-    __slots__ = ('client', 'name', 'staff', 'categories')
+    __slots__ = ('client', 'name', 'staff',)
     permissions_jp = {
         'create_instant_invite': '招待を作成',
         'manage_channels': 'チャンネルの管理',
@@ -36,23 +36,10 @@ class FreeCategory(commands.Cog):
     def __init__(self, client, name=None,):
         self.client: commands.Bot = client
         self.name = name if name is not None else type(self).__name__
-        self.categories = []
-        self.update_limiter = False
 
-    @commands.Cog.listener()
-    async def on_ready(self):
-        self.categories = [self.client.get_channel(i) for i in free_categories]
-        await self.update_categories()
-
-    async def update_categories(self):
-        if not self.update_limiter:
-            self.update_limiter = True
-            try:
-                await self.client.wait_until_ready()
-                guild = await self.client.fetch_guild(self.categories[0].guild.id)
-                self.categories = [guild.get_channel(i) for i in free_categories]
-            finally:
-                self.update_limiter = False
+    @property
+    def categories(self):
+        return list(filter(None, (self.client.get_channel(i) for i in free_categories)))
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -85,7 +72,6 @@ class FreeCategory(commands.Cog):
                 await channel.edit(category=category2)
             else:
                 await channel.edit(position=max(channel.position - 1, max_position))
-            await self.update_categories()
 
     @commands.command(name='ftcc')
     async def free_text_channel_create(self, ctx, name, category_n: int = None):
