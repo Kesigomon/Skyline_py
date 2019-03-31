@@ -9,9 +9,9 @@ client = SKYLINE(loop=loop)
 async def main():
     await client.start(token)
     await client.close()
-    all_tasks = asyncio.all_tasks(loop=loop)
-    while True:
-        done, pending = await asyncio.wait(list(all_tasks), timeout=5)
+    all_tasks = [t for t in asyncio.all_tasks(loop=loop) if t != main_task]
+    while all_tasks:
+        done, pending = await asyncio.wait(all_tasks, timeout=5)
         [t.cancel() for t in pending]
         if not pending:
             break
