@@ -47,6 +47,7 @@ class Events(commands.Cog):
         filtered = list(filter(check, audit_logs))
         if not filtered:
             try:
+                await self.client.wait_until_ready()
                 zatsudan_forum = member.guild.get_channel(515467559051591681)
             except (StopIteration, IndexError):
                 pass

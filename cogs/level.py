@@ -190,7 +190,7 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
         await ctx.send(content)
         await self.update_level(member, data.level)
 
-    async def _save(self, member):
+    async def _save(self, member, wait=False):
         data_dict = {
             key: {k1: getattr(value, k1) for k1 in ('exp', 'count', 'rank', 'bot_count',)}
             for key, value in self.data.items()
@@ -199,7 +199,9 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
         stream = io.BytesIO(text.encode('utf-8'))
         file = discord.File(stream, filename=self.filename)
         await self.save_channel.send(file=file)
-        self.client.loop.create_task(self._change_message(member))
+        task = self.client.loop.create_task(self._change_message(member))
+        if wait:
+            await task
 
     async def _change_message(self, member):
         mes = self.save_message
@@ -322,7 +324,7 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
 
     @commands.Cog.listener()
     async def on_close(self):
-        await self._save(self.guild.me)
+        await self._save(self.guild.me, wait=True)
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
