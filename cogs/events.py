@@ -3,17 +3,23 @@ from discord.ext import commands
 import datetime
 import asyncio
 from .general import ZATSUDAN_FORUM_ID, join_message, voice_text
+import aiohttp
+import feedparser
 
 
 class Events(commands.Cog):
     __slots__ = ('client', 'name', 'DJ', 'beginner_chat',
                  'Normal_User', 'OverLevel10',
                  'webhook_site', 'webhook_app', 'webhook_runner',
-                 'saves', 'new_member')
+                 'saves', 'new_member', 'tasks')
 
     def __init__(self, client, name=None):
         self.client: commands.Bot = client
         self.name = name if name is not None else type(self).__name__
+        self.tasks = [
+            self.client.loop.create_task(coro)
+            for coro in (self.task_bump(), self.task_skyline_update())
+        ]
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -106,3 +112,90 @@ class Events(commands.Cog):
                 await text_channel.send(embed=embed, delete_after=180)
                 if before.channel.id == 515467651691315220:  # 音楽鑑賞VCの場合
                     await member.remove_roles(self.DJ)  # DJ役職を解除
+
+    @commands.Cog.listener()
+    async def on_close(self):
+        [t.cancel() for t in self.tasks]
+
+    async def task_skyline_update(self):
+        await self.client.wait_until_ready()
+        channel = self.client.get_channel(515468115535200256)
+        webhooks = await channel.webhooks()
+        webhook: discord.Webhook = webhooks[0]
+        session: aiohttp.ClientSession = self.client.http.__session
+        url = 'https://github.com/Kesigomon/Skyline_py/commits/master.atom'
+        while not self.client.is_closed():
+            try:
+                message = await channel.history().filter(lambda m: m.author.id == webhook.id).next()
+            except discord.NoMoreItems:
+                message = None
+            async with session.get(url) as resp:
+                feed = feedparser.parse(await resp.text())
+            entry = feed.entries[0]
+            flag = message is None or entry.link != message.embeds[0].url
+            if flag:
+                embed = discord.Embed(
+                    title=entry.link.replace('https://github.com/Kesigomon/Skyline_py/commit/', ''),
+                    description=entry.title,
+                    timestamp=datetime.datetime(*entry.updated_parsed[0:7]),
+                    url=entry.link
+                )
+                embed.set_author(name=entry.author, url=entry.author_detail.href,
+                                 icon_url=entry.media_thumbnail[0]['url'])
+                await webhook.send(embed=embed)
+            try:
+                await asyncio.wait_for(self.client._closed.wait() ,timeout=60)
+            except asyncio.TimeoutError:
+                pass
+
+    async def task_bump(self):
+        disboard_bot_id = 302050872383242240
+        Interval = datetime.timedelta(hours=2)
+        disboard_bot = self.client.get_user(disboard_bot_id)
+        mention = '<@&515467430018154507>'
+
+        def check1(m):
+            return m.author == disboard_bot and ':thumbsup:' in m.embeds[0].description
+        await self.client.wait_until_ready()
+        channel: discord.TextChannel = self.client.get_channel(515467856239132672)
+        while not self.client.is_closed():
+            try:
+                x = await channel.history().filter().next()
+            except discord.NoMoreItems:
+                x = None
+            if x is not None:
+                TD1 = datetime.datetime.utcnow() - x.created_at
+                if TD1 >= Interval:
+                    await channel.send(
+                        mention
+                        + '既に2時間以上経っていますよ\n'
+                        + 'SKYLINEは!disboard bumpするといいと思います'
+                    )
+                else:
+                    try:
+                        # クライアントクローズか2時間経過するのを待つ
+                        await asyncio.wait_for(
+                            self.client._closed.wait(),
+                            (Interval - TD1).total_seconds()
+                        )
+                    except asyncio.TimeoutError:
+                        # 2時間経過
+                        await channel.send(
+                            mention
+                            + '2時間経ちましたよ\n'
+                            + 'SKYLINEは!disboard bumpするといいと思います'
+                        )
+                    else:
+                        # クライアントクローズ
+                        pass
+            else:
+                await channel.send(
+                    mention
+                    + 'このサーバーで一度もコマンドを実行していませんね\n'
+                    + 'SKYLINEは!disboard bumpするといいと思います'
+                )
+            # メッセージがクライアントクローズ待ち
+            await asyncio.wait(
+                [self.client.wait_for(event='message', check=check1),
+                 self.client._closed.wait()]
+            )
