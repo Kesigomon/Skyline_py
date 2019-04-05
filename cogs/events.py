@@ -122,49 +122,52 @@ class Events(commands.Cog):
         channel = self.client.get_channel(515468115535200256)
         webhooks = await channel.webhooks()
         webhook: discord.Webhook = webhooks[0]
-        session: aiohttp.ClientSession = self.client.http.__session
         url = 'https://github.com/Kesigomon/Skyline_py/commits/master.atom'
-        while not self.client.is_closed():
-            try:
-                message = await channel.history().filter(lambda m: m.author.id == webhook.id).next()
-            except discord.NoMoreItems:
-                message = None
-            async with session.get(url) as resp:
-                feed = feedparser.parse(await resp.text())
-            entry = feed.entries[0]
-            flag = message is None or entry.link != message.embeds[0].url
-            if flag:
-                embed = discord.Embed(
-                    title=entry.link.replace('https://github.com/Kesigomon/Skyline_py/commit/', ''),
-                    description=entry.title,
-                    timestamp=datetime.datetime(*entry.updated_parsed[0:7]),
-                    url=entry.link
-                )
-                embed.set_author(name=entry.author, url=entry.author_detail.href,
-                                 icon_url=entry.media_thumbnail[0]['url'])
-                await webhook.send(embed=embed)
-            try:
-                await asyncio.wait_for(self.client._closed.wait() ,timeout=60)
-            except asyncio.TimeoutError:
-                pass
+
+        def check(m):
+            return  m.author.id == webhook.id
+        async with aiohttp.ClientSession() as session:
+            while not self.client.is_closed():
+                try:
+                    message = await channel.history().filter(check).next()
+                except discord.NoMoreItems:
+                    message = None
+                async with session.get(url) as resp:
+                    feed = feedparser.parse(await resp.text())
+                entry = feed.entries[0]
+                flag = message is None or entry.link != message.embeds[0].url
+                if flag:
+                    embed = discord.Embed(
+                        title=entry.link.replace('https://github.com/Kesigomon/Skyline_py/commit/', ''),
+                        description=entry.title,
+                        timestamp=datetime.datetime(*entry.updated_parsed[0:7]),
+                        url=entry.link
+                    )
+                    embed.set_author(name=entry.author, url=entry.author_detail.href,
+                                    icon_url=entry.media_thumbnail[0]['url'])
+                    await webhook.send(embed=embed)
+                try:
+                    await asyncio.wait_for(self.client._closed.wait() ,timeout=60)
+                except asyncio.TimeoutError:
+                    pass
 
     async def task_bump(self):
         disboard_bot_id = 302050872383242240
         Interval = datetime.timedelta(hours=2)
-        disboard_bot = self.client.get_user(disboard_bot_id)
         mention = '<@&515467430018154507>'
 
         def check1(m):
             return m.author == disboard_bot and ':thumbsup:' in m.embeds[0].description
         await self.client.wait_until_ready()
+        disboard_bot = self.client.get_user(disboard_bot_id)
         channel: discord.TextChannel = self.client.get_channel(515467856239132672)
         while not self.client.is_closed():
             try:
-                x = await channel.history().filter().next()
+                mes = await channel.history().filter(check1).next()
             except discord.NoMoreItems:
-                x = None
-            if x is not None:
-                TD1 = datetime.datetime.utcnow() - x.created_at
+                mes = None
+            if mes is not None:
+                TD1 = datetime.datetime.utcnow() - mes.created_at
                 if TD1 >= Interval:
                     await channel.send(
                         mention
@@ -194,7 +197,7 @@ class Events(commands.Cog):
                     + 'このサーバーで一度もコマンドを実行していませんね\n'
                     + 'SKYLINEは!disboard bumpするといいと思います'
                 )
-            # メッセージがクライアントクローズ待ち
+            # メッセージかクライアントクローズ待ち
             await asyncio.wait(
                 [self.client.wait_for(event='message', check=check1),
                  self.client._closed.wait()]
