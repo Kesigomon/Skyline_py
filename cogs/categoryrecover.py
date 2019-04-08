@@ -28,7 +28,7 @@ class Category_recover(commands.Cog):  # 言わずと知れたカテゴリリカ
             if channel.name not in (c.name for c in channel.guild.categories):
                 await channel.guild.create_category(
                     name=channel.name,
-                    overwrites=dict(channel.overwrites)
+                    overwrites=channel.overwrites
                 )
 
     @commands.Cog.listener()

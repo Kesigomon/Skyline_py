@@ -71,6 +71,7 @@ free_categories = [
     515468108392169482
 ]
 
+spam = [515467956113768483, 555687014872383488, 534340672300515328]
 
 async def is_zatudanfolum(ctx):
     try:

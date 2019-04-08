@@ -200,5 +200,6 @@ class Events(commands.Cog):
             # メッセージかクライアントクローズ待ち
             await asyncio.wait(
                 [self.client.wait_for(event='message', check=check1),
-                 self.client._closed.wait()]
+                 self.client._closed.wait()],
+                return_when='FIRST_COMPLETED'
             )
