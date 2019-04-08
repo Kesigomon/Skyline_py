@@ -11,7 +11,7 @@ import textwrap
 import discord
 from discord.ext import commands
 
-from .general import is_staff
+from .general import is_staff, spam
 
 
 class Level_counter:
@@ -147,7 +147,7 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
         member = message.author
         sub_data: Level_counter = self.get_data(member)
         if not self.pattern1.search(message.content):  # BOTコマンドでなければNoneが返る
-            if message.channel.id not in (515467956113768483, 555687014872383488):  # スパムチャンネル以外で
+            if message.channel.id not in spam:  # スパムチャンネル以外で
                 old_level = sub_data.level
                 await sub_data.message()
                 new_level = sub_data.level

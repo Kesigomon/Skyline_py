@@ -136,7 +136,7 @@ class FreeCategory(commands.Cog):
     async def cedit(self, ctx, *args):
         EMOJI = 0x1f1e6  # 絵文字定数(これを足したり引いたりするとリアクション的にうまくいく)
         EMBED_TITLE = 'チャンネル権限編集'
-        if args:
+        if args:  # 引数があれば、そのチャンネルがあるか確認
             try:
                 channel = await commands.TextChannelConverter().convert(ctx, args[0])
             except commands.BadArgument:
@@ -145,11 +145,11 @@ class FreeCategory(commands.Cog):
                 except commands.BadArgument:
                     await ctx.send('チャンネルが見つかりませんでした。')
                     return
-        else:
+        else:  # なければ、コマンドを打ったチャンネル
             channel = ctx.channel
         if (
             (
-                ctx.author in [i[0] for i in channel.overwrites]
+                ctx.author in channel.overwrites
                 and channel.overwrites_for(ctx.author).manage_roles is not False
             )  # メンバーの追加設定があり、かつ「権限の管理」がNone
             or await self.client.is_owner(ctx.author)  # オーナー
@@ -185,13 +185,14 @@ class FreeCategory(commands.Cog):
             await message.delete()
             num_command = ord(reaction.emoji) - EMOJI
             if 0 <= num_command <= 1:
+                # ユーザーまたは役職の追加
                 if num_command == 0:
                     target_type = '役職'
                 else:
                     target_type = 'ユーザー'
-                description = ('チャンネルの追加設定に{0}を追加します。\n'
+                description1 = ('チャンネルの追加設定に{0}を追加します。\n'
                                '追加したい{0}を入力してください').format(target_type)
-                message = await ctx.send(description)
+                message = await ctx.send(description1)
 
                 def check1(m):
                     return (
@@ -214,11 +215,11 @@ class FreeCategory(commands.Cog):
                     return
             elif 2 <= num_command <= 3:
                 action = '変更' if num_command == 2 else '削除'
-                description = (
+                description1 = (
                     '追加設定を{0}します\n'
                     '{0}したい役職、またはユーザーを選んでください'
                 ).format(action)
-                embed = discord.Embed(title=EMBED_TITLE, description=description)
+                embed = discord.Embed(title=EMBED_TITLE, description=description1)
                 overwrites = channel.overwrites
 
                 def func2(_page=0):
@@ -226,19 +227,19 @@ class FreeCategory(commands.Cog):
                     if len(overwrites) < end:
                         end = len(overwrites)
                     start = _page * 17
-                    targets = [i[0] for i in overwrites[start:end]]
+                    tg = [i for i in overwrites.keys()][start:end]
                     try:
-                        targets.remove(self.client.user)
+                        tg.remove(self.client.user)
                     except ValueError:
                         pass
-                    description = '\n'.join(
+                    desc = '\n'.join(
                         '{0}:{1}'.format(chr(i + EMOJI), t.mention)
-                        for i, t in enumerate(targets)
+                        for i, t in enumerate(tg)
                     )
-                    return targets, description
+                    return tg, desc
                 page = 0
-                targets, description = func2(page)
-                embed.add_field(name='役職・ユーザー一覧', value=description)
+                targets, description1 = func2(page)
+                embed.add_field(name='役職・ユーザー一覧', value=description1)
                 message = await ctx.send(embed=embed)
                 [await message.add_reaction(chr(i + EMOJI))
                  for i in range(len(targets))]
@@ -246,12 +247,12 @@ class FreeCategory(commands.Cog):
                 await message.add_reaction('\U0001f51c')
                 await message.add_reaction('\u274c')
 
-                def check3(reaction, user):
+                def check3(r, u):
                     return (
-                        user == ctx.author
-                        and reaction.me
-                        and reaction.message.channel == message.channel
-                        and reaction.message.id == message.id
+                            u == ctx.author
+                            and r.me
+                            and r.message.channel == message.channel
+                            and r.message.id == message.id
                     )
 
                 while True:
@@ -270,10 +271,10 @@ class FreeCategory(commands.Cog):
                     else:
                         break
                     if new_page != page:
-                        new_targets, description = func2(_page=new_page)
-                        if description != '':
+                        new_targets, description1 = func2(_page=new_page)
+                        if description1 != '':
                             embed.set_field_at(
-                                0, name='役職・ユーザー一覧', value=description
+                                0, name='役職・ユーザー一覧', value=description1
                             )
                             await message.edit(embed=embed)
                             page = new_page
@@ -308,12 +309,12 @@ class FreeCategory(commands.Cog):
                             description += ':\u274c\n'
                         n += 1
                     return description
-                overwrite: discord.PermissionOverwrite = channel.overwrites_for(target)
+                overwrite1: discord.PermissionOverwrite = channel.overwrites_for(target)
                 embed = discord.Embed(
                     title=EMBED_TITLE,
                     description='{0}の権限設定を変更します'.format(target.mention)
                 )
-                embed.add_field(name='権限一覧', value=func1(overwrite))
+                embed.add_field(name='権限一覧', value=func1(overwrite1))
                 message3 = await ctx.send(embed=embed)
                 [await message3.add_reaction(chr(i + EMOJI))
                  for i in range(len(perms))]
@@ -340,7 +341,7 @@ class FreeCategory(commands.Cog):
                         break
                     await message3.remove_reaction(reaction, user)
                     perm = perms[ord(reaction.emoji) - EMOJI]
-                    value = getattr(overwrite, perm)
+                    value = getattr(overwrite1, perm)
                     if value:
                         value = False
                     elif value is None:
@@ -349,12 +350,12 @@ class FreeCategory(commands.Cog):
                         value = None
                     if perm == 'manage_roles' and value:
                         value = False
-                    overwrite.update(**{perm: value})
-                    embed.set_field_at(0, name='権限一覧', value=func1(overwrite))
+                    overwrite1.update(**{perm: value})
+                    embed.set_field_at(0, name='権限一覧', value=func1(overwrite1))
                     await message3.edit(embed=embed)
                 else:
                     await message3.delete()
-                    await channel.set_permissions(target, overwrite=overwrite)
+                    await channel.set_permissions(target, overwrite=overwrite1)
                     await ctx.send('権限を変更しました。')
             elif num_command == 3:
                 await channel.set_permissions(target, overwrite=None)

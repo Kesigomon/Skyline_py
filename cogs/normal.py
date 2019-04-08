@@ -24,7 +24,7 @@ class Normal_Command(commands.Cog):
     # サーバ情報表示
     @commands.command()
     async def server(self, ctx):
-        guild = ctx.guild
+        guild: discord.Guild = ctx.guild
         description = '''
         サーバーの名前:{0.name}
         サーバーの人数:{0.member_count}
