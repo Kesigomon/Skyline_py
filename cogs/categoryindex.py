@@ -49,8 +49,9 @@ class Category_Index(commands.Cog):
         index_channel = self._create_category_find_index_channel(category)
         if index_channel is not None:
             try:
-                message = await (index_channel.history(oldest_first=True)
-                                      .filter(lambda m: m.author == self.client.user and not m.embeds))
+                message = await index_channel.history(oldest_first=True) \
+                                      .filter(lambda m: m.author == self.client.user and not m.embeds) \
+                                      .next()
             except discord.NoMoreItems:
                 message = None
             channels = sorted((c for c in category.channels if isinstance(
@@ -68,23 +69,20 @@ class Category_Index(commands.Cog):
         index_channel = self._create_category_find_index_channel(
             channel.category)
         if index_channel is not None:
-            async for message in (index_channel.history(reverse=True)
+            async for message in (index_channel.history(oldest_first=True)
                                   .filter(lambda m: m.author == self.client.user and m.embeds)):
                 match = self.id_match.search(message.embeds[0].description)
                 if match and channel.id == int(match.group(1)):
                     break
             else:
-                try:
-                    del message
-                except UnboundLocalError:
-                    pass
+                message = None
             description = channel.topic if channel.topic else 'トピックはないと思います'
             embed = discord.Embed(title=channel.name,
                                   description='ID:{0}'.format(channel.id))
             embed.add_field(name='チャンネルトピック', value=description)
-            try:
+            if message is not None:
                 await message.edit(embed=embed)
-            except UnboundLocalError:
+            else:
                 await index_channel.send(embed=embed)
             return 1
 
