@@ -1,4 +1,5 @@
 import discord
+import typing
 from discord.ext import commands
 import re
 import asyncio
@@ -33,7 +34,8 @@ class Category_Index(commands.Cog):
         self.index_index = self.client.get_channel(515467529167044608)
 
     # インデックスチャンネルをサーチ。なければNone
-    def _create_category_find_index_channel(self, category) -> discord.TextChannel:
+    def _create_category_find_index_channel(self, category)\
+            -> typing.Union[discord.TextChannel, type(None)]:
         try:
             index_channel: discord.TextChannel = next(
                 c for c in category.channels if c.name == 'category-index')
@@ -46,17 +48,19 @@ class Category_Index(commands.Cog):
     async def _create_category_index1(self, category):
         index_channel = self._create_category_find_index_channel(category)
         if index_channel is not None:
-            async for message in (index_channel.history(reverse=True)
-                                  .filter(lambda m: m.author == self.client.user and not m.embeds)):
-                break
+            try:
+                message = await (index_channel.history(oldest_first=True)
+                                      .filter(lambda m: m.author == self.client.user and not m.embeds))
+            except discord.NoMoreItems:
+                message = None
             channels = sorted((c for c in category.channels if isinstance(
                 c, discord.TextChannel) and c != index_channel), key=lambda c: c.position)
             content = '\n'.join(('-' * 10, self.index_index.mention, '-' * 10, '')) \
                 + '\n'.join(map(lambda c: c.mention,
                                 sorted(channels, key=lambda c: c.position)))
-            try:
+            if message is not None:
                 await message.edit(content=content)
-            except UnboundLocalError:
+            else:
                 await index_channel.send(content=content)
             return 1
 
