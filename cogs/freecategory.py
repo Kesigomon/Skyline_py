@@ -1,4 +1,5 @@
 import discord
+import typing
 from discord.ext import commands
 import textwrap
 from .general import is_staff, free_categories
@@ -133,19 +134,11 @@ class FreeCategory(commands.Cog):
             return None
 
     @commands.command()
-    async def cedit(self, ctx, *args):
+    async def cedit(self, ctx,
+                    channel: typing.Union[discord.TextChannel, discord.VoiceChannel] = None):
         EMOJI = 0x1f1e6  # 絵文字定数(これを足したり引いたりするとリアクション的にうまくいく)
         EMBED_TITLE = 'チャンネル権限編集'
-        if args:  # 引数があれば、そのチャンネルがあるか確認
-            try:
-                channel = await commands.TextChannelConverter().convert(ctx, args[0])
-            except commands.BadArgument:
-                try:
-                    channel = await commands.VoiceChannelConverter().convert(ctx, args[0])
-                except commands.BadArgument:
-                    await ctx.send('チャンネルが見つかりませんでした。')
-                    return
-        else:  # なければ、コマンドを打ったチャンネル
+        if channel is None:
             channel = ctx.channel
         if (
             (
