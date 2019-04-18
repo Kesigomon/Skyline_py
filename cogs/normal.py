@@ -23,6 +23,7 @@ class Normal_Command(commands.Cog):
 
     @commands.command()
     async def tweet(self, ctx: commands.Context):
+        await ctx.message.delete()
         if ctx.channel.id != 515467568652484608:
             await ctx.send('このチャンネルでは実行できません。')
         else:
