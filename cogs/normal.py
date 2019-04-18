@@ -21,6 +21,20 @@ class Normal_Command(commands.Cog):
             title='ロールサーチの結果', description='{0}\nID:{1}'.format(role.mention, role.id))
         await ctx.send(embed=embed)
 
+    @commands.command()
+    async def tweet(self, ctx: commands.Context):
+        if ctx.channel.id != 515467568652484608:
+            await ctx.send('このチャンネルでは実行できません。')
+        else:
+            mes1 = await ctx.send('ツイートを送信してください。')
+            mes2 = await self.client.wait_for(
+                event='message',
+                check=lambda m: m.author == ctx.author and m.channel == ctx.channel
+            )
+            await mes1.delete()
+            [await mes2.add_reaction(i)
+             for i in ('\u2764', '\U0001f501')]
+
     # サーバ情報表示
     @commands.command()
     async def server(self, ctx):
