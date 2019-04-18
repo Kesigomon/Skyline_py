@@ -21,7 +21,7 @@ class Normal_Command(commands.Cog):
             title='ロールサーチの結果', description='{0}\nID:{1}'.format(role.mention, role.id))
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @commands.command(aliases=['tw'])
     async def tweet(self, ctx: commands.Context):
         await ctx.message.delete()
         if ctx.channel.id != 515467568652484608:
