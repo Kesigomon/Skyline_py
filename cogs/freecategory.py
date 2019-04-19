@@ -9,7 +9,7 @@ import asyncio
 class FreeCategory(commands.Cog):
     __slots__ = ('client', 'name', 'staff',)
     permissions_jp = {
-        'create_instant_invite': '招待を作成',
+        # 'create_instant_invite': '招待を作成',
         'manage_channels': 'チャンネルの管理',
         'manage_roles': '権限の管理',
     }
