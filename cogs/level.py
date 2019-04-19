@@ -201,12 +201,15 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
         stream = io.BytesIO(text.encode('utf-8'))
         file = discord.File(stream, filename=self.filename)
         await self.save_channel.send(file=file)
-        task = self.client.loop.create_task(self._change_message(member))
+        task = self.client.loop.create_task(self._change_message(member, self.save_message))
         if wait:
             await task
 
-    async def _change_message(self, member):
-        mes = self.save_message
+    async def _change_message(self, member, mes):
+        if mes.id == self.save_message.id:
+            guildname = self.guild.name
+        else:
+            guildname = '偽物のセーブデータ'
         delta = datetime.datetime.utcnow() - member.joined_at
         q, r = divmod(delta, datetime.timedelta(seconds=60))
         nick = member.display_name[:6]
@@ -214,7 +217,7 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
         title = textwrap.dedent(
             f"""
             {nick}          LV{self.get_data(member).level}       {q}:{r.seconds}
-            {self.guild.name}
+            {guildname}
 
             """
         )
@@ -337,9 +340,18 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
-        if (self.save_message.channel.id == payload.channel_id
-                and self.save_message.id == payload.message_id):
+        if self.save_message.channel.id == payload.channel_id:
+            save = self.save_message.id == payload.message_id
+            if not save:
+                mes = await self.save_message.channel.fetch_message(payload.message_id)
+            else:
+                mes = self.save_message
+            if mes is None or mes.author != self.client.user:
+                return
             user = self.guild.get_member(payload.user_id)
-            await self.save_message.remove_reaction(payload.emoji, user)
-            if await is_staff(user):
+            await mes.remove_reaction(payload.emoji, user)
+            if save and await is_staff(user):
                 await self._save(user)
+            else:
+                await self._change_message(user, mes)
+
