@@ -340,6 +340,8 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
+        if payload.user_id == self.client.user.id:
+            return
         if self.save_message.channel.id == payload.channel_id:
             save = self.save_message.id == payload.message_id
             if not save:
