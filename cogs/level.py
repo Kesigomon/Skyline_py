@@ -68,7 +68,7 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
     __slots__ = ('client', 'save_channel', 'name', 'data', 'firstlaunch', 'ranking_limiter',
                  'cache_messages', 'ranking_channel', 'role_dict', 'save_message', 'guild', 'ready')
     filename = 'Level.json'
-    pattern1 = re.compile(r'^\w*?!', re.ASCII)
+    pattern1 = re.compile(r'^\w*?(!|::)', re.ASCII)
 
     def __init__(self, client, name=None, ):
         self.client: commands.Bot = client
