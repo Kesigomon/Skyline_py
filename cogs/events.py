@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 import datetime
+import re
 import asyncio
 from .general import ZATSUDAN_FORUM_ID, join_message, voice_text
 import aiohttp
@@ -31,10 +32,12 @@ class Events(commands.Cog):
         self.new_member = self.guild.get_channel(515467586679603202)
 
     @commands.Cog.listener()
-    async def on_member_join(self, member):
+    async def on_member_join(self, member: discord.Member):
         if member.guild == self.guild:
             if 'discord.gg' in member.display_name:
                 await member.ban(reason='招待リンクの名前のため、BAN', delete_message_days=1)
+            elif any(i in member.name for i in ('rennsura', 'レンスラ', 'れんすら')):
+                await member.ban(reason='レンスラのため、BAN', delete_message_days=1)
             else:
                 content = join_message.format(member.mention, member.guild.name)
                 await self.new_member.send(content)
@@ -125,7 +128,7 @@ class Events(commands.Cog):
         url = 'https://github.com/Kesigomon/Skyline_py/commits/master.atom'
 
         def check(m):
-            return  m.author.id == webhook.id
+            return m.author.id == webhook.id
         async with aiohttp.ClientSession() as session:
             while not self.client.is_closed():
                 try:
