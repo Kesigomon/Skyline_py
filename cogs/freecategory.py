@@ -72,7 +72,10 @@ class FreeCategory(commands.Cog):
                     await channels2[-1].edit(category=category, position=channel.position)
                 await channel.edit(category=category2)
             else:
+                old_position = channel.position
                 await channel.edit(position=max(channel.position - 1, max_position))
+                new_position = self.client.get_channel(channel.id).position
+                print(f'{channel.name} {old_position} -> {new_position}')
 
     @commands.command(name='ftcc')
     async def free_text_channel_create(self, ctx, name, category_n: int = None):
