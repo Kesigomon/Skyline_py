@@ -68,7 +68,7 @@ class Role_panel(commands.Cog):  # 役職パネルの機能
     @commands.command()
     async def rolepanel_remove(self, ctx, role: discord.Role, tag=None):
         break1 = False
-        async for m in self.channel.history(reverse=True)\
+        async for m in self.channel.history(oldest_first=True)\
                 .filter(lambda m: m.author == self.client.user and m.embeds):
             embed = m.embeds[0]
             description = embed.description
@@ -99,7 +99,7 @@ class Role_panel(commands.Cog):  # 役職パネルの機能
         prog = re.compile(r'<@&(\d*)>')
         roles = {}
         guild: discord.Guild = self.channel.guild
-        async for message in self.channel.history(reverse=True)\
+        async for message in self.channel.history(oldest_first=True)\
                 .filter(filter_func):
             message: discord.Message
             tag = self.pattern.search(message.embeds[0].title).group(1)
