@@ -32,7 +32,7 @@ class Role_panel(commands.Cog):  # 役職パネルの機能
                 and tag in m.embeds[0].title
             )
         break1 = False
-        history = await self.channel.history(reverse=True)\
+        history = await self.channel.history(oldest_first=True)\
             .filter(check).flatten()
         for m in history:
             embed = m.embeds[0]
