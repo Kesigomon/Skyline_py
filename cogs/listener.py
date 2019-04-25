@@ -7,7 +7,7 @@ import aiohttp
 import feedparser
 
 
-class Events(commands.Cog):
+class Listener(commands.Cog):
     __slots__ = ('client', 'name', 'DJ', 'beginner_chat',
                  'Normal_User', 'OverLevel10',
                  'webhook_site', 'webhook_app', 'webhook_runner',

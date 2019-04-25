@@ -241,7 +241,7 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
             ).format(now, nexttime, second)
             self.client.loop.create_task(self.save_channel.send(content=content))
             try:
-                await asyncio.wait_for(self.client._closed.wait() ,timeout=second)
+                await asyncio.wait_for(self.client._closed.wait(), timeout=second)
             except asyncio.TimeoutError:
                 pass
             else:

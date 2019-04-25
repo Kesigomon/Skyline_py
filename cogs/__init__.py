@@ -2,7 +2,7 @@ from .normal import Normal_Command
 from .freecategory import FreeCategory
 from .staff import Staff_Command
 from .level import Level
-from .events import Events
+from .listener import Listener
 from .categoryindex import Category_Index
 from .categoryrecover import Category_recover
 from .botowner import Bot_Owner_Command
@@ -16,5 +16,5 @@ def cogs(bot):
     bot.add_cog(Role_panel(bot, '役職パネル'))
     bot.add_cog(FreeCategory(bot,'自由チャンネル編集コマンド'))
     bot.add_cog(Category_recover(bot, 'カテゴリーリカバリー'))
-    bot.add_cog(Events(bot, '参加・退出通知、VC通知'))
+    bot.add_cog(Listener(bot, '参加・退出通知、VC通知'))
     bot.add_cog(Level(bot, 'レベル機能'))
