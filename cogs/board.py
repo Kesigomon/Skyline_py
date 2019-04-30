@@ -126,7 +126,7 @@ class DiscussionBoard(commands.Cog):
         # 新規作成用チャンネルならチャンネル作成
         if channel in (self.channel1, self.channel2):
             overwrites = {
-                self.client.user:
+                self.bot.user:
                     discord.PermissionOverwrite.from_pair(discord.Permissions.all(), discord.Permissions.none()),
                 message.author:
                     discord.PermissionOverwrite.from_pair(discord.Permissions(66448721), discord.Permissions.none()),
