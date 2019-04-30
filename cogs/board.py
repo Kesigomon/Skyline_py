@@ -139,7 +139,7 @@ class DiscussionBoard(commands.Cog):
                     discord.PermissionOverwrite.from_pair(discord.Permissions(66448721), discord.Permissions.none()),
                 self.guild.default_role:
                     discord.PermissionOverwrite.from_pair(discord.Permissions.none(), discord.Permissions.all()),
-                self.message.get_role(515467411898761216):
+                self.guild.get_role(515467411898761216):
                     discord.PermissionOverwrite.from_pair(discord.Permissions.none(), discord.Permissions.all()),
                 self.guild.get_role(515467425429585941):
                     discord.PermissionOverwrite.from_pair(
