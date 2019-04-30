@@ -15,8 +15,9 @@ class DiscussionBoard(commands.Cog):
     pattern = re.compile(r'(channel|category)(\d+)')
     filename = 'dis.json'
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: commands.Bot, name=None):
         self.bot = bot
+        self.name = name if name is not None else type(self).__name__
         self.guild_id = board_kwargs['guild_id']
         self.channel_ids = board_kwargs['channel_id']
         self.category_ids = board_kwargs['category_id']
