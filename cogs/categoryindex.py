@@ -100,7 +100,7 @@ class Category_Index(commands.Cog):
             await self._create_category_index1(channel.category)
             index_channel = self._create_category_find_index_channel(
                 channel.category)
-            async for message in (index_channel.history(reverse=True)
+            async for message in (index_channel.history(oldest_first=True)
                                   .filter(lambda m: m.author == self.client.user and m.embeds)):
                 match = self.id_match.search(message.embeds[0].description)
                 if match and channel.id == int(match.group(1)):
