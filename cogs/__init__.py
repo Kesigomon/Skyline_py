@@ -7,6 +7,7 @@ from .categoryindex import Category_Index
 from .categoryrecover import Category_recover
 from .botowner import Bot_Owner_Command
 from .rolepanel import Role_panel
+from .board import DiscussionBoard
 
 def cogs(bot):
     bot.add_cog(Normal_Command(bot, '普通のコマンド'))
