@@ -19,3 +19,4 @@ def cogs(bot):
     bot.add_cog(Category_recover(bot, 'カテゴリーリカバリー'))
     bot.add_cog(Events(bot, '参加・退出通知、VC通知'))
     bot.add_cog(Level(bot, 'レベル機能'))
+    bot.add_cog(DiscussionBoard(bot, '掲示板機能'))
