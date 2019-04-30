@@ -77,11 +77,11 @@ spam = [515467956113768483, 555687014872383488, 534340672300515328]
 board_kwargs = {
     'guild_id': ZATSUDAN_FORUM_ID,
     'channel_id': [
-        515467533441040384,
+        572772143729868806,
         572757718939729921,
         531377173869625345
     ],
-    'category_id': free_categories
+    'category_id': [0, 0, 572771784408039424, 0]
 }
 
 async def is_zatudanfolum(ctx):

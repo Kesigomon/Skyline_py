@@ -99,7 +99,11 @@ class DiscussionBoard(commands.Cog):
         while not self.bot.is_closed():
             now = datetime.datetime.utcnow()
             await asyncio.sleep((dt1 - now).total_seconds())
-            for channel in (x1 for x2 in (self.category2.text_channels, self.category3.text_channels) for x1 in x2):
+            channels = (
+                # self.category2.text_channels,
+                self.category3.text_channels,
+            )
+            for channel in (x1 for x2 in channels for x1 in x2):
                 try:
                     # メッセージがあればそれを
                     mes: discord.Message = await channel.history().next()
@@ -124,7 +128,10 @@ class DiscussionBoard(commands.Cog):
             return
         channel = message.channel
         # 新規作成用チャンネルならチャンネル作成
-        if channel in (self.channel1, self.channel2):
+        if channel in (
+                self.channel1,
+               # self.channel2
+        ):
             overwrites = {
                 self.bot.user:
                     discord.PermissionOverwrite.from_pair(discord.Permissions.all(), discord.Permissions.none()),
@@ -138,11 +145,14 @@ class DiscussionBoard(commands.Cog):
                     discord.PermissionOverwrite.from_pair(
                         discord.Permissions(37080128), discord.Permissions(2 ** 53 - 37080129)),
             }
-            category = self.category3 if channel == self.channel1 else self.category1
+            # category = self.category3 if channel == self.channel1 else self.category1
+            category = self.category3
             new_channel = await self.guild.create_text_channel(name=message.content, category=category)
             await channel.send(f'作成しました。\n{new_channel.mention}')
         # 地上 or UNDERGROUND　での発言
-        elif channel.category in (self.category2, self.category3):
+        elif channel.category in (
+                # self.category2,
+                self.category3,):
             # カウンターに存在すればその値 + 1
             # 存在しなければ 1
             count = self.counter.setdefault(channel, 0) + 1
@@ -150,9 +160,9 @@ class DiscussionBoard(commands.Cog):
             if count % 10 == 0:
                 # 7つのソウル（人間単位）の力で地上へ出れる！
                 # 10発言＝1人の人間のソウルって感じ？
-                if count == 70:
-                    await channel.edit(category=self.category2)
-                # 10発言ごとに上に行ける
-                else:
-                    await channel.edit(position=max(0, channel.position - 1))
+                # if count == 70:
+                #     await channel.edit(category=self.category2)
+                # # 10発言ごとに上に行ける
+                # else:
+                await channel.edit(position=max(0, channel.position - 1))
             self.counter[message.channel] = count
