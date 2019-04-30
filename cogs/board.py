@@ -49,8 +49,8 @@ class DiscussionBoard(commands.Cog):
 
     async def _save(self):
         data = {
-            'counter': {str(k.id): v for k, v in self.counter},
-            'user_limiter': {str(k.id): v for k, v in self.user_limiter}
+            'counter': {str(k.id): v for k, v in self.counter.items()},
+            'user_limiter': {str(k.id): v for k, v in self.user_limiter.items()}
         }
         await self.channel3.send(
             file=discord.File(
