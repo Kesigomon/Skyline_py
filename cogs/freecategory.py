@@ -42,40 +42,40 @@ class FreeCategory(commands.Cog):
     def categories(self):
         return list(filter(None, (self.client.get_channel(i) for i in free_categories)))
 
-    @commands.Cog.listener()
-    async def on_message(self, message):
-        channel: discord.TextChannel = message.channel
-        category = channel.category
-        if category is None:
-            return
-        try:
-            index = self.categories.index(category)
-        except ValueError:
-            pass
-        else:
-            if index == 0:  # 個人チャンネルは無視する
-                return
-            channels = category.text_channels
-            channels.sort(key=lambda c: c.position)
-            max_position = channels[1].position + 1
-            if channel.position < max_position:  # ここって何？orカテゴリインデックスならスルーする
-                return
-            elif channel.position == max_position:  # カテゴリの一番上でさらに発言したときの処理
-                if index == 1:  # 第一カテゴリの一番上ならスルーする
-                    return
-                while True:
-                    category2 = self.categories[index - 1]  # 一個上のカテゴリ
-                    if len(category2.channels) < 49:  # チャンネル数オーバーなら入れ替えを行う
-                        break
-                    channels2 = category2.text_channels
-                    channels2.sort(key=lambda c: c.position)
-                    await channels2[-1].edit(category=category, position=channel.position)
-                await channel.edit(category=category2)
-            else:
-                old_position = channel.position
-                await channel.edit(position=max(channel.position - 1, max_position))
-                new_position = self.client.get_channel(channel.id).position
-                print(f'{channel.name} {old_position} -> {new_position}')
+    # @commands.Cog.listener()
+    # async def on_message(self, message):
+    #     channel: discord.TextChannel = message.channel
+    #     category = channel.category
+    #     if category is None:
+    #         return
+    #     try:
+    #         index = self.categories.index(category)
+    #     except ValueError:
+    #         pass
+    #     else:
+    #         if index == 0:  # 個人チャンネルは無視する
+    #             return
+    #         channels = category.text_channels
+    #         channels.sort(key=lambda c: c.position)
+    #         max_position = channels[1].position + 1
+    #         if channel.position < max_position:  # ここって何？orカテゴリインデックスならスルーする
+    #             return
+    #         elif channel.position == max_position:  # カテゴリの一番上でさらに発言したときの処理
+    #             if index == 1:  # 第一カテゴリの一番上ならスルーする
+    #                 return
+    #             while True:
+    #                 category2 = self.categories[index - 1]  # 一個上のカテゴリ
+    #                 if len(category2.channels) < 49:  # チャンネル数オーバーなら入れ替えを行う
+    #                     break
+    #                 channels2 = category2.text_channels
+    #                 channels2.sort(key=lambda c: c.position)
+    #                 await channels2[-1].edit(category=category, position=channel.position)
+    #             await channel.edit(category=category2)
+    #         else:
+    #             old_position = channel.position
+    #             await channel.edit(position=max(channel.position - 1, max_position))
+    #             new_position = self.client.get_channel(channel.id).position
+    #             print(f'{channel.name} {old_position} -> {new_position}')
 
     # @commands.command(name='ftcc')
     # async def free_text_channel_create(self, ctx, name, category_n: int = None):
