@@ -193,6 +193,9 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
         await self.update_level(member, data.level)
 
     async def _save(self, member, wait=False):
+        loop = self.client.loop
+        events_task = [loop.create_task(f()) for f in
+                       self.client.extra_events.get('on_save', [])]
         data_dict = {
             key: {k1: getattr(value, k1) for k1 in ('exp', 'count', 'rank', 'bot_count',)}
             for key, value in self.data.items()
@@ -201,7 +204,9 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
         stream = io.BytesIO(text.encode('utf-8'))
         file = discord.File(stream, filename=self.filename)
         await self.save_channel.send(file=file)
-        task = self.client.loop.create_task(self._change_message(member, self.save_message))
+        if events_task:
+            await asyncio.wait(events_task)
+        task = loop.create_task(self._change_message(member, self.save_message))
         if wait:
             await task
 
