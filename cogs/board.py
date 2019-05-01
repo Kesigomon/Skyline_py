@@ -115,7 +115,7 @@ class DiscussionBoard(commands.Cog):
                     # 最後のメッセージの時間
                     dt2 = mes.created_at
                 # １週間以上更新がないと遺跡に封印される。
-                if datetime.datetime.utcnow() - dt2 >= datetime.timedelta(days=1):
+                if datetime.datetime.utcnow() - dt2 >= datetime.timedelta(days=7):
                     await channel.edit(category=self.category4)
             self.user_limiter.clear()
             await self._save()
