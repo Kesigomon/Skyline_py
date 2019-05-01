@@ -169,7 +169,9 @@ class DiscussionBoard(commands.Cog):
                     top_channel_position = channels[0].position
                     channel_old_position = channels.index(channel)
                     await channel.edit(
-                        position=max(top_channel_position + 2,  # 最大ポジション
-                                     top_channel_position + channel_old_position - 1)
+                        position=max(
+                            top_channel_position + channel_old_position - 1,
+                            top_channel_position
+                        )
                     )
             self.counter[message.channel] = count
