@@ -14,6 +14,8 @@ class Events(commands.Cog):
                  'webhook_site', 'webhook_app', 'webhook_runner',
                  'saves', 'new_member', 'tasks')
 
+    pattern = re.compile(r'discord(?:\.gg|app\.com/invite)/([a-zA-Z0-9]+)')
+
     def __init__(self, client, name=None):
         self.client: commands.Bot = client
         self.name = name if name is not None else type(self).__name__
@@ -34,7 +36,7 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         if member.guild == self.guild:
-            if 'discord.gg' in member.display_name:
+            if self.pattern.search(member.display_name):
                 await member.ban(reason='招待リンクの名前のため、BAN', delete_message_days=1)
             elif any(i in member.name for i in ('rennsura', 'レンスラ', 'れんすら')):
                 await member.ban(reason='レンスラのため、BAN', delete_message_days=1)
