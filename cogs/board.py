@@ -165,5 +165,14 @@ class DiscussionBoard(commands.Cog):
                 #     await channel.edit(category=self.category2)
                 # # 10発言ごとに上に行ける
                 # else:
-                await channel.edit(position=max(0, channel.position - 1))
+                # チャンネルポジションを正しく計算していくスタイル。
+                # なんか知らんけど、discord側に頼ると上がらない時がある。
+                channels = sorted(channel.category.channels, key=lambda c: c.position)
+                # 一番上のチャンネルに、上から数えての位置を足す感じ
+                top_channel_position = channels[0].position
+                channel_old_position = channels.index(channel)
+                await channel.edit(
+                    position=max(top_channel_position + 2,  # 最大ポジション
+                                 top_channel_position + channel_old_position - 1)
+                )
             self.counter[message.channel] = count
