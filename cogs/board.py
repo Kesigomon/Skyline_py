@@ -133,23 +133,27 @@ class DiscussionBoard(commands.Cog):
                 self.channel1,
                # self.channel2
         ):
-            overwrites = {
-                self.bot.user:
-                    discord.PermissionOverwrite.from_pair(discord.Permissions.all(), discord.Permissions.none()),
-                message.author:
-                    discord.PermissionOverwrite.from_pair(discord.Permissions(66448721), discord.Permissions.none()),
-                self.guild.default_role:
-                    discord.PermissionOverwrite.from_pair(discord.Permissions.none(), discord.Permissions.all()),
-                self.guild.get_role(515467411898761216):
-                    discord.PermissionOverwrite.from_pair(discord.Permissions.none(), discord.Permissions.all()),
-                self.guild.get_role(515467425429585941):
-                    discord.PermissionOverwrite.from_pair(
-                        discord.Permissions(37080128), discord.Permissions(2 ** 53 - 37080129)),
-            }
-            # category = self.category3 if channel == self.channel1 else self.category1
-            category = self.category3
-            new_channel = await self.guild.create_text_channel(name=message.content, category=category)
-            await channel.send(f'作成しました。\n{new_channel.mention}')
+            if self.user_limiter.setdefault(message.author, 0) >= 3:
+                await channel.send('あなたは今日はチャンネルを作れません')
+            else:
+                self.user_limiter[message.author] += 1
+                overwrites = {
+                    self.bot.user:
+                        discord.PermissionOverwrite.from_pair(discord.Permissions.all(), discord.Permissions.none()),
+                    message.author:
+                        discord.PermissionOverwrite.from_pair(discord.Permissions(66448721), discord.Permissions.none()),
+                    self.guild.default_role:
+                        discord.PermissionOverwrite.from_pair(discord.Permissions.none(), discord.Permissions.all()),
+                    self.guild.get_role(515467411898761216):
+                        discord.PermissionOverwrite.from_pair(discord.Permissions.none(), discord.Permissions.all()),
+                    self.guild.get_role(515467425429585941):
+                        discord.PermissionOverwrite.from_pair(
+                            discord.Permissions(37080128), discord.Permissions(2 ** 53 - 37080129)),
+                }
+                # category = self.category3 if channel == self.channel1 else self.category1
+                category = self.category3
+                new_channel = await self.guild.create_text_channel(name=message.content, category=category)
+                await channel.send(f'作成しました。\n{new_channel.mention}')
         # 地上 or UNDERGROUND　での発言
         elif channel.category in (
                 # self.category2,
