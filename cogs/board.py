@@ -102,7 +102,7 @@ class DiscussionBoard(commands.Cog):
             await asyncio.sleep((dt1 - now).total_seconds())
             channels = (
                 # self.category2.text_channels,
-                self.category3.text_channels,
+                sorted(self.category3.text_channels, key=lambda c: c.position)[2:],
             )
             for channel in (x1 for x2 in channels for x1 in x2):
                 try:
