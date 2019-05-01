@@ -49,7 +49,8 @@ class DiscussionBoard(commands.Cog):
 
     async def _save(self):
         data = {
-            'counter': {str(k.id): v for k, v in self.counter.items()},
+            'counter': {str(k.id): v for k, v in self.counter.items()
+                        if k is not None},
             'user_limiter': {str(k.id): v for k, v in self.user_limiter.items()}
         }
         await self.channel3.send(
