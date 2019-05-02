@@ -3,7 +3,7 @@ from discord.ext import commands
 import datetime
 import re
 import asyncio
-from .general import ZATSUDAN_FORUM_ID, join_message, voice_text
+from .general import ZATSUDAN_FORUM_ID, join_message, voice_text, is_staff
 import aiohttp
 import feedparser
 
@@ -12,9 +12,10 @@ class Events(commands.Cog):
     __slots__ = ('client', 'name', 'DJ', 'beginner_chat',
                  'Normal_User', 'OverLevel10',
                  'webhook_site', 'webhook_app', 'webhook_runner',
-                 'saves', 'new_member', 'tasks')
+                 'saves', 'new_member', 'tasks', 'mention_counter')
 
-    pattern = re.compile(r'discord(?:\.gg|app\.com/invite)/([a-zA-Z0-9]+)')
+    pattern1 = re.compile(r'discord(?:\.gg|app\.com/invite)/([a-zA-Z0-9]+)')
+    pattern2 = re.compile(r'(@everyone|@here|<@\d+?>)')
 
     def __init__(self, client, name=None):
         self.client: commands.Bot = client
@@ -23,6 +24,7 @@ class Events(commands.Cog):
             self.client.loop.create_task(coro)
             for coro in (self.task_bump(), self.task_skyline_update())
         ]
+        self.mention_counter = {}
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -36,7 +38,7 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         if member.guild == self.guild:
-            if self.pattern.search(member.display_name):
+            if self.pattern1.search(member.display_name):
                 await member.ban(reason='招待リンクの名前のため、BAN', delete_message_days=1)
             elif any(i in member.name for i in ('rennsura', 'レンスラ', 'れんすら')):
                 await member.ban(reason='レンスラのため、BAN', delete_message_days=1)
@@ -117,6 +119,22 @@ class Events(commands.Cog):
                 await text_channel.send(embed=embed, delete_after=180)
                 if before.channel.id == 515467651691315220:  # 音楽鑑賞VCの場合
                     await member.remove_roles(self.DJ)  # DJ役職を解除
+
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        # スタッフは判定しない
+        if not await is_staff(message.author):
+            # メンションカウンターに登録されていないならデフォルト値を設定しておく
+            self.mention_counter.setdefault(message.author, 0)
+            # メンションのある発言なら、マッチする
+            if self.pattern2.search(message.content):
+                self.mention_counter[message.author] += 1
+                if self.mention_counter[message.author] >= 3:
+                    callback = self.client.get_command('limit').callback
+                    await callback(message, message.author)
+            # メンションのない発言ならカウンターリセット
+            else:
+                self.mention_counter[message.author] = 0
 
     @commands.Cog.listener()
     async def on_close(self):
