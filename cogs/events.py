@@ -122,19 +122,17 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        # スタッフは判定しない
-        if not await is_staff(message.author):
-            # メンションカウンターに登録されていないならデフォルト値を設定しておく
-            self.mention_counter.setdefault(message.author, 0)
-            # メンションのある発言なら、マッチする
-            if self.pattern2.search(message.content):
-                self.mention_counter[message.author] += 1
-                if self.mention_counter[message.author] >= 3:
-                    callback = self.client.get_command('limit').callback
-                    await callback(message, message.author)
-            # メンションのない発言ならカウンターリセット
-            else:
-                self.mention_counter[message.author] = 0
+        # メンションカウンターに登録されていないならデフォルト値を設定しておく
+        self.mention_counter.setdefault(message.author, 0)
+        # メンションのある発言なら、マッチする
+        if self.pattern2.search(message.content):
+            self.mention_counter[message.author] += 1
+            if self.mention_counter[message.author] >= 3:
+                callback = self.client.get_command('limit').callback
+                await callback(message, message.author)
+        # メンションのない発言ならカウンターリセット
+        else:
+            self.mention_counter[message.author] = 0
 
     @commands.Cog.listener()
     async def on_close(self):
