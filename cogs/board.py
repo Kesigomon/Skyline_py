@@ -3,6 +3,7 @@ import re
 import asyncio
 import json
 import io
+import typing
 
 import discord
 from discord.ext import commands
@@ -104,6 +105,7 @@ class DiscussionBoard(commands.Cog):
                 sorted(self.category1.text_channels, key=lambda c: c.position)[3:],
                 self.category2.text_channels,
             )
+            channel: discord.TextChannel
             for channel in (x1 for x2 in channels for x1 in x2):
                 try:
                     # メッセージがあればそれを
@@ -114,9 +116,19 @@ class DiscussionBoard(commands.Cog):
                 else:
                     # 最後のメッセージの時間
                     dt2 = mes.created_at
-                # １週間以上更新がないと遺跡に封印される。
-                if datetime.datetime.utcnow() - dt2 >= datetime.timedelta(days=7):
-                    await channel.edit(category=self.category3)
+                # UNDERGROUNDなら3日で遺跡に
+                if channel.category == self.category2:
+                    td1 = datetime.timedelta(days=3)
+                    category = self.category3
+                # 地上なら7日でUNDERGROUNDに
+                elif channel.category == self.category1:
+                    td1 = datetime.timedelta(days=7)
+                    category = self.category2
+                else:
+                    continue
+                # ここで条件を満たしていればチャンネルを対象カテゴリに移動
+                if datetime.datetime.utcnow() - dt2 >= td1:
+                    await channel.edit(category=category, sync_permissions=True)
             self.user_limiter.clear()
             await self._save()
             dt1 += datetime.timedelta(days=1)
@@ -138,7 +150,8 @@ class DiscussionBoard(commands.Cog):
                     self.bot.user:
                         discord.PermissionOverwrite.from_pair(discord.Permissions.all(), discord.Permissions.none()),
                     message.author:
-                        discord.PermissionOverwrite.from_pair(discord.Permissions(66448721), discord.Permissions.none()),
+                        discord.PermissionOverwrite.from_pair(
+                            discord.Permissions(66448721), discord.Permissions.none()),
                     self.guild.default_role:
                         discord.PermissionOverwrite.from_pair(discord.Permissions.none(), discord.Permissions.all()),
                     self.guild.get_role(515467411898761216):
@@ -147,31 +160,37 @@ class DiscussionBoard(commands.Cog):
                         discord.PermissionOverwrite.from_pair(
                             discord.Permissions(37080128), discord.Permissions(2 ** 53 - 37080129)),
                 }
-                new_channel = await self.guild.create_text_channel(name=message.content, category=self.category2)
+                new_channel = await self.guild.create_text_channel(
+                    name=message.content, category=self.category2, overwrites=overwrites)
                 await channel.send(f'作成しました。\n{new_channel.mention}')
-        # 地上 or UNDERGROUND　での発言
+        # UNDERGROUND　での発言
         elif channel.category == self.category2:
             # カウンターに存在すればその値 + 1
             # 存在しなければ 1
             count = self.counter.setdefault(channel, 0) + 1
             # 10で割り切れる数字のときの処理
             if count % 10 == 0:
-                # 7つのソウル（人間単位）の力で地上へ出れる！
-                # 10発言＝1人の人間のソウルって感じ？
-                if count == 70:
-                    await channel.edit(category=self.category1)
-                else:
-                    # 10発言ごとに上に行ける
-                    # チャンネルポジションを正しく計算していくスタイル。
-                    # なんか知らんけど、discord側に頼ると上がらない時がある。
-                    channels = sorted(channel.category.channels, key=lambda c: c.position)
-                    # 一番上のチャンネルに、上から数えての位置を足す感じ
-                    top_channel_position = channels[0].position
-                    channel_old_position = channels.index(channel)
-                    await channel.edit(
-                        position=max(
-                            top_channel_position + channel_old_position - 1,
-                            top_channel_position
-                        )
+                # 10発言ごとに上に行ける
+                # チャンネルポジションを正しく計算していくスタイル。
+                # なんか知らんけど、discord側に頼ると上がらない時がある。
+                channels = sorted(channel.category.channels, key=lambda c: c.position)
+                # 一番上のチャンネルに、上から数えての位置を足す感じ
+                top_channel_position = channels[0].position
+                channel_old_position = channels.index(channel)
+                await channel.edit(
+                    position=max(
+                        top_channel_position + channel_old_position - 1,
+                        top_channel_position
                     )
+                )
+            if count >= 1000:
+                await channel.edit(category=self.category1)
             self.counter[message.channel] = count
+
+    @commands.command()
+    async def reboon(self, ctx, channel: typing.Union[discord.TextChannel, discord.VoiceChannel]):
+        if channel.category == self.category3:
+            await channel.edit(sync_permissions=True, category=self.category2)
+            await ctx.send('復活しました。')
+        else:
+            await ctx.send('そのチャンネルは復活できません')
