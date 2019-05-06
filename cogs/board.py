@@ -134,15 +134,18 @@ class DiscussionBoard(commands.Cog):
                 if channel.category in self.category_underground:
                     td1 = datetime.timedelta(days=3)
                     category = self.category_ruins
+                    content = '＊このチャンネルは発言がないので、過去ログスレッド倉庫に移動した。'
                 # 地上なら7日でUNDERGROUNDに
                 elif channel.category == self.category_surface:
                     td1 = datetime.timedelta(days=7)
                     category = self.category_underground
+                    content = '＊このチャンネルは発言がないので、雑談板に戻された。'
                 else:
                     continue
                 # ここで条件を満たしていればチャンネルを対象カテゴリに移動
                 if datetime.datetime.utcnow() - dt2 >= td1:
                     await channel.edit(category=category, sync_permissions=True)
+                    await channel.send(content)
             self.user_limiter.clear()
             await self._save()
             dt1 += datetime.timedelta(days=1)
@@ -157,7 +160,7 @@ class DiscussionBoard(commands.Cog):
         # 新規作成用チャンネルならチャンネル作成
         if channel == self.channel_create:
             if self.user_limiter.setdefault(message.author, 0) >= 3:
-                await channel.send('あなたは今日はチャンネルを作れません')
+                await channel.send('＊あなたは今日はもうチャンネルを作れない。')
             else:
                 self.user_limiter[message.author] += 1
                 overwrites = {
@@ -179,10 +182,10 @@ class DiscussionBoard(commands.Cog):
                         continue
                     new_channel = await self.guild.create_text_channel(
                         name=message.content, category=category, overwrites=overwrites)
-                    await channel.send(f'作成しました。\n{new_channel.mention}')
+                    await channel.send(f'＊作成完了。\n{new_channel.mention}')
                     break
                 else:
-                    await channel.send('カテゴリがいっぱいでこれ以上作成できません。')
+                    await channel.send('＊カテゴリがいっぱいでこれ以上作成できない。')
         # UNDERGROUND　での発言
         elif channel.category in self.category_underground:
             # カウンターに存在すればその値 + 1
@@ -214,18 +217,23 @@ class DiscussionBoard(commands.Cog):
                     )
             if count >= 1000:
                 await channel.edit(category=self.category_surface)
+                await channel.send(
+                    '＊たくさんの発言の力で、このチャンネルは雑談板保存版に移動した。'
+                )
             self.counter[message.channel] = count
 
     @commands.command()
-    async def reboon(self, ctx, channel: typing.Union[discord.TextChannel, discord.VoiceChannel]):
+    async def reborn(self, ctx, channel: typing.Union[discord.TextChannel, discord.VoiceChannel] = None):
+        if channel is None:
+            channel = ctx.channel
         if channel.category == self.category_ruins:
             for category in self.category_underground:
                 if len(category.channels) >= 49:
                     continue
                 await channel.edit(sync_permissions=True, category=category)
-                await ctx.send('復活しました。')
+                await channel.send('＊いやだ。けされるもんか。')
                 break
             else:
-                await channel.send('カテゴリがいっぱいで復活できません。')
+                await ctx.send('＊カテゴリがいっぱいで復活できない。')
         else:
-            await ctx.send('そのチャンネルは復活できません')
+            await ctx.send('＊そのチャンネルは復活できない。')
