@@ -25,16 +25,27 @@ class DiscussionBoard(commands.Cog):
         self.counter = {}
         self.user_limiter = {}
         self.ready = asyncio.Event(loop=bot.loop)
-        t = bot.loop.create_task(self.autoclear())
+        bot.loop.create_task(self.autoclear())
 
-    def __getattr__(self, item):
-        match = self.pattern.match(item)
-        if match and not item.endswith('_ids'):
-            return self.bot.get_channel(
-                getattr(self, f'{match.group(1)}_ids')[int(match.group(2)) - 1]
-            )
-        else:
-            raise AttributeError
+    @property
+    def channel_create(self):
+        return self.bot.get_channel(self.channel_ids[0])
+
+    @property
+    def channel_save(self) -> discord.TextChannel:
+        return self.bot.get_channel(self.channel_ids[1])
+
+    @property
+    def category_surface(self):
+        return self.bot.get_channel(self.category_ids[0])
+
+    @property
+    def category_underground(self) -> typing.List[discord.CategoryChannel]:
+        return [self.bot.get_channel(i) for i in self.category_ids[1:3]]
+
+    @property
+    def category_ruins(self):
+        return self.bot.get_channel(self.category_ids[3])
 
     @property
     def guild(self) -> discord.Guild:
@@ -48,13 +59,16 @@ class DiscussionBoard(commands.Cog):
     async def on_save(self):
         await self._save()
 
+    async def cog_before_invoke(self, ctx):
+        await self.ready.wait()
+
     async def _save(self):
         data = {
             'counter': {str(k.id): v for k, v in self.counter.items()
                         if k is not None},
             'user_limiter': {str(k.id): v for k, v in self.user_limiter.items()}
         }
-        await self.channel2.send(
+        await self.channel_save.send(
             file=discord.File(
                 io.StringIO(json.dumps(data, indent=4)),
                 filename=self.filename
@@ -76,7 +90,7 @@ class DiscussionBoard(commands.Cog):
 
         # 次回再起動前２４時間以内に作られたセーブ
         mes: discord.Message
-        async for mes in self.channel2.history(after=dt1 - datetime.timedelta(days=1)).filter(check):
+        async for mes in self.channel_save.history(after=dt1 - datetime.timedelta(days=1)).filter(check):
             attach: discord.Attachment
             for attach in mes.attachments:
                 if attach.filename == self.filename:
@@ -102,8 +116,8 @@ class DiscussionBoard(commands.Cog):
             now = datetime.datetime.utcnow()
             await asyncio.sleep((dt1 - now).total_seconds())
             channels = (
-                sorted(self.category1.text_channels, key=lambda c: c.position)[3:],
-                self.category2.text_channels,
+                sorted(self.category_surface.text_channels, key=lambda c: c.position)[3:],
+                *(c.channels for c in self.category_underground)
             )
             channel: discord.TextChannel
             for channel in (x1 for x2 in channels for x1 in x2):
@@ -117,13 +131,13 @@ class DiscussionBoard(commands.Cog):
                     # 最後のメッセージの時間
                     dt2 = mes.created_at
                 # UNDERGROUNDなら3日で遺跡に
-                if channel.category == self.category2:
+                if channel.category in self.category_underground:
                     td1 = datetime.timedelta(days=3)
-                    category = self.category3
+                    category = self.category_ruins
                 # 地上なら7日でUNDERGROUNDに
-                elif channel.category == self.category1:
+                elif channel.category == self.category_surface:
                     td1 = datetime.timedelta(days=7)
-                    category = self.category2
+                    category = self.category_underground
                 else:
                     continue
                 # ここで条件を満たしていればチャンネルを対象カテゴリに移動
@@ -141,7 +155,7 @@ class DiscussionBoard(commands.Cog):
             return
         channel = message.channel
         # 新規作成用チャンネルならチャンネル作成
-        if channel == self.channel1:
+        if channel == self.channel_create:
             if self.user_limiter.setdefault(message.author, 0) >= 3:
                 await channel.send('あなたは今日はチャンネルを作れません')
             else:
@@ -160,11 +174,17 @@ class DiscussionBoard(commands.Cog):
                         discord.PermissionOverwrite.from_pair(
                             discord.Permissions(37080128), discord.Permissions(2 ** 53 - 37080129)),
                 }
-                new_channel = await self.guild.create_text_channel(
-                    name=message.content, category=self.category2, overwrites=overwrites)
-                await channel.send(f'作成しました。\n{new_channel.mention}')
+                for category in self.category_underground:
+                    if len(category.channels) >= 49:
+                        continue
+                    new_channel = await self.guild.create_text_channel(
+                        name=message.content, category=category, overwrites=overwrites)
+                    await channel.send(f'作成しました。\n{new_channel.mention}')
+                    break
+                else:
+                    await channel.send('カテゴリがいっぱいでこれ以上作成できません。')
         # UNDERGROUND　での発言
-        elif channel.category == self.category2:
+        elif channel.category in self.category_underground:
             # カウンターに存在すればその値 + 1
             # 存在しなければ 1
             count = self.counter.setdefault(channel, 0) + 1
@@ -174,23 +194,38 @@ class DiscussionBoard(commands.Cog):
                 # チャンネルポジションを正しく計算していくスタイル。
                 # なんか知らんけど、discord側に頼ると上がらない時がある。
                 channels = sorted(channel.category.channels, key=lambda c: c.position)
-                # 一番上のチャンネルに、上から数えての位置を足す感じ
-                top_channel_position = channels[0].position
-                channel_old_position = channels.index(channel)
-                await channel.edit(
-                    position=max(
-                        top_channel_position + channel_old_position - 1,
-                        top_channel_position
+                top_channel = channels[0]
+                if channel == top_channel:
+                    index = self.category_underground.index(channel.category)
+                    if index != 0:
+                        while True:
+                            category2 = self.category_underground[index - 1]  # 一個上のカテゴリ
+                            if len(category2.channels) < 49:  # チャンネル数オーバーなら入れ替えを行う
+                                break
+                            channels2 = category2.text_channels
+                            channels2.sort(key=lambda c: c.position)
+                            await channels2[-1].edit(category=channel.category, position=channel.position)
+                        position = sorted(category2.channels, key=lambda c: c.position)[-1].position + 1
+                        await channel.edit(category=category2, position=position)
+                else:
+                    # 一番上のチャンネルに、上から数えての位置を足す感じ
+                    await channel.edit(
+                        position=top_channel.position + channels.index(channel) - 1
                     )
-                )
             if count >= 1000:
-                await channel.edit(category=self.category1)
+                await channel.edit(category=self.category_surface)
             self.counter[message.channel] = count
 
     @commands.command()
     async def reboon(self, ctx, channel: typing.Union[discord.TextChannel, discord.VoiceChannel]):
-        if channel.category == self.category3:
-            await channel.edit(sync_permissions=True, category=self.category2)
-            await ctx.send('復活しました。')
+        if channel.category == self.category_ruins:
+            for category in self.category_underground:
+                if len(category.channels) >= 49:
+                    continue
+                await channel.edit(sync_permissions=True, category=category)
+                await ctx.send('復活しました。')
+                break
+            else:
+                await channel.send('カテゴリがいっぱいで復活できません。')
         else:
             await ctx.send('そのチャンネルは復活できません')
