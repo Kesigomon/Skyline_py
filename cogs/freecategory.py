@@ -2,7 +2,7 @@ import discord
 import typing
 from discord.ext import commands
 import textwrap
-from .general import is_staff, free_categories
+from .general import is_staff, free_category
 import asyncio
 
 
@@ -39,47 +39,12 @@ class FreeCategory(commands.Cog):
         self.name = name if name is not None else type(self).__name__
 
     @property
-    def categories(self):
-        return list(filter(None, (self.client.get_channel(i) for i in free_categories)))
-
-    @commands.Cog.listener()
-    async def on_message(self, message):
-        channel: discord.TextChannel = message.channel
-        category = channel.category
-        if category is None:
-            return
-        try:
-            index = self.categories.index(category)
-        except ValueError:
-            pass
-        else:
-            if index == 0:  # 個人チャンネルは無視する
-                return
-            channels = category.text_channels
-            channels.sort(key=lambda c: c.position)
-            max_position = channels[1].position + 1
-            if channel.position < max_position:  # ここって何？orカテゴリインデックスならスルーする
-                return
-            elif channel.position == max_position:  # カテゴリの一番上でさらに発言したときの処理
-                if index == 1:  # 第一カテゴリの一番上ならスルーする
-                    return
-                while True:
-                    category2 = self.categories[index - 1]  # 一個上のカテゴリ
-                    if len(category2.channels) < 49:  # チャンネル数オーバーなら入れ替えを行う
-                        break
-                    channels2 = category2.text_channels
-                    channels2.sort(key=lambda c: c.position)
-                    await channels2[-1].edit(category=category, position=channel.position)
-                await channel.edit(category=category2)
-            else:
-                old_position = channel.position
-                await channel.edit(position=max(channel.position - 1, max_position))
-                new_position = self.client.get_channel(channel.id).position
-                print(f'{channel.name} {old_position} -> {new_position}')
+    def category(self):
+        return self.client.get_channel(free_category)
 
     @commands.command(name='ftcc')
-    async def free_text_channel_create(self, ctx, name, category_n: int = None):
-        channel = await self._free_channel_create(ctx, name, category_n, VC=False)
+    async def free_text_channel_create(self, ctx, *, name):
+        channel = await self._free_channel_create(ctx, name, VC=False)
         if channel is not None:
             await ctx.send(
                 '作成しました。\n{0}\nあと{1}チャンネル作成可能。'
@@ -87,54 +52,43 @@ class FreeCategory(commands.Cog):
             )
 
     @commands.command(name='fvcc')
-    async def free_voice_channel_create(self, ctx, name, category_n: int = None):
-        channel = await self._free_channel_create(ctx, name, category_n, VC=True)
+    async def free_voice_channel_create(self, ctx, *, name):
+        channel = await self._free_channel_create(ctx, name, VC=True)
         if channel is not None:
             await ctx.send(
                 '作成しました。\nあと{0}チャンネル作成可能。'
                 .format(49 - len(channel.category.channels))
             )
 
-    async def _free_channel_create(self, ctx, name, category_n=None, VC=False):
-        if 515467423101747200 in (r.id for r in ctx.author.roles) or True:  # 一時的に全員使用可能(or True)
-            if category_n is None:
-                category_n = 1
-                while len(self.categories[category_n].channels) >= 49:  # チャンネル数49以上のカテゴリがあれば次のカテゴリへ
-                    category_n += 1
-                    if category_n == len(self.categories) - 1:
-                        break
-            category = self.categories[category_n]
-            if (len(category.channels) >= 50
-                    or (category_n >= 1 and len(category.channels) >= 49)):
-                await ctx.send(textwrap.dedent(
-                  """
-                チャンネルが一杯でこのカテゴリには作成できません。
-                別なカテゴリを指定してください。
-                指定していないときにこのメッセージが出た場合は、運営に連絡してください。
-                """
-                ))
-                return
-            guild = category.guild
-            overwrites = {
-                self.client.user:
-                    discord.PermissionOverwrite.from_pair(discord.Permissions.all(), discord.Permissions.none()),
-                ctx.author:
-                    discord.PermissionOverwrite.from_pair(discord.Permissions(66448721), discord.Permissions.none()),
-                guild.default_role:
-                    discord.PermissionOverwrite.from_pair(discord.Permissions.none(), discord.Permissions.all()),
-                guild.get_role(515467411898761216):
-                    discord.PermissionOverwrite.from_pair(discord.Permissions.none(), discord.Permissions.all()),
-                guild.get_role(515467425429585941):
-                    discord.PermissionOverwrite.from_pair(
-                        discord.Permissions(37080128), discord.Permissions(2 ** 53 - 37080129)),
-            }
-            if VC:
-                return await guild.create_voice_channel(name, overwrites=overwrites, category=category)
-            else:
-                return await guild.create_text_channel(name, overwrites=overwrites, category=category)
+    async def _free_channel_create(self, ctx, name, VC=False):
+        category = self.category
+        if len(category.channels) >= 50:
+            await ctx.send(textwrap.dedent(
+              """
+            チャンネルが一杯でこのカテゴリには作成できません。
+            別なカテゴリを指定してください。
+            指定していないときにこのメッセージが出た場合は、運営に連絡してください。
+            """
+            ))
+            return
+        guild = category.guild
+        overwrites = {
+            self.client.user:
+                discord.PermissionOverwrite.from_pair(discord.Permissions.all(), discord.Permissions.none()),
+            ctx.author:
+                discord.PermissionOverwrite.from_pair(discord.Permissions(66448721), discord.Permissions.none()),
+            guild.default_role:
+                discord.PermissionOverwrite.from_pair(discord.Permissions.none(), discord.Permissions.all()),
+            guild.get_role(515467411898761216):
+                discord.PermissionOverwrite.from_pair(discord.Permissions.none(), discord.Permissions.all()),
+            guild.get_role(515467425429585941):
+                discord.PermissionOverwrite.from_pair(
+                    discord.Permissions(37080128), discord.Permissions(2 ** 53 - 37080129)),
+        }
+        if VC:
+            return await guild.create_voice_channel(name, overwrites=overwrites, category=category)
         else:
-            await ctx.send('あなたはまだチャンネルを作成できません')
-            return None
+            return await guild.create_text_channel(name, overwrites=overwrites, category=category)
 
     @commands.command()
     async def cedit(self, ctx,
