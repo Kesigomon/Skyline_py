@@ -164,16 +164,16 @@ class DiscussionBoard(commands.Cog):
             else:
                 self.user_limiter[message.author] += 1
                 overwrites = {
-                    self.bot.user:
+                    self.bot.user:  # bot自身
                         discord.PermissionOverwrite.from_pair(discord.Permissions.all(), discord.Permissions.none()),
-                    message.author:
+                    message.author:  # 作成者
                         discord.PermissionOverwrite.from_pair(
                             discord.Permissions(66448721), discord.Permissions.none()),
-                    self.guild.default_role:
+                    self.guild.default_role:  # @everyone
                         discord.PermissionOverwrite.from_pair(discord.Permissions.none(), discord.Permissions.all()),
-                    self.guild.get_role(515467411898761216):
+                    self.guild.get_role(515467411898761216):  # 制限付きユーザー
                         discord.PermissionOverwrite.from_pair(discord.Permissions.none(), discord.Permissions.all()),
-                    self.guild.get_role(515467425429585941):
+                    self.guild.get_role(575319592533229598):  # 掲示板カテゴリ閲覧
                         discord.PermissionOverwrite.from_pair(
                             discord.Permissions(37080128), discord.Permissions(2 ** 53 - 37080129)),
                 }
