@@ -172,7 +172,8 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
             '＊次のLVまで{1.next_exp}EXP。',
             '＊カウント開始してから{1.count}発言。',
             '＊このサーバーでは{1.rank}位のようだ。',
-            '＊BOTのコマンド（と思われるもの）を{1.bot_count}回使ったようだ。'
+            '＊BOTのコマンド（と思われるもの）を{1.bot_count}回使ったようだ。',
+            '＊引数に数字を指定することで、メッセージを固定できる。'
         )
         no_message = '＊その番号のメッセージは用意されていない。'
         if content_index == 0:
@@ -187,8 +188,8 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
         data: Level_counter = self.get_data(member)
         content = (
                 '＊　{0}　ー　LV　{1.level}　EXP　{1.exp}\n'
-                + content2
-        ).format(member.display_name, data)
+                '{2}'
+        ).format(member.display_name, data, content2)
         await ctx.send(content)
         await self.update_level(member, data.level)
 
