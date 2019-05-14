@@ -194,8 +194,6 @@ class DiscussionBoard(commands.Cog):
             # 10で割り切れる数字のときの処理
             if count % 10 == 0:
                 # 10発言ごとに上に行ける
-                # チャンネルポジションを正しく計算していくスタイル。
-                # なんか知らんけど、discord側に頼ると上がらない時がある。
                 channels = sorted(channel.category.channels, key=lambda c: c.position)
                 top_channel = channels[0]
                 if channel == top_channel:
@@ -211,9 +209,11 @@ class DiscussionBoard(commands.Cog):
                         position = sorted(category2.channels, key=lambda c: c.position)[-1].position + 1
                         await channel.edit(category=category2, position=position)
                 else:
-                    # 一番上のチャンネルに、上から数えての位置を足す感じ
+                    upper_channel = channels[channels.index(channel) - 1]
+                    # 一つ上のチャンネルと同じポジションを指定することで
+                    # チャンネルを上げることができる
                     await channel.edit(
-                        position=top_channel.position + channels.index(channel) - 1
+                        position=upper_channel.position
                     )
             if count >= 1000:
                 await channel.edit(category=self.category_surface)
@@ -230,7 +230,8 @@ class DiscussionBoard(commands.Cog):
             for category in self.category_underground:
                 if len(category.channels) >= 49:
                     continue
-                await channel.edit(sync_permissions=True, category=category)
+                await channel.edit(sync_permissions=True, category=category,
+                                   position=max(c.position for c in category.channels) + 1)
                 await channel.send('＊いやだ。けされるもんか。')
                 break
             else:
