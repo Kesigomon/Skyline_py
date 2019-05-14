@@ -188,8 +188,8 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
         data: Level_counter = self.get_data(member)
         content = (
                 '＊　{0}　ー　LV　{1.level}　EXP　{1.exp}\n'
-                '{2}'
-        ).format(member.display_name, data, content2)
+                + content2
+        ).format(member.display_name, data)
         await ctx.send(content)
         await self.update_level(member, data.level)
 
