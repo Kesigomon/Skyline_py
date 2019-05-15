@@ -231,7 +231,7 @@ class DiscussionBoard(commands.Cog):
                 if len(category.channels) >= 49:
                     continue
                 await channel.edit(sync_permissions=True, category=category,
-                                   position=max(
+                                   position=min(
                                        max(c.position for c in category.channels) + 1,
                                        len(channel.guild.text_channels)
                                    ))
