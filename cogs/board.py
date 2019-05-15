@@ -233,7 +233,7 @@ class DiscussionBoard(commands.Cog):
                 await channel.edit(sync_permissions=True, category=category,
                                    position=min(
                                        max(c.position for c in category.channels) + 1,
-                                       len(channel.guild.text_channels)
+                                       len(channel.guild.text_channels) - 1
                                    ))
                 await channel.send('＊いやだ。けされるもんか。')
                 break
