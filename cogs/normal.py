@@ -18,7 +18,8 @@ class Normal_Command(commands.Cog):
     @commands.command()
     async def role_search(self, ctx, *, role: discord.Role):
         embed = discord.Embed(
-            title='ロールサーチの結果', description='{0}\nID:{1}'.format(role.mention, role.id))
+            title='ロールサーチの結果',
+            description=f'{role.mention}\nID:{role.id}\nメンバーの数:{len(role.members)}')
         await ctx.send(embed=embed)
 
     @commands.command(aliases=['tw'])
