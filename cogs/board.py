@@ -130,9 +130,9 @@ class DiscussionBoard(commands.Cog):
                 else:
                     # 最後のメッセージの時間
                     dt2 = mes.created_at
-                # UNDERGROUNDなら3日で遺跡に
+                # UNDERGROUNDなら4日で遺跡に
                 if channel.category in self.category_underground:
-                    td1 = datetime.timedelta(days=3)
+                    td1 = datetime.timedelta(days=4)
                     category = self.category_ruins
                     content = '＊このチャンネルは発言がないので、過去ログスレッド倉庫に移動した。'
                 # 地上なら7日でUNDERGROUNDに
@@ -230,11 +230,11 @@ class DiscussionBoard(commands.Cog):
             for category in self.category_underground:
                 if len(category.channels) >= 49:
                     continue
-                await channel.edit(sync_permissions=True, category=category,
-                                   position=min(
-                                       max(c.position for c in category.channels) + 1,
-                                       len(channel.guild.text_channels) - 1
-                                   ))
+                await channel.edit(
+                    sync_permissions=True,
+                    category=category,
+                    position=len(channel.guild.text_channels) - 1
+                )
                 await channel.send('＊いやだ。けされるもんか。')
                 break
             else:
