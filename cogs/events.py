@@ -1,11 +1,13 @@
-import discord
-from discord.ext import commands
+import asyncio
 import datetime
 import re
-import asyncio
-from .general import ZATSUDAN_FORUM_ID, join_message, voice_text, is_staff
+
 import aiohttp
+import discord
 import feedparser
+from discord.ext import commands
+
+from .general import ZATSUDAN_FORUM_ID, join_message, voice_text
 
 
 class Events(commands.Cog):
@@ -146,7 +148,7 @@ class Events(commands.Cog):
         url = 'https://github.com/Kesigomon/Skyline_py/commits/master.atom'
 
         def check(m):
-            return m.author.id == webhook.id
+            return m.author.id == webhook.id and m.embeds
         async with aiohttp.ClientSession() as session:
             while not self.client.is_closed():
                 try:
@@ -155,11 +157,13 @@ class Events(commands.Cog):
                     message = None
                 async with session.get(url) as resp:
                     feed = feedparser.parse(await resp.text())
-                entry = feed.entries[0]
-                flag = message is None or entry.link != message.embeds[0].url
-                if flag:
+                for entry in feed.entries:
+                    commit_id = entry.link.replace('https://github.com/Kesigomon/Skyline_py/commit/', '')
+                    if (message is not None and
+                            message.embeds[0].title == commit_id):
+                        break
                     embed = discord.Embed(
-                        title=entry.link.replace('https://github.com/Kesigomon/Skyline_py/commit/', ''),
+                        title=commit_id,
                         description=entry.title,
                         timestamp=datetime.datetime(*entry.updated_parsed[0:7]),
                         url=entry.link
@@ -168,7 +172,7 @@ class Events(commands.Cog):
                                     icon_url=entry.media_thumbnail[0]['url'])
                     await webhook.send(embed=embed)
                 try:
-                    await asyncio.wait_for(self.client._closed.wait() ,timeout=60)
+                    await asyncio.wait_for(self.client._closed.wait(), timeout=60)
                 except asyncio.TimeoutError:
                     pass
 
