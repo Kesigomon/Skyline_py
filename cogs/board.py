@@ -24,6 +24,7 @@ class DiscussionBoard(commands.Cog):
         self.category_ids = board_kwargs['category_id']
         self.counter = {}
         self.user_limiter = {}
+        self.creater = {}
         self.ready = asyncio.Event(loop=bot.loop)
         bot.loop.create_task(self.autoclear())
 
@@ -66,7 +67,8 @@ class DiscussionBoard(commands.Cog):
         data = {
             'counter': {str(k.id): v for k, v in self.counter.items()
                         if k is not None},
-            'user_limiter': {str(k.id): v for k, v in self.user_limiter.items()}
+            'user_limiter': {str(k.id): v for k, v in self.user_limiter.items()},
+            'creater': {str(k.id): v.id for k, v in self.creater.items()}
         }
         await self.channel_save.send(
             file=discord.File(
@@ -102,6 +104,8 @@ class DiscussionBoard(commands.Cog):
                                     for k, v in data['counter'].items()}
                     self.user_limiter = {self.guild.get_member(int(k)): v
                                          for k, v in data['user_limiter'].items()}
+                    self.creater = {self.bot.get_channel(int(k)): self.guild.get_member(v)
+                                    for k, v in data['creater'].items()}
                     break
             else:
                 # 添付に該当ファイルがなければ次のメッセージに
@@ -131,16 +135,23 @@ class DiscussionBoard(commands.Cog):
                 else:
                     # 最後のメッセージの時間
                     dt2 = mes.created_at
+                # チャンネル作成者取得の処理
+                try:
+                    creater = self.creater[channel]
+                except KeyError:
+                    mention = ''
+                else:
+                    mention = creater.mention + "\n"
                 # UNDERGROUNDなら4日で遺跡に
                 if channel.category in self.category_underground:
                     td1 = datetime.timedelta(days=4)
                     category = self.category_ruins
-                    content = '＊このチャンネルは発言がないので、過去ログスレッド倉庫に移動した。'
+                    content = mention + '＊このチャンネルは発言がないので、過去ログスレッド倉庫に移動した。'
                 # 地上なら7日でUNDERGROUNDに
                 elif channel.category == self.category_surface:
                     td1 = datetime.timedelta(days=7)
                     category = self.category_underground
-                    content = '＊このチャンネルは発言がないので、雑談板に戻された。'
+                    content = mention + '＊このチャンネルは発言がないので、雑談板に戻された。'
                 elif channel.category == self.category_ruins:
                     td1 = datetime.timedelta(days=14)
                     content = None
@@ -189,6 +200,7 @@ class DiscussionBoard(commands.Cog):
                         continue
                     new_channel = await self.guild.create_text_channel(
                         name=message.content, category=category, overwrites=overwrites)
+                    self.creater[new_channel] = message.author
                     await channel.send(f'＊作成完了。\n{new_channel.mention}')
                     break
                 else:
