@@ -117,7 +117,8 @@ class DiscussionBoard(commands.Cog):
             await asyncio.sleep((dt1 - now).total_seconds())
             channels = (
                 sorted(self.category_surface.text_channels, key=lambda c: c.position)[3:],
-                *(c.channels for c in self.category_underground)
+                *(c.channels for c in self.category_underground),
+                self.category_ruins.channels
             )
             channel: discord.TextChannel
             for channel in (x1 for x2 in channels for x1 in x2):
@@ -140,12 +141,18 @@ class DiscussionBoard(commands.Cog):
                     td1 = datetime.timedelta(days=7)
                     category = self.category_underground
                     content = '＊このチャンネルは発言がないので、雑談板に戻された。'
+                elif channel.category == self.category_ruins:
+                    td1 = datetime.timedelta(days=14)
+                    content = None
                 else:
                     continue
                 # ここで条件を満たしていればチャンネルを対象カテゴリに移動
                 if datetime.datetime.utcnow() - dt2 >= td1:
-                    await channel.edit(category=category, sync_permissions=True)
-                    await channel.send(content)
+                    if content is not None:
+                        await channel.edit(category=category, sync_permissions=True)
+                        await channel.send(content)
+                    else:
+                        await channel.delete(reason='過去ログスレッド倉庫にて更新がないチャンネルのため、削除')
             self.user_limiter.clear()
             await self._save()
             dt1 += datetime.timedelta(days=1)
