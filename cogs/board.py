@@ -99,13 +99,13 @@ class DiscussionBoard(commands.Cog):
                     # ここからロード処理
                     stream = io.BytesIO()
                     await attach.save(stream)
-                    data = json.load(stream)
+                    data: dict = json.load(stream)
                     self.counter = {self.bot.get_channel(int(k)): v
                                     for k, v in data['counter'].items()}
                     self.user_limiter = {self.guild.get_member(int(k)): v
                                          for k, v in data['user_limiter'].items()}
                     self.creater = {self.bot.get_channel(int(k)): self.guild.get_member(v)
-                                    for k, v in data['creater'].items()}
+                                    for k, v in data.get('creater', {}).items()}
                     break
             else:
                 # 添付に該当ファイルがなければ次のメッセージに
