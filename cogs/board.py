@@ -139,6 +139,7 @@ class DiscussionBoard(commands.Cog):
                 try:
                     creater = self.creater[channel]
                 except KeyError:
+                    creater = None
                     mention = ''
                 else:
                     mention = creater.mention + "\n"
@@ -164,6 +165,12 @@ class DiscussionBoard(commands.Cog):
                         await channel.send(content)
                     else:
                         await channel.delete(reason='過去ログスレッド倉庫にて更新がないチャンネルのため、削除')
+                        if creater is not None:
+                            try:
+                                await creater.send(
+                                    f'あなたのチャンネル「{channel.name}」は更新がないため、削除されました。')
+                            except discord.Forbidden:
+                                pass
             self.user_limiter.clear()
             await self._save()
             dt1 += datetime.timedelta(days=1)
