@@ -92,7 +92,8 @@ class DiscussionBoard(commands.Cog):
 
         # 次回再起動前２４時間以内に作られたセーブ
         mes: discord.Message
-        async for mes in self.channel_save.history(after=dt1 - datetime.timedelta(days=1)).filter(check):
+        history = self.channel_save.history(after=dt1 - datetime.timedelta(days=1), oldest_first=False)
+        async for mes in history.filter(check):
             attach: discord.Attachment
             for attach in mes.attachments:
                 if attach.filename == self.filename:
