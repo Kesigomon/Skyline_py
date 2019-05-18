@@ -12,6 +12,44 @@ from .general import board_kwargs
 listener = commands.Cog.listener
 
 
+class DiscordDict:
+    __slots__ = ('_items', 'key_method', 'value_method')
+
+    def __init__(self, _items, key_method, value_method):
+        self._items = _items
+        self.key_method = key_method
+        self.value_method = value_method
+
+    @property
+    def data(self):
+        return {self.key_method(int(k)): self.value_method(v) for k, v in self.items.items()}
+
+    def __getattr__(self, item):
+        return getattr(self._items, item)
+
+    def __getitem__(self, key):
+        return self.value_method(self._items[int(key.id)])
+
+    def __setitem__(self, key, value):
+        self._items[int(key.id)] = value.id
+
+    def setdefault(self, key, default):
+        try:
+            value = self[key]
+        except KeyError:
+            self[key] = default
+            return default
+        else:
+            return value
+
+    def clear(self):
+        self._items.clear()
+
+    @property
+    def items(self):
+        return self._items
+
+
 class DiscussionBoard(commands.Cog):
     pattern = re.compile(r'(channel|category)(\d+)')
     filename = 'dis.json'
@@ -22,9 +60,6 @@ class DiscussionBoard(commands.Cog):
         self.guild_id = board_kwargs['guild_id']
         self.channel_ids = board_kwargs['channel_id']
         self.category_ids = board_kwargs['category_id']
-        self.counter = {}
-        self.user_limiter = {}
-        self.creater = {}
         self.ready = asyncio.Event(loop=bot.loop)
         bot.loop.create_task(self.autoclear())
 
@@ -65,11 +100,8 @@ class DiscussionBoard(commands.Cog):
 
     async def _save(self):
         data = {
-            'counter': {str(k.id): v for k, v in self.counter.items()
-                        if k is not None},
-            'user_limiter': {str(k.id): v for k, v in self.user_limiter.items()},
-            'creater': {str(k.id): v.id for k, v in self.creater.items()
-                        if k is not None and v is not None}
+            key: getattr(self, key).items
+            for key in ('counter', 'user_limiter', 'creater')
         }
         await self.channel_save.send(
             file=discord.File(
@@ -102,12 +134,9 @@ class DiscussionBoard(commands.Cog):
                     stream = io.BytesIO()
                     await attach.save(stream)
                     data: dict = json.load(stream)
-                    self.counter = {self.bot.get_channel(int(k)): v
-                                    for k, v in data['counter'].items()}
-                    self.user_limiter = {self.guild.get_member(int(k)): v
-                                         for k, v in data['user_limiter'].items()}
-                    self.creater = {self.bot.get_channel(int(k)): self.guild.get_member(v)
-                                    for k, v in data.get('creater', {}).items()}
+                    self.counter = DiscordDict(data['counter'], self.bot.get_channel, int)
+                    self.user_limiter = DiscordDict(data['user_limiter'], self.guild.get_member, int)
+                    self.creater = DiscordDict(data['creater'], self.guild.get_channel, self.guild.get_member)
                     break
             else:
                 # 添付に該当ファイルがなければ次のメッセージに
