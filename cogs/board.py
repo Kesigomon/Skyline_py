@@ -68,7 +68,8 @@ class DiscussionBoard(commands.Cog):
             'counter': {str(k.id): v for k, v in self.counter.items()
                         if k is not None},
             'user_limiter': {str(k.id): v for k, v in self.user_limiter.items()},
-            'creater': {str(k.id): v.id for k, v in self.creater.items()}
+            'creater': {str(k.id): v.id for k, v in self.creater.items()
+                        if k is not None and v is not None}
         }
         await self.channel_save.send(
             file=discord.File(
@@ -142,7 +143,7 @@ class DiscussionBoard(commands.Cog):
                 except KeyError:
                     creater = None
                     mention = ''
-                else:
+                if creater is not None:
                     mention = creater.mention + "\n"
                 # UNDERGROUNDなら4日で遺跡に
                 if channel.category in self.category_underground:
