@@ -131,7 +131,7 @@ class Events(commands.Cog):
             self.mention_counter[message.author] += 1
             if self.mention_counter[message.author] >= 3:
                 callback = self.client.get_command('limit').callback
-                await callback(message, message.author)
+                await callback(ctx=message, member=message.author)
         # メンションのない発言ならカウンターリセット
         else:
             self.mention_counter[message.author] = 0
