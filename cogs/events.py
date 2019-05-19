@@ -130,8 +130,8 @@ class Events(commands.Cog):
         if self.pattern2.search(message.content):
             self.mention_counter[message.author] += 1
             if self.mention_counter[message.author] >= 3:
-                callback = self.client.get_command('limit').callback
-                await callback(ctx=message, member=message.author)
+                ctx: commands.Context = await self.client.get_context(message)
+                await ctx.invoke(self.client.get_command('limit'), message.author)
         # メンションのない発言ならカウンターリセット
         else:
             self.mention_counter[message.author] = 0
