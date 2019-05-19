@@ -17,7 +17,7 @@ class Events(commands.Cog):
                  'saves', 'new_member', 'tasks', 'mention_counter')
 
     pattern1 = re.compile(r'discord(?:\.gg|app\.com/invite)/([a-zA-Z0-9]+)')
-    pattern2 = re.compile(r'(@everyone|@here|<@\d+?>)')
+    pattern2 = re.compile(r'(@everyone|@here|<@.??\d+?>)')
 
     def __init__(self, client, name=None):
         self.client: commands.Bot = client
