@@ -129,7 +129,7 @@ class Events(commands.Cog):
         # メンションのある発言なら、マッチする
         if self.pattern2.search(message.content):
             self.mention_counter[message.author] += 1
-            if self.mention_counter[message.author] >= 3:
+            if self.mention_counter[message.author] >= 5:
                 ctx: commands.Context = await self.client.get_context(message)
                 await ctx.invoke(self.client.get_command('limit'), message.author)
         # メンションのない発言ならカウンターリセット
