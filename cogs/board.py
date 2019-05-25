@@ -183,7 +183,7 @@ class DiscussionBoard(commands.Cog):
         # 自分 or BOT or 指定されたサーバー以外は全て無視
         if message.author == self.bot.user or message.author.bot or message.guild != self.guild:
             return
-        channel = message.channel
+        channel: discord.TextChannel = message.channel
         # 新規作成用チャンネルならチャンネル作成
         if channel == self.channel_create:
             if self.user_limiter.setdefault(message.author, 0) >= 3:
@@ -234,7 +234,7 @@ class DiscussionBoard(commands.Cog):
                             channels2 = category2.text_channels
                             channels2.sort(key=lambda c: c.position)
                             await channels2[-1].edit(category=channel.category, position=channel.position)
-                        await channel.edit(category=category2, position=len(channel.guild.text_channels))
+                        await channel.edit(category=category2, position=len(channel.guild.text_channels) - 1)
                 else:
                     upper_channel = channels[channels.index(channel) - 1]
                     # 一つ上のチャンネルと同じポジションを指定することで
