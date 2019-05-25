@@ -234,8 +234,7 @@ class DiscussionBoard(commands.Cog):
                             channels2 = category2.text_channels
                             channels2.sort(key=lambda c: c.position)
                             await channels2[-1].edit(category=channel.category, position=channel.position)
-                        position = sorted(category2.channels, key=lambda c: c.position)[-1].position + 1
-                        await channel.edit(category=category2, position=position)
+                        await channel.edit(category=category2, position=len(channel.guild.text_channels))
                 else:
                     upper_channel = channels[channels.index(channel) - 1]
                     # 一つ上のチャンネルと同じポジションを指定することで
