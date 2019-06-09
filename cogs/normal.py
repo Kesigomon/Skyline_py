@@ -95,6 +95,19 @@ class Normal_Command(commands.Cog):
             m: discord.Message = await ctx.send('**{0}**'.format(args[0]), embed=embed)
             [self.client.loop.create_task(m.add_reaction(e)) for e in emojis]
 
+    # メンション
+    @commands.command(check=[is_zatudanfolum])
+    async def mention(self, ctx):
+        data = self.client.get_cog('Level').get_data(ctx.author.id)
+        if data.level >= 5:
+            members = [m for m in ctx.guild.get_role(531122932274036795).members
+                       if m.status is discord.Status.online]
+            await ctx.send(
+                '気軽にメンションが発動されました！\n' + ''.join(m.mention for m in members)
+            )
+        else:
+            await ctx.send('あなたはまだこの機能を使えません。')
+
     @commands.command(check=[is_zatudanfolum])
     async def agree(self, ctx):
         roles = [ctx.guild.get_role(i) for i in

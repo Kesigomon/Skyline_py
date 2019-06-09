@@ -18,6 +18,7 @@ class DiscussionBoard(commands.Cog):
 
     def __init__(self, bot: commands.Bot, name=None):
         self.bot = bot
+        self.closed = asyncio.Event(loop=bot.loop)
         self.name = name if name is not None else type(self).__name__
         self.guild_id = board_kwargs['guild_id']
         self.channel_ids = board_kwargs['channel_id']
@@ -59,6 +60,10 @@ class DiscussionBoard(commands.Cog):
     @listener()
     async def on_save(self):
         await self._save()
+
+    @listener()
+    async def on_close(self):
+        self.closed.set()
 
     async def cog_before_invoke(self, ctx):
         await self.ready.wait()
@@ -120,7 +125,12 @@ class DiscussionBoard(commands.Cog):
         self.ready.set()
         while not self.bot.is_closed():
             now = datetime.datetime.utcnow()
-            await asyncio.sleep((dt1 - now).total_seconds())
+            try:
+                await asyncio.wait_for(self.closed.wait(), (dt1 - now).total_seconds())
+            except asyncio.TimeoutError:
+                pass
+            else:
+                break
             channels = (
                 sorted(self.category_surface.text_channels, key=lambda c: c.position)[3:],
                 *(c.channels for c in self.category_underground),
@@ -142,9 +152,10 @@ class DiscussionBoard(commands.Cog):
                     creater = self.creater[channel]
                 except KeyError:
                     creater = None
-                    mention = ''
                 if creater is not None:
                     mention = creater.mention + "\n"
+                else:
+                    mention = ''
                 # UNDERGROUNDなら4日で遺跡に
                 if channel.category in self.category_underground:
                     td1 = datetime.timedelta(days=4)
