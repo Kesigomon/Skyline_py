@@ -78,6 +78,7 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
         self.ranking_limiter = False
         self.cache_messages = []
         self.ready = asyncio.Event(loop=self.client.loop)
+        self.closed = asyncio.Event(loop=self.client.loop)
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -236,7 +237,7 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
 
     async def autosave(self):
         member = self.guild.me
-        while not self.client.is_closed():
+        while not self.closed.is_set():
             now = datetime.datetime.now()
             nexttime = now.replace(minute=58, second=0, microsecond=0)
             if now.minute == 58:
@@ -248,7 +249,7 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
             ).format(now, nexttime, second)
             self.client.loop.create_task(self.save_channel.send(content=content))
             try:
-                await asyncio.wait_for(self.client._closed.wait() ,timeout=second)
+                await asyncio.wait_for(self.closed.wait(), timeout=second)
             except asyncio.TimeoutError:
                 pass
             else:
@@ -337,13 +338,14 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
                 del self.cache_messages[page:]
             finally:
                 try:
-                    await asyncio.wait_for(self.client._closed.wait(), timeout=5)
+                    await asyncio.wait_for(self.closed.wait(), timeout=5)
                 except asyncio.TimeoutError:
                     self.ranking_limiter = False
 
     @commands.Cog.listener()
     async def on_close(self):
         await self._save(self.guild.me, wait=True)
+        self.closed.set()
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):

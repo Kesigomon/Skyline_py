@@ -10,11 +10,7 @@ class SKYLINE(commands.Bot):
         cogs.cogs(self)
 
     async def close(self):
-        try:
-            futs = [self.on_close]
-        except AttributeError:
-            futs = []
-        futs.extend(self.extra_events.get('on_close', []))
+        futs = self.extra_events.get('on_close', [])
         if futs:
             await asyncio.wait([f() for f in futs])
         await super().close()

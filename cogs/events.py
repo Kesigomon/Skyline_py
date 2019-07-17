@@ -27,6 +27,7 @@ class Events(commands.Cog):
             for coro in (self.task_bump(), self.task_skyline_update())
         ]
         self.mention_counter = {}
+        self.closed = asyncio.Event(loop=client.loop)
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -139,6 +140,7 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_close(self):
         [t.cancel() for t in self.tasks]
+        self.closed.set()
 
     async def task_skyline_update(self):
         await self.client.wait_until_ready()
@@ -150,7 +152,7 @@ class Events(commands.Cog):
         def check(m):
             return m.author.id == webhook.id and m.embeds
         async with aiohttp.ClientSession() as session:
-            while not self.client.is_closed():
+            while not self.closed.is_set():
                 try:
                     message = await channel.history().filter(check).next()
                 except discord.NoMoreItems:
@@ -172,7 +174,7 @@ class Events(commands.Cog):
                                     icon_url=entry.media_thumbnail[0]['url'])
                     await webhook.send(embed=embed)
                 try:
-                    await asyncio.wait_for(self.client._closed.wait(), timeout=60)
+                    await asyncio.wait_for(self.closed.wait(), timeout=60)
                 except asyncio.TimeoutError:
                     pass
 
@@ -186,7 +188,7 @@ class Events(commands.Cog):
         await self.client.wait_until_ready()
         disboard_bot = self.client.get_user(disboard_bot_id)
         channel: discord.TextChannel = self.client.get_channel(515467856239132672)
-        while not self.client.is_closed():
+        while not self.closed.is_set():
             try:
                 mes = await channel.history().filter(check1).next()
             except discord.NoMoreItems:
@@ -203,7 +205,7 @@ class Events(commands.Cog):
                     try:
                         # クライアントクローズか2時間経過するのを待つ
                         await asyncio.wait_for(
-                            self.client._closed.wait(),
+                            self.closed.wait(),
                             (Interval - TD1).total_seconds()
                         )
                     except asyncio.TimeoutError:
@@ -225,6 +227,6 @@ class Events(commands.Cog):
             # メッセージかクライアントクローズ待ち
             await asyncio.wait(
                 [self.client.wait_for(event='message', check=check1),
-                 self.client._closed.wait()],
+                 self.closed.wait()],
                 return_when='FIRST_COMPLETED'
             )
