@@ -123,7 +123,7 @@ class DiscussionBoard(commands.Cog):
             # もし、ロードできなければすぐにキャッシュクリア＆チャンネル処理
             dt1 -= datetime.timedelta(days=1)
         self.ready.set()
-        while not self.bot.is_closed():
+        while not self.closed.is_set():
             now = datetime.datetime.utcnow()
             try:
                 await asyncio.wait_for(self.closed.wait(), (dt1 - now).total_seconds())
