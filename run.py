@@ -9,7 +9,7 @@ client = SKYLINE(loop=loop)
 
 async def main():
     now = datetime.datetime.utcnow()
-    endtime = now.replace(hour=17, minute=0, second=0, microsecond=0)
+    endtime = now.replace(hour=17, minute=1, second=0, microsecond=0)
     if now >= endtime:
         endtime += datetime.timedelta(days=1)
     await asyncio.wait([client.start(token)], timeout=(endtime - now).total_seconds())
