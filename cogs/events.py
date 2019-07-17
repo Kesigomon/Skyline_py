@@ -125,6 +125,8 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
+        if message.author == self.client.user:
+            return
         # メンションカウンターに登録されていないならデフォルト値を設定しておく
         self.mention_counter.setdefault(message.author, 0)
         # メンションのある発言なら、マッチする
