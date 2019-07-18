@@ -164,7 +164,7 @@ class DiscussionBoard(commands.Cog):
                 # 地上なら7日でUNDERGROUNDに
                 elif channel.category == self.category_surface:
                     td1 = datetime.timedelta(days=7)
-                    category = self.category_underground
+                    category = next(c for c in self.category_underground if len(c.channels) <= 49)
                     content = mention + '＊このチャンネルは発言がないので、雑談板に戻された。'
                 elif channel.category == self.category_ruins:
                     td1 = datetime.timedelta(days=14)
