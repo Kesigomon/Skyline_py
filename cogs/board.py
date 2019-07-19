@@ -286,7 +286,7 @@ class DiscussionBoard(commands.Cog):
 
     @commands.command()
     async def board_load(self, ctx: commands.Context):
-        if await self.bot.is_owner(ctx.author):
+        if not await self.bot.is_owner(ctx.author):
             await ctx.send("あなたはこのコマンドを使えません")
             return
         await ctx.send("データをロードします。ファイルを送信してください")
