@@ -68,6 +68,15 @@ class DiscussionBoard(commands.Cog):
     async def cog_before_invoke(self, ctx):
         await self.ready.wait()
 
+    def load(self, stream: io.BytesIO):
+        data: dict = json.load(stream)
+        self.counter = {self.bot.get_channel(int(k)): v
+                        for k, v in data['counter'].items()}
+        self.user_limiter = {self.guild.get_member(int(k)): v
+                             for k, v in data['user_limiter'].items()}
+        self.creater = {self.bot.get_channel(int(k)): self.guild.get_member(v)
+                        for k, v in data.get('creater', {}).items()}
+
     async def _save(self):
         data = {
             'counter': {str(k.id): v for k, v in self.counter.items()
@@ -82,6 +91,7 @@ class DiscussionBoard(commands.Cog):
                 filename=self.filename
             )
         )
+
 
     async def autoclear(self):
         # 起動完了まで待機
@@ -106,13 +116,7 @@ class DiscussionBoard(commands.Cog):
                     # ここからロード処理
                     stream = io.BytesIO()
                     await attach.save(stream)
-                    data: dict = json.load(stream)
-                    self.counter = {self.bot.get_channel(int(k)): v
-                                    for k, v in data['counter'].items()}
-                    self.user_limiter = {self.guild.get_member(int(k)): v
-                                         for k, v in data['user_limiter'].items()}
-                    self.creater = {self.bot.get_channel(int(k)): self.guild.get_member(v)
-                                    for k, v in data.get('creater', {}).items()}
+                    self.load(stream)
                     break
             else:
                 # 添付に該当ファイルがなければ次のメッセージに
@@ -279,3 +283,32 @@ class DiscussionBoard(commands.Cog):
                 await ctx.send('＊カテゴリがいっぱいで復活できない。')
         else:
             await ctx.send('＊そのチャンネルは復活できない。')
+
+    @commands.command()
+    async def board_load(self, ctx: commands.Context):
+        if await self.bot.is_owner(ctx.author):
+            await ctx.send("あなたはこのコマンドを使えません")
+            return
+        await ctx.send("データをロードします。ファイルを送信してください")
+        def check(m):
+            return m.author == ctx.author and m.channel == ctx.channel
+        while True:
+            mes1: discord.Message = await self.bot.wait_for("message", check=check)
+            if mes1.content == "キャンセル":
+                await ctx.send("キャンセルしました")
+                return
+            if not mes1.attachments:
+                await ctx.send("データがありません。もう１度送信してください")
+                continue
+            for att in mes1.attachments:  # type: discord.Attachment
+                stream = io.BytesIO()
+                await att.save(stream)
+                try:
+                    self.load(stream)
+                except:
+                    pass
+                else:
+                    await ctx.send("ロード完了しました")
+                    return
+            else:
+                await ctx.send("ロードできませんでした。もう１度送信してください")
