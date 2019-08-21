@@ -165,11 +165,14 @@ class Events(commands.Cog):
                     message = None
                 async with session.get(url) as resp:
                     feed = feedparser.parse(await resp.text())
-                for entry in reversed(feed.entries):
+                entries = []
+                for entry in feed.entries:
                     commit_id = entry.link.replace('https://github.com/Kesigomon/Skyline_py/commit/', '')
                     if (message is not None and
                             message.embeds[0].title == commit_id):
                         break
+                    entries.append(entry)
+                for entry in reversed(entries):
                     embed = discord.Embed(
                         title=commit_id,
                         description=entry.title,
