@@ -138,6 +138,10 @@ class Events(commands.Cog):
         # メンションのない発言ならカウンターリセット
         else:
             self.mention_counter[message.author] = 0
+        # 特定のinviteはban
+        invite: discord.Invite = await self.client.fetch_invite(self.pattern1.match(message.content).group(1))
+        if invite.guild.id == 611445741902364672:
+            await message.author.ban(reason='DGSサーバー招待のため、BAN', delete_message_days=1)
 
     @commands.Cog.listener()
     async def on_close(self):
