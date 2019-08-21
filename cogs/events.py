@@ -138,6 +138,9 @@ class Events(commands.Cog):
         # メンションのない発言ならカウンターリセット
         else:
             self.mention_counter[message.author] = 0
+        # 特定のinviteはban
+        if self.client.fetch_invite(self.pattern1.match(message.content)).id == 611445741902364672:
+            message.author.ban(reason='レンスラのため、BAN', delete_message_days=1)
 
     @commands.Cog.listener()
     async def on_close(self):
