@@ -160,12 +160,12 @@ class Events(commands.Cog):
         async with aiohttp.ClientSession() as session:
             while not self.closed.is_set():
                 try:
-                    message = await channel.history(limit=1000).filter(check).next()
+                    message = await channel.history(limit=None).filter(check).next()
                 except discord.NoMoreItems:
                     message = None
                 async with session.get(url) as resp:
                     feed = feedparser.parse(await resp.text())
-                for entry in feed.entries:
+                for entry in reversed(feed.entries):
                     commit_id = entry.link.replace('https://github.com/Kesigomon/Skyline_py/commit/', '')
                     if (message is not None and
                             message.embeds[0].title == commit_id):
