@@ -150,7 +150,7 @@ class Events(commands.Cog):
 
     async def task_skyline_update(self):
         await self.client.wait_until_ready()
-        channel = self.client.get_channel(515468115535200256)
+        channel: discord.TextChannel = self.client.get_channel(515468115535200256)
         webhooks = await channel.webhooks()
         webhook: discord.Webhook = webhooks[0]
         url = 'https://github.com/Kesigomon/Skyline_py/commits/master.atom'
@@ -160,7 +160,7 @@ class Events(commands.Cog):
         async with aiohttp.ClientSession() as session:
             while not self.closed.is_set():
                 try:
-                    message = await channel.history().filter(check).next()
+                    message = await channel.history(limit=1000).filter(check).next()
                 except discord.NoMoreItems:
                     message = None
                 async with session.get(url) as resp:
