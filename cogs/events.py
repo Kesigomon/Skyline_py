@@ -174,7 +174,7 @@ class Events(commands.Cog):
                     entries.append(entry)
                 for entry in reversed(entries):
                     embed = discord.Embed(
-                        title=commit_id,
+                        title=entry.link.replace('https://github.com/Kesigomon/Skyline_py/commit/', ''),
                         description=entry.title,
                         timestamp=datetime.datetime(*entry.updated_parsed[0:7]),
                         url=entry.link
