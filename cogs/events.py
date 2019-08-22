@@ -141,7 +141,8 @@ class Events(commands.Cog):
         # 特定のinviteはban
         for match in self.pattern1.finditer(message.content):
             invite: discord.Invite = await self.client.fetch_invite(match.group(1))
-            if invite.guild.id == 611445741902364672:
+            if (invite.guild.id == 611445741902364672
+                    and datetime.datetime.utcnow() - message.author.joined_at <= datetime.timedelta(days=1)):
                 await message.author.ban(reason='DGSサーバー招待のため、BAN', delete_message_days=1)
 
     @commands.Cog.listener()
