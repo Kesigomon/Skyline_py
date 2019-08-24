@@ -17,7 +17,7 @@ class Category_recover(commands.Cog):  # 言わずと知れたカテゴリリカ
 
     @commands.command()
     async def category_delete(self, ctx, category:discord.CategoryChannel):
-        if not is_subowner(ctx.author):
+        if not await is_subowner(ctx.author):
             await ctx.send("あなたはこのコマンドを実行できません。")
             return
         mes: discord.Message = await ctx.send(f"カテゴリー「{category.name}」を削除してもよろしいですか？")
