@@ -1,15 +1,38 @@
 import discord
 from discord.ext import commands
 
+
 import asyncio
+
+from .general import is_subowner
 
 
 class Category_recover(commands.Cog):  # 言わずと知れたカテゴリリカバリ機能
-    __slots__ = ('client', 'category_cache', 'name')
+    __slots__ = ('client', 'category_cache', 'name', 'exclusion')
 
     def __init__(self, client, name=None):
         self.client: discord.Client = client
         self.name = name if name is not None else type(self).__name__
+        self.exclusion = []
+
+    @commands.command(checks=[is_subowner])
+    async def category_delete(self, ctx, category:discord.CategoryChannel):
+        mes: discord.Message = await ctx.send(f"カテゴリー「{category.name}」を削除してもよろしいですか？")
+        [await mes.add_reaction(i) for i in ("\u2705", "\u274c")]
+        def check(react: discord.Reaction, usr):
+            return(
+                usr == ctx.author
+                and react.message.id == mes.id
+                and react.message.channel == mes.channel
+                and react.me
+            )
+        reaction, user = await self.client.wait_for("reaction_add", check=check)
+        if reaction.emoji == "\u2705":
+            self.exclusion.append(category)
+            await category.delete()
+            await ctx.send("削除しました")
+        else:
+            await ctx.send("中止しました")
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -24,7 +47,7 @@ class Category_recover(commands.Cog):  # 言わずと知れたカテゴリリカ
 
     @commands.Cog.listener()
     async def on_guild_channel_delete(self, channel):
-        if isinstance(channel, discord.CategoryChannel):
+        if isinstance(channel, discord.CategoryChannel) and channel not in self.exclusion:
             if channel.name not in (c.name for c in channel.guild.categories):
                 await channel.guild.create_category(
                     name=channel.name,
