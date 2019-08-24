@@ -15,8 +15,11 @@ class Category_recover(commands.Cog):  # 言わずと知れたカテゴリリカ
         self.name = name if name is not None else type(self).__name__
         self.exclusion = []
 
-    @commands.command(checks=[is_subowner])
+    @commands.command()
     async def category_delete(self, ctx, category:discord.CategoryChannel):
+        if not is_subowner(ctx.author):
+            await ctx.send("あなたはこのコマンドを実行できません。")
+            return
         mes: discord.Message = await ctx.send(f"カテゴリー「{category.name}」を削除してもよろしいですか？")
         [await mes.add_reaction(i) for i in ("\u2705", "\u274c")]
         def check(react: discord.Reaction, usr):
