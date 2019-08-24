@@ -94,3 +94,11 @@ async def is_staff(member):
         return any(r.id in (515467407381364738, 515467410174902272, 515467421323100160) for r in member.roles)
     else:
         return False
+
+
+async def is_subowner(member):
+    if await is_zatudanfolum(member):
+        return any(r.id in (515467407381364738, 515467410174902272) for r in member.roles)
+    else:
+        return False
+
