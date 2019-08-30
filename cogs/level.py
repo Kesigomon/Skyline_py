@@ -315,7 +315,8 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
                 [setattr(d[1], 'rank', i) for i, d in enumerate(subdata, 1)]
                 for page in itertools.count():
                     sub_subdata = subdata[page * 25:(page + 1) * 25]
-                    if not sub_subdata:
+                    # データがもうない or BOT停止で終了
+                    if not sub_subdata or self.closed.is_set():
                         break
                     embed = discord.Embed(title='ランキング')
                     [
@@ -333,9 +334,10 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
                         self.cache_messages.append(message)
                     else:
                         await message.edit(embed=embed)
-                for message in self.cache_messages[page:]:
-                    await message.delete()
-                del self.cache_messages[page:]
+                if not self.closed.is_set():
+                    for message in self.cache_messages[page:]:
+                        await message.delete()
+                    del self.cache_messages[page:]
             finally:
                 try:
                     await asyncio.wait_for(self.closed.wait(), timeout=5)
@@ -344,8 +346,9 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
 
     @commands.Cog.listener()
     async def on_close(self):
-        await self._save(self.guild.me, wait=True)
         self.closed.set()
+        await self._save(self.guild.me, wait=True)
+
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
