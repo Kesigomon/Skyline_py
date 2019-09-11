@@ -34,7 +34,7 @@ class Category_Index(commands.Cog):
         self.index_index = self.client.get_channel(515467529167044608)
 
     # インデックスチャンネルをサーチ。なければNone
-    def _create_category_find_index_channel(self, category)\
+    def _find_index_channel(self, category)\
             -> typing.Union[discord.TextChannel, type(None)]:
         try:
             index_channel: discord.TextChannel = next(
@@ -46,7 +46,7 @@ class Category_Index(commands.Cog):
 
     # インデックスの上のメンションのやつを作る方。
     async def _create_category_index1(self, category):
-        index_channel = self._create_category_find_index_channel(category)
+        index_channel = self._find_index_channel(category)
         if index_channel is not None:
             try:
                 message = await index_channel.history(oldest_first=True) \
@@ -66,7 +66,7 @@ class Category_Index(commands.Cog):
             return 1
 
     async def _create_category_index2(self, channel):  # インデックスの下のEmbedを作る方。
-        index_channel = self._create_category_find_index_channel(
+        index_channel = self._find_index_channel(
             channel.category)
         if index_channel is not None:
             async for message in (index_channel.history(oldest_first=True)
@@ -98,14 +98,14 @@ class Category_Index(commands.Cog):
         if (isinstance(channel, discord.TextChannel)
                 and channel.category is not None):
             await self._create_category_index1(channel.category)
-            index_channel = self._create_category_find_index_channel(
-                channel.category)
-            async for message in (index_channel.history(oldest_first=True)
-                                  .filter(lambda m: m.author == self.client.user and m.embeds)):
-                match = self.id_match.search(message.embeds[0].description)
-                if match and channel.id == int(match.group(1)):
-                    await message.delete()
-                    break
+            index_channel = self._find_index_channel(channel.category)
+            if index_channel:
+                async for message in (index_channel.history(oldest_first=True)
+                                      .filter(lambda m: m.author == self.client.user and m.embeds)):
+                    match = self.id_match.search(message.embeds[0].description)
+                    if match and channel.id == int(match.group(1)):
+                        await message.delete()
+                        break
 
     @commands.Cog.listener()
     async def on_guild_channel_update(self, before, after):
@@ -120,8 +120,7 @@ class Category_Index(commands.Cog):
     @commands.command(brief='カテゴリインデックスを作ります')
     async def create_category_index(self, ctx, *args):
         async def _create_category_index(category, ctx=None):
-            index_channel: discord.TextChannel = self._create_category_find_index_channel(
-                category)
+            index_channel: discord.TextChannel = self._find_index_channel(category)
             if index_channel is None:
                 if ctx is not None:
                     await ctx.send('インデックスチャンネルが見つかりませんでした。')
