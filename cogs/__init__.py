@@ -9,6 +9,7 @@ from .botowner import Bot_Owner_Command
 from .rolepanel import Role_panel
 from .board import DiscussionBoard
 from .rolesave import Role_save
+from .message_count import Message_count
 
 def cogs(bot):
     bot.add_cog(Normal_Command(bot, '普通のコマンド'))
@@ -16,9 +17,10 @@ def cogs(bot):
     bot.add_cog(Bot_Owner_Command(bot, 'BOTオーナー用コマンド'))
     bot.add_cog(Staff_Command(bot, 'スタッフ用コマンド'))
     bot.add_cog(Role_panel(bot, '役職パネル'))
-    bot.add_cog(FreeCategory(bot,'自由チャンネル編集コマンド'))
+    bot.add_cog(FreeCategory(bot, '自由チャンネル編集コマンド'))
     bot.add_cog(Category_recover(bot, 'カテゴリーリカバリー'))
     bot.add_cog(Events(bot, '参加・退出通知、VC通知'))
     bot.add_cog(Level(bot, 'レベル機能'))
     bot.add_cog(DiscussionBoard(bot, '掲示板機能'))
     bot.add_cog(Role_save(bot, '役職セーブ'))
+    bot.add_cog(Message_count(bot, 'メッセージカウント'))
