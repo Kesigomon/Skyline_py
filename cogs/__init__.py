@@ -8,6 +8,7 @@ from .categoryrecover import Category_recover
 from .botowner import Bot_Owner_Command
 from .rolepanel import Role_panel
 from .board import DiscussionBoard
+from .rolesave import Role_save
 
 def cogs(bot):
     bot.add_cog(Normal_Command(bot, '普通のコマンド'))
@@ -20,3 +21,4 @@ def cogs(bot):
     bot.add_cog(Events(bot, '参加・退出通知、VC通知'))
     bot.add_cog(Level(bot, 'レベル機能'))
     bot.add_cog(DiscussionBoard(bot, '掲示板機能'))
+    bot.add_cog(Role_save(bot, '役職セーブ'))
