@@ -18,6 +18,7 @@ class Message_count(commands.Cog):
         self.name = name if name is not None else type(self).__name__
         self.count = 0
         self.event = asyncio.Event(loop=self.bot.loop)
+        self.closed = asyncio.Event(loop=self.bot.loop)
         self.channel_id = 543794237515497472
         self.firstlaunch = True
 
@@ -47,7 +48,12 @@ class Message_count(commands.Cog):
     async def _update_task(self):
         while not self.bot.is_closed():
             await self.channel.edit(name=f'発言数:{self.count}')
-            await asyncio.sleep(10)
+            try:
+                await asyncio.wait_for(self.closed.wait(), timeout=10)
+            except asyncio.TimeoutError:
+                pass
+            else:
+                break
             await self.event.wait()
             self.event.clear()
 
@@ -56,3 +62,7 @@ class Message_count(commands.Cog):
         if self.not_bot(message):
             self.count += 1
             self.event.set()
+
+    @commands.Cog.listener()
+    async def on_close(self):
+        self.closed.set()
