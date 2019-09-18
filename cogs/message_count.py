@@ -46,16 +46,15 @@ class Message_count(commands.Cog):
                 await asyncio.gather(*(_task(channel) for channel in self.guild.text_channels))
 
     async def _update_task(self):
-        while not self.bot.is_closed():
+        while not self.closed.is_set():
             await self.channel.edit(name=f'発言数:{self.count}')
             try:
                 await asyncio.wait_for(self.closed.wait(), timeout=10)
             except asyncio.TimeoutError:
-                pass
+                await asyncio.wait([self.event.wait(), self.closed.wait()])
+                self.event.clear()
             else:
                 break
-            await self.event.wait()
-            self.event.clear()
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -65,4 +64,5 @@ class Message_count(commands.Cog):
 
     @commands.Cog.listener()
     async def on_close(self):
+        await self.channel.edit(name=f'発言数:{self.count}')
         self.closed.set()
