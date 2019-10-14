@@ -56,32 +56,22 @@ class Events(commands.Cog):
                 log.target.id == member.id
                 and abs(now - log.created_at) <= datetime.timedelta(seconds=1)
             )
+        await self.client.wait_until_ready()
         now = datetime.datetime.utcnow()
         await asyncio.sleep(0.5)
         audit_logs = await member.guild.audit_logs(action=discord.AuditLogAction.kick).flatten()
         audit_logs.extend(await member.guild.audit_logs(action=discord.AuditLogAction.ban).flatten())
         filtered = list(filter(check, audit_logs))
         if not filtered:
-            try:
-                await self.client.wait_until_ready()
-                zatsudan_forum = member.guild.get_channel(515467559051591681)
-            except (StopIteration, IndexError):
-                pass
-            else:
-                name = member.display_name
-                embed = discord.Embed(
-                    title='{0}さんが退出しました。'.format(name),
-                    colour=0x2E2EFE,
-                    description='{0}さん、ご利用ありがとうございました。\nこのサーバーの現在の人数は{1}人です'
-                    .format(name, member.guild.member_count)
-                )
-                embed.set_thumbnail(url=member.avatar_url)
-                await zatsudan_forum.send(embed=embed)
-                content = (
-                    '{0}が退出しました。'
-                    'ご利用ありがとうございました。'
-                ).format(member)
-                await self.new_member.send(content)
+            name = member.display_name
+            embed = discord.Embed(
+                title='{0}さんが退出しました。'.format(name),
+                colour=0x2E2EFE,
+                description='{0}さん、ご利用ありがとうございました。\nこのサーバーの現在の人数は{1}人です'
+                .format(name, member.guild.member_count)
+            )
+            embed.set_thumbnail(url=member.avatar_url)
+            await self.new_member.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
