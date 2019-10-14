@@ -48,7 +48,7 @@ class FreeCategory(commands.Cog):
         if channel is not None:
             await ctx.send(
                 '作成しました。\n{0}\nあと{1}チャンネル作成可能。'
-                .format(channel.mention, 49 - len(channel.category.channels))
+                .format(channel.mention, 50 - len(channel.category.channels))
             )
 
     @commands.command(name='fvcc')
@@ -57,7 +57,7 @@ class FreeCategory(commands.Cog):
         if channel is not None:
             await ctx.send(
                 '作成しました。\nあと{0}チャンネル作成可能。'
-                .format(49 - len(channel.category.channels))
+                .format(50 - len(channel.category.channels))
             )
 
     async def _free_channel_create(self, ctx, name, VC=False):
