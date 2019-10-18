@@ -10,6 +10,7 @@ from .rolepanel import Role_panel
 from .board import DiscussionBoard
 from .rolesave import Role_save
 from .message_count import Message_count
+from .ticket import Ticket
 
 def cogs(bot):
     bot.add_cog(Normal_Command(bot, '普通のコマンド'))
@@ -24,3 +25,4 @@ def cogs(bot):
     bot.add_cog(DiscussionBoard(bot, '掲示板機能'))
     bot.add_cog(Role_save(bot, '役職セーブ'))
     bot.add_cog(Message_count(bot, 'メッセージカウント'))
+    bot.add_cog(Ticket(bot, 'トラブルチケット'))
