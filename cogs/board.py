@@ -162,7 +162,7 @@ class DiscussionBoard(commands.Cog):
                     mention = ''
                 # UNDERGROUNDなら4日で遺跡に
                 if channel.category in self.category_underground:
-                    td1 = datetime.timedelta(days=4)
+                    td1 = datetime.timedelta(days=7)
                     category = self.category_ruins
                     content = mention + '＊このチャンネルは発言がないので、過去ログスレッド倉庫に移動した。'
                 # 地上なら7日でUNDERGROUNDに
