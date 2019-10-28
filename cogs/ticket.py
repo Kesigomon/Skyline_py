@@ -1,3 +1,5 @@
+import datetime
+
 import discord
 from discord.ext import commands
 
@@ -14,6 +16,19 @@ class Ticket(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         self.category: discord.CategoryChannel = self.bot.get_channel(ticket_category)
+        for channel in self.category.text_channels:  # type: discord.TextChannel
+            try:
+                # 最後のメッセージを取得しようとする
+                last = await channel.history().next()
+            except discord.NoMoreItems:
+                # もしメッセージがなければ、チャンネルの作成時間
+                dt = channel.created_at
+            else:
+                # メッセージがあれば、最後の発言の時間
+                dt = last.created_at
+            # 先で取得した時間から7日以上経っていたら、チャンネルを消す
+            if (datetime.datetime.utcnow() - dt) >= datetime.timedelta(days=7):
+                await channel.delete()
 
     @commands.command()
     async def ticket(self, ctx: commands.Context):
