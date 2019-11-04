@@ -175,8 +175,7 @@ class Events(commands.Cog):
                     embed.set_author(name=entry.author, url=entry.author_detail.href,
                                     icon_url=entry.media_thumbnail[0]['url'])
                     await webhook.send(embed=embed)
-                else:
-                    # 更新が来たら自動停止する！
+                if entries:
                     self.client.loop.create_task(self.client.close())
                 try:
                     await asyncio.wait_for(self.closed.wait(), timeout=60)
