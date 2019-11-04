@@ -1,12 +1,13 @@
-import datetime
-import re
 import asyncio
-import json
+import datetime
 import io
+import json
+import re
 import typing
 
 import discord
 from discord.ext import commands
+
 from .general import board_kwargs
 
 listener = commands.Cog.listener
@@ -263,6 +264,19 @@ class DiscussionBoard(commands.Cog):
                     '＊たくさんの発言の力で、このチャンネルは雑談板保存版に移動した。'
                 )
             self.counter[message.channel] = count
+
+    @listener()
+    async def on_guild_channel_create(self, channel: discord.abc.GuildChannel):
+        # 雑談板保存版 or 雑談板でなければスルー
+        if not(
+                channel.category == self.category_surface
+                or channel.category in self.category_ruins):
+            return
+        # 念押しでスリープ
+        await asyncio.sleep(2)
+        # もし作成チャンネルで作ってなければ消す！
+        if channel not in self.creater:
+            await channel.delete()
 
     @commands.command()
     async def reborn(self, ctx, channel: typing.Union[discord.TextChannel, discord.VoiceChannel] = None):
