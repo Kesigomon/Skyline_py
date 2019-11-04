@@ -270,7 +270,7 @@ class DiscussionBoard(commands.Cog):
         # 雑談板保存版 or 雑談板でなければスルー
         if not(
                 channel.category == self.category_surface
-                or channel.category in self.category_ruins):
+                or channel.category in self.category_underground):
             return
         # 念押しでスリープ
         await asyncio.sleep(2)
