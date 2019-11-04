@@ -177,7 +177,7 @@ class Events(commands.Cog):
                     await webhook.send(embed=embed)
                 else:
                     # 更新が来たら自動停止する！
-                    await self.client.close()
+                    self.client.loop.create_task(self.client.close())
                 try:
                     await asyncio.wait_for(self.closed.wait(), timeout=60)
                 except asyncio.TimeoutError:
