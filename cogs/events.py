@@ -137,8 +137,9 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_close(self):
-        [t.cancel() for t in self.tasks]
         self.closed.set()
+        done, pending = await asyncio.wait(self.tasks, timeout=1)
+        [t.cancel() for t in pending]
 
     async def task_skyline_update(self):
         await self.client.wait_until_ready()
