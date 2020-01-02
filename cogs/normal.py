@@ -1,7 +1,9 @@
+import random
+
 import discord
 from discord.ext import commands
+
 from .general import is_zatudanfolum, agree_messages
-import random
 
 
 class Normal_Command(commands.Cog):
@@ -118,8 +120,7 @@ class Normal_Command(commands.Cog):
                 '{0}さんの\n'
                 'アカウントが登録されました！{1}の\n'
                 '{2}個のチャンネルが利用できます！\n'
-                'まずは<#515467585152876544>で自己紹介をしてみてください！\n'
-                '旧サーバーから移動してきた方は、<#531284969025437696>を参照してください。'
+                'まずは<#515467585152876544>で自己紹介をしてみてください！'
             ).format(ctx.author.mention, ctx.guild.name, len(ctx.guild.channels))
             # 左から順に、ユーザーのメンション、サーバーの名前、サーバーのチャンネル数に置き換える。
             # 役職付与
