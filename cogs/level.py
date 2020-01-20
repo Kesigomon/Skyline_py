@@ -1,12 +1,12 @@
 import asyncio
+import datetime
 import io
 import itertools
 import json
 import random
 import re
-import datetime
-import traceback
 import textwrap
+import traceback
 
 import discord
 from discord.ext import commands
@@ -94,6 +94,7 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
         self.role_dict = {
             i[0]: guild.get_role(i[1])
             for i in (
+                (60, 668960966972801037),
                 (50, 532121179457060876),
                 (40, 532120974942797835),
                 (30, 532119101309452289),
