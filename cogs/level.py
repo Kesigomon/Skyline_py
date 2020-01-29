@@ -367,6 +367,6 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
             await mes.remove_reaction(payload.emoji, user)
             if save and await is_staff(user):
                 await self._save(user)
-            else:
+            if not save or await is_staff(user):
                 await self._change_message(user, mes)
 
