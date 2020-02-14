@@ -1,5 +1,5 @@
-import re
 import asyncio
+import re
 
 import discord
 from discord.ext import commands
@@ -31,7 +31,7 @@ class Message_count(commands.Cog):
 
             match = self.pattern1.search(self.channel.name)
             asyncio.ensure_future(self._update_task(), loop=self.bot.loop)
-            if isinstance(match, re.Match):
+            if match:
                 self.count = int(match.group(1))
             else:
                 async def _task(channel):
