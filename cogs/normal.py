@@ -113,7 +113,7 @@ class Normal_Command(commands.Cog):
     @commands.command(check=[is_zatudanfolum])
     async def agree(self, ctx):
         roles = [ctx.guild.get_role(i) for i in
-                 (515467427459629056, 515467425429585941, 575319592533229598, 573506143985467392)]
+                 (515467427459629056, 515467425429585941, 575319592533229598)]
         if roles[0] not in ctx.author.roles:
             # 送信する文章指定。
             content = (
