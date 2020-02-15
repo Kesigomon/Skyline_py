@@ -227,6 +227,7 @@ class DiscussionBoard(commands.Cog):
                         name=message.content, category=category, overwrites=overwrites)
                     self.creater[new_channel] = message.author
                     await channel.send(f'＊作成完了。\n{new_channel.mention}')
+                    await message.author.add_roles(self.guild.get_role(573506143985467392))
                     break
                 else:
                     await channel.send('＊カテゴリがいっぱいでこれ以上作成できない。')
