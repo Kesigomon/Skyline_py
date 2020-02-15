@@ -2,7 +2,7 @@
 import discord
 from discord.ext import commands
 
-from .general import ZATSUDAN_FORUM_ID, is_subowner
+from .general import ZATSUDAN_FORUM_ID, is_subowner, event_channel
 
 
 class Staff_Command(commands.Cog):
@@ -15,6 +15,7 @@ class Staff_Command(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         self.guild = self.client.get_guild(ZATSUDAN_FORUM_ID)
+        self.normal_user: discord.Role = self.guild.get_role(515467427459629056)
         self.limit_role: discord.Role = self.guild.get_role(515467411898761216)
 
     async def cog_check(self, ctx):
@@ -45,3 +46,13 @@ class Staff_Command(commands.Cog):
             await ctx.send("BANしました")
         else:
             await ctx.send("キャンセルしました")
+
+    @commands.command()
+    async def event_toggle(self, ctx: commands.Context):
+        for _id in event_channel:
+            channel: discord.abc.GuildChannel = self.client.get_channel(_id)
+            if channel is None:
+                continue
+            overwrite = channel.overwrites_for(self.normal_user)
+            overwrite.update(read_messages=not overwrite.read_messages)
+            await channel.set_permissions(self.normal_user, )
