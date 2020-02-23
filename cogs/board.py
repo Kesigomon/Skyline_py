@@ -161,7 +161,7 @@ class DiscussionBoard(commands.Cog):
                     mention = creater.mention + "\n"
                 else:
                     mention = ''
-                # UNDERGROUNDなら4日で遺跡に
+                # UNDERGROUNDなら7日で遺跡に
                 if channel.category in self.category_underground:
                     td1 = datetime.timedelta(days=7)
                     category = self.category_ruins
@@ -171,6 +171,7 @@ class DiscussionBoard(commands.Cog):
                     td1 = datetime.timedelta(days=7)
                     category = next(c for c in self.category_underground if len(c.channels) <= 49)
                     content = mention + '＊このチャンネルは発言がないので、雑談板に戻された。'
+
                 elif channel.category == self.category_ruins:
                     td1 = datetime.timedelta(days=14)
                     content = None
