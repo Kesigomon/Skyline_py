@@ -171,7 +171,7 @@ class DiscussionBoard(commands.Cog):
                     td1 = datetime.timedelta(days=7)
                     category = next(c for c in self.category_underground if len(c.channels) <= 49)
                     content = mention + '＊このチャンネルは発言がないので、雑談板に戻された。'
-
+                # 過去ログスレッドなら14日で消す
                 elif channel.category == self.category_ruins:
                     td1 = datetime.timedelta(days=14)
                     content = None
