@@ -3,7 +3,7 @@ import datetime
 import discord
 from discord.ext import commands
 
-from .general import ticket_category
+from .general import ticket_category, is_subowner
 
 
 class Ticket(commands.Cog):
@@ -31,22 +31,27 @@ class Ticket(commands.Cog):
                 await channel.delete()
 
     @commands.command()
-    async def ticket(self, ctx: commands.Context):
+    async def ticket(self, ctx: commands.Context, member: discord.Member = None):
         if ctx.author in self.limiter:
             await ctx.send("あなたはチャンネルを作成できません。")
             return
-        self.limiter.append(ctx.author)
+        if member is None:
+            member = ctx.author
+            self.limiter.append(ctx.author)
+        elif not await is_subowner(ctx.author):
+            await ctx.send("サブオーナーでなければ引数を取ることはできません。")
+            return
         overwrites = {
             ctx.guild.default_role:
                 discord.PermissionOverwrite.from_pair(
                     discord.Permissions.none(),
                     discord.Permissions.all()
                 ),
-            ctx.author:
+            member:
                 discord.PermissionOverwrite.from_pair(
                     discord.Permissions(388176),
                     discord.Permissions(2 ** 53 + ~388176)
                 )
         }
-        channel = await self.category.create_text_channel(str(ctx.author), overwrites=overwrites)
+        channel = await self.category.create_text_channel(str(member), overwrites=overwrites)
         await ctx.send(f"作成しました {channel.mention}")
