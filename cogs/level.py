@@ -312,7 +312,7 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
                 guild = self.ranking_channel.guild
                 subdata = [(key, value) for key, value in self.data.items()
                            if guild.get_member(int(key)) is not None]
-                subdata.sort(key=lambda i: i[1].exp, reverse=True)
+                subdata.sort(key=lambda i: i[1].exp)
                 [setattr(d[1], 'rank', i) for i, d in enumerate(subdata, 1)]
                 for page in itertools.count():
                     sub_subdata = subdata[page * 25:(page + 1) * 25]
