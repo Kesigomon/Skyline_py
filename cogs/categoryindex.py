@@ -130,7 +130,7 @@ class Category_Index(commands.Cog):
                     (c for c in category.channels if isinstance(c, discord.TextChannel) and c != index_channel),
                     key=lambda c: c.position
                 )
-                await asyncio.wait([self._create_category_index2(channel) for channel in channels])
+                await asyncio.gather(*[self._create_category_index2(channel) for channel in channels])
                 await self._create_category_index1(category)
 
 
