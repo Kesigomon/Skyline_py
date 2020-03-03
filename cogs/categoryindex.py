@@ -126,13 +126,13 @@ class Category_Index(commands.Cog):
                     await ctx.send('インデックスチャンネルが見つかりませんでした。')
             else:
                 await index_channel.purge(check=lambda m: m.author == self.client.user and m.embeds)
-                await self._create_category_index1(category)
                 channels = sorted(
                     (c for c in category.channels if isinstance(c, discord.TextChannel) and c != index_channel),
                     key=lambda c: c.position
                 )
                 tasks = [self.client.loop.create_task(self._create_category_index2(channel))
                          for channel in channels]
+                await self._create_category_index1(category)
                 await asyncio.wait(tasks)
 
         if not args:
