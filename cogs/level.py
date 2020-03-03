@@ -322,7 +322,7 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
                     embed = discord.Embed(title='ランキング')
                     [
                         embed.add_field(
-                            name='{0}位 (LV{1.level} {1.exp}EXP)'.format(count, value),
+                            name='{0}位 (LV{1.level} {1.exp}EXP)'.format(len(subdata) - count, value),
                             value='<@{0}>'.format(key),
                             inline=False
                         )
