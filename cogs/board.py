@@ -243,7 +243,11 @@ class DiscussionBoard(commands.Cog):
             if count % 10 == 0:
                 # 10発言ごとに上に行ける
                 channels = sorted(channel.category.channels, key=lambda c: c.position)
-                top_channel = channels[0]
+                index = channels.index(channel)
+                # インデックスチャンネルは動かない
+                if index == 0:
+                    return
+                top_channel = channels[1]
                 if channel == top_channel:
                     index = self.category_underground.index(channel.category)
                     if index != 0:
@@ -256,7 +260,7 @@ class DiscussionBoard(commands.Cog):
                             await channels2[-1].edit(category=channel.category, position=channel.position)
                         await channel.edit(category=category2, position=len(channel.guild.text_channels) - 1)
                 else:
-                    upper_channel = channels[channels.index(channel) - 1]
+                    upper_channel = channels[index - 1]
                     # 一つ上のチャンネルと同じポジションを指定することで
                     # チャンネルを上げることができる
                     await channel.edit(
