@@ -313,7 +313,7 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
                 subdata = [(key, value) for key, value in self.data.items()
                            if guild.get_member(int(key)) is not None]
                 subdata.sort(key=lambda i: i[1].exp)
-                [setattr(d[1], 'rank', i) for i, d in enumerate(subdata, 1)]
+                [setattr(d[1], 'rank', i) for i, d in enumerate(reversed(subdata), 1)]
                 for page in itertools.count():
                     sub_subdata = subdata[page * 25:(page + 1) * 25]
                     # データがもうない or BOT停止で終了
