@@ -139,6 +139,16 @@ class Events(commands.Cog):
     async def on_close(self):
         self.closed.set()
 
+    async def task_purge_complaint(self):
+        await self.client.wait_until_ready()
+        channel: discord.TextChannel = self.client.get_channel(515467578274217996)
+        while not self.closed.is_set():
+            try:
+                await asyncio.wait_for(self.closed.wait(), timeout=3600)
+            except asyncio.TimeoutError:
+                pass
+            await channel.purge()
+
     async def task_skyline_update(self):
         await self.client.wait_until_ready()
         channel: discord.TextChannel = self.client.get_channel(515468115535200256)
