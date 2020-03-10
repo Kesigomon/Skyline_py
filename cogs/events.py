@@ -24,7 +24,7 @@ class Events(commands.Cog):
         self.name = name if name is not None else type(self).__name__
         self.tasks = [
             self.client.loop.create_task(coro)
-            for coro in (self.task_bump(), self.task_skyline_update())
+            for coro in (self.task_bump(), self.task_skyline_update(), self.task_purge_complaint())
         ]
         self.mention_counter = {}
         self.closed = asyncio.Event(loop=client.loop)
