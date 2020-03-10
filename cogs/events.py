@@ -146,8 +146,8 @@ class Events(commands.Cog):
             try:
                 await asyncio.wait_for(self.closed.wait(), timeout=3600)
             except asyncio.TimeoutError:
-                pass
-            await channel.purge()
+                await channel.purge()
+
 
     async def task_skyline_update(self):
         await self.client.wait_until_ready()
