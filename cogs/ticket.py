@@ -14,6 +14,14 @@ class Ticket(commands.Cog):
         self.bot: commands.Bot = bot
         self.name = name if name is not None else type(self).__name__
         self.ready = asyncio.Event()
+        self.overwrite_default = discord.PermissionOverwrite.from_pair(
+            discord.Permissions(379968),
+            discord.Permissions(2 ** 53 + ~379968)
+        )
+        self.overwrite_owner = discord.PermissionOverwrite.from_pair(
+            discord.Permissions(388160),
+            discord.Permissions(2 ** 53 + ~388160)
+        )
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -44,13 +52,13 @@ class Ticket(commands.Cog):
     def get_channel(self, member):
         return next((
             channel for channel in self.category.text_channels
-            if self.is_own(channel, member)
+            if self.is_own(member, channel)
         ), None)
 
     async def cog_before_invoke(self, ctx):
         await self.ready.wait()
 
-    @commands.group()
+    @commands.group(invoke_without_command=True)
     async def ticket(self, ctx: commands.Context, members: commands.Greedy[discord.Member]):
         member = ctx.author
         if self.get_channel(member) is not None and not is_subowner(member):
@@ -62,11 +70,8 @@ class Ticket(commands.Cog):
                     discord.Permissions.none(),
                     discord.Permissions.all()
                 ),
-            member:
-                discord.PermissionOverwrite.from_pair(
-                    discord.Permissions(388176),
-                    discord.Permissions(2 ** 53 + ~388176)
-                )
+            member: self.overwrite_owner
+
         }
         topic = dedent(f"""
             {member.id}
@@ -75,6 +80,7 @@ class Ticket(commands.Cog):
         """)
         channel = await self.category.create_text_channel(str(ctx.author), overwrites=overwrites, topic=topic)
         await ctx.send(f"作成しました {channel.mention}")
+        await asyncio.gather(*(self.add_member(channel, member) for member in members))
 
     @ticket.command()
     async def invite(self, ctx, members: commands.Greedy[discord.Member]):
@@ -84,10 +90,10 @@ class Ticket(commands.Cog):
                            "まずはsk!ticketでチャンネルを作ってください")
             return
         await asyncio.gather(*(self.add_member(channel, member) for member in members))
+        await ctx.send("追加しました")
 
-    @staticmethod
-    async def add_member(channel: discord.TextChannel, member: discord.Member):
-        await channel.set_permissions(member)
+    async def add_member(self, channel: discord.TextChannel, member: discord.Member):
+        await channel.set_permissions(member, overwrite=self.overwrite_default)
 
     @ticket.command()
     async def leave(self, ctx: commands.Context):
@@ -96,6 +102,22 @@ class Ticket(commands.Cog):
             await ctx.send("ここでは使えません")
             return
         if self.is_own(ctx.author, channel):
-            pass
+            emojis = ('\u2705', '\u274c')
+            message = await channel.send("本当に削除して良い？")
+
+            def check1(reaction: discord.Reaction, user):
+                return (
+                    reaction.message.id == message.id
+                    and reaction.message.channel == message.channel
+                    and user == ctx.author
+                )
+
+            [self.bot.loop.create_task(message.add_reaction(i))
+             for i in emojis]
+            reaction, _ = await self.bot.wait_for('reaction_add', check=check1)
+            if reaction.emoji == '\u2705':
+                await channel.delete()
+            else:
+                await ctx.send("キャンセルしました")
         else:
             await channel.set_permissions(ctx.author, overwrite=None)
