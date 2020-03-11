@@ -141,7 +141,8 @@ class Events(commands.Cog):
 
     async def task_purge_complaint(self):
         await self.client.wait_until_ready()
-        channel: discord.TextChannel = self.client.get_channel(515467578274217996)
+        # todo: サーバー変更時、チャンネルID変更
+        channel: discord.TextChannel = self.client.get_channel(687371705861144607)
         while not self.closed.is_set():
             try:
                 await asyncio.wait_for(self.closed.wait(), timeout=3600)
