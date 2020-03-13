@@ -24,7 +24,7 @@ class Events(commands.Cog):
         self.name = name if name is not None else type(self).__name__
         self.tasks = [
             self.client.loop.create_task(coro)
-            for coro in (self.task_bump(), self.task_skyline_update(), self.task_purge_complaint())
+            for coro in (self.task_bump(), self.task_skyline_update())
         ]
         self.mention_counter = {}
         self.closed = asyncio.Event(loop=client.loop)
@@ -139,15 +139,14 @@ class Events(commands.Cog):
     async def on_close(self):
         self.closed.set()
 
-    async def task_purge_complaint(self):
-        await self.client.wait_until_ready()
-        # todo: サーバー変更時、チャンネルID変更
-        channel: discord.TextChannel = self.client.get_channel(687371705861144607)
-        while not self.closed.is_set():
-            try:
-                await asyncio.wait_for(self.closed.wait(), timeout=3600)
-            except asyncio.TimeoutError:
-                await channel.purge()
+    # async def task_purge_complaint(self):
+    #     await self.client.wait_until_ready()
+    #     channel: discord.TextChannel = self.client.get_channel(687371705861144607)
+    #     while not self.closed.is_set():
+    #         try:
+    #             await asyncio.wait_for(self.closed.wait(), timeout=3600)
+    #         except asyncio.TimeoutError:
+    #             await channel.purge()
 
 
     async def task_skyline_update(self):
