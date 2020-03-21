@@ -5,9 +5,8 @@ import os
 from new_skyline2 import SKYLINE
 
 token = os.environ['token']
-loop = asyncio.new_event_loop()
+loop = asyncio.get_event_loop()
 client = SKYLINE(loop=loop)
-asyncio.set_event_loop(loop)
 
 
 async def main():
