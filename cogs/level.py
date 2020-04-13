@@ -158,8 +158,9 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
                     content = (
                         '＊{0}のLVが{1}になった。\n'
                         '＊次のLVまで{2}EXP。'
-                    ).format(member.mention, new_level, sub_data.max_exp)
-                    await message.channel.send(content)
+                    ).format(member.display_name, new_level, sub_data.max_exp)
+                    # Todo: レベルアップ通知のチャンネル
+                    await self.client.get_channel(698899256089772092).send(content)
                     await self.update_level(member, new_level)
             else:  # スパムちゃんねるなら以下
                 sub_data.count += 1
