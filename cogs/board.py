@@ -244,9 +244,9 @@ class DiscussionBoard(commands.Cog):
                 # 10発言ごとに上に行ける
                 channels = sorted(channel.category.channels, key=lambda c: c.position)
                 index = channels.index(channel)
-                # インデックスチャンネルは動かない
-                if index == 0:
-                    return
+                # # インデックスチャンネルは動かない
+                # if index == 0:
+                #     return
                 top_channel = channels[1]
                 if channel == top_channel:
                     index = self.category_underground.index(channel.category)
