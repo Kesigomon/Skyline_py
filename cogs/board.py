@@ -266,7 +266,7 @@ class DiscussionBoard(commands.Cog):
                     await channel.edit(
                         position=upper_channel.position
                     )
-            if count >= 1000:
+            if count >= 200:
                 await channel.edit(category=self.category_surface)
                 await channel.send(
                     '＊たくさんの発言の力で、このチャンネルは雑談板保存版に移動した。'
