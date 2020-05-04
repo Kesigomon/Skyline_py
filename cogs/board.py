@@ -39,10 +39,6 @@ class DiscussionBoard(commands.Cog):
         return self.bot.get_channel(self.channel_ids[1])
 
     @property
-    def category_surface(self):
-        return self.bot.get_channel(self.category_ids[0])
-
-    @property
     def category_underground(self) -> typing.List[discord.CategoryChannel]:
         return [self.bot.get_channel(i) for i in self.category_ids[1:3]]
 
@@ -137,8 +133,6 @@ class DiscussionBoard(commands.Cog):
             else:
                 break
             channels = (
-                # 雑談板保存版
-                sorted(self.category_surface.text_channels, key=lambda c: c.position)[3:],
                 # 雑談板
                 *(sorted(c.channels, key=lambda c: c.position)[1:] for c in self.category_underground),
                 self.category_ruins.channels
@@ -168,11 +162,6 @@ class DiscussionBoard(commands.Cog):
                     td1 = datetime.timedelta(days=7)
                     category = self.category_ruins
                     content = mention + '＊このチャンネルは発言がないので、過去ログスレッド倉庫に移動した。'
-                # 地上なら7日でUNDERGROUNDに
-                elif channel.category == self.category_surface:
-                    td1 = datetime.timedelta(days=7)
-                    category = next(c for c in self.category_underground if len(c.channels) <= 49)
-                    content = mention + '＊このチャンネルは発言がないので、雑談板に戻された。'
                 # 過去ログスレッドなら14日で消す
                 elif channel.category == self.category_ruins:
                     td1 = datetime.timedelta(days=14)
@@ -266,19 +255,11 @@ class DiscussionBoard(commands.Cog):
                     await channel.edit(
                         position=upper_channel.position
                     )
-            if count >= 200:
-                await channel.edit(category=self.category_surface)
-                await channel.send(
-                    '＊たくさんの発言の力で、このチャンネルは雑談板保存版に移動した。'
-                )
-            self.counter[message.channel] = count
 
     @listener()
     async def on_guild_channel_create(self, channel: discord.abc.GuildChannel):
         # 雑談板保存版 or 雑談板でなければスルー
-        if not(
-                channel.category == self.category_surface
-                or channel.category in self.category_underground):
+        if not channel.category in self.category_underground:
             return
         # 念押しでスリープ
         await asyncio.sleep(2)
