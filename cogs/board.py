@@ -205,7 +205,7 @@ class DiscussionBoard(commands.Cog):
         channel: discord.TextChannel = message.channel
         # 新規作成用チャンネルならチャンネル作成
         if channel == self.channel_create:
-            if self.user_limiter.setdefault(message.author, 0) >= 3:
+            if self.user_limiter.setdefault(message.author, 0) >= 1:
                 await channel.send('＊あなたは今日はもうチャンネルを作れない。')
             else:
                 self.user_limiter[message.author] += 1
