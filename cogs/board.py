@@ -133,8 +133,9 @@ class DiscussionBoard(commands.Cog):
             else:
                 break
             channels = (
-                # 雑談板
-                *(sorted(c.channels, key=lambda c: c.position)[1:] for c in self.category_underground),
+                # 雑談板1(チャンネル保護)
+                sorted(self.category_underground[0].channels, key=lambda c: c.position)[2:],
+                *(sorted(c.channels, key=lambda c: c.position) for c in self.category_underground[1:]),
                 self.category_ruins.channels
             )
             channel: discord.TextChannel
