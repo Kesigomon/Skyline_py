@@ -1,9 +1,9 @@
-import discord
 import typing
+
+import discord
 from discord.ext import commands
-import textwrap
-from .general import is_staff, free_category
-import asyncio
+
+from .general import is_staff, free_category, free_category_create
 
 
 class FreeCategory(commands.Cog):
@@ -42,34 +42,26 @@ class FreeCategory(commands.Cog):
     def category(self):
         return self.client.get_channel(free_category)
 
+    @property
+    def create_channel(self):
+        return self.client.get_channel(free_category_create)
+
     @commands.command(name='ftcc')
     async def free_text_channel_create(self, ctx, *, name):
-        channel = await self._free_channel_create(ctx, name, VC=False)
+        channel = await self._free_channel_create(ctx, name)
         if channel is not None:
             await ctx.send(
                 '作成しました。\n{0}\nあと{1}チャンネル作成可能。'
                 .format(channel.mention, 50 - len(channel.category.channels))
             )
 
-    @commands.command(name='fvcc')
-    async def free_voice_channel_create(self, ctx, *, name):
-        channel = await self._free_channel_create(ctx, name, VC=True)
-        if channel is not None:
-            await ctx.send(
-                '作成しました。\nあと{0}チャンネル作成可能。'
-                .format(50 - len(channel.category.channels))
-            )
-
-    async def _free_channel_create(self, ctx, name, VC=False):
+    async def _free_channel_create(self, ctx, name):
         category = self.category
         if len(category.channels) >= 50:
-            await ctx.send(textwrap.dedent(
-              """
-            チャンネルが一杯でこのカテゴリには作成できません。
-            別なカテゴリを指定してください。
-            指定していないときにこのメッセージが出た場合は、運営に連絡してください。
-            """
-            ))
+            await ctx.send(
+                "チャンネルが一杯で作成できません。\n"
+                "運営に連絡してください。"
+            )
             return
         guild = category.guild
         overwrites = {
@@ -85,10 +77,7 @@ class FreeCategory(commands.Cog):
                 discord.PermissionOverwrite.from_pair(
                     discord.Permissions(37080128), discord.Permissions(2 ** 53 - 37080129)),
         }
-        if VC:
-            return await guild.create_voice_channel(name, overwrites=overwrites, category=category)
-        else:
-            return await guild.create_text_channel(name, overwrites=overwrites, category=category)
+        return await guild.create_text_channel(name, overwrites=overwrites, category=category)
 
     @commands.command()
     async def cedit(self, ctx,

@@ -18,8 +18,6 @@ https://chat-forum-dcc.jimdo.com/
 """
 
 
-rolepanel_channel = 515467531176116224
-
 agree_messages = [
     "{0}がサーバーに飛び込んだ！カンガルーだ！",
     "{0}の参上だ！",
@@ -68,6 +66,7 @@ voice_text = {
 
 free_category = 531634881860599818
 ticket_category = 626531344029057044
+free_category_create = 515467533441040384
 event_channel = [573332787722059786, 573332874510729226]
 spam = [515467956113768483, 555687014872383488, 534340672300515328]
 
