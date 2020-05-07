@@ -235,15 +235,15 @@ class DiscussionBoard(commands.Cog):
                 # 3発言ごとに上に行ける
                 channels = sorted(channel.category.channels, key=lambda c: c.position)
                 index = channels.index(channel)
-                # # インデックスチャンネルは動かない
-                # if index == 0:
-                #     return
-                top_channel = channels[1]
-                if channel == top_channel:
-                    index = self.category_underground.index(channel.category)
-                    if index != 0:
+                # 新規スレ立て・雑談板とは？チャンネルは動かない
+                if channel.category == self.category_underground[0] and index <= 2:
+                    return
+                if index == 0:
+                    index_category = self.category_underground.index(channel.category)
+                    # 雑談板1なら動かさない
+                    if index_category != 0:
                         while True:
-                            category2 = self.category_underground[index - 1]  # 一個上のカテゴリ
+                            category2 = self.category_underground[index_category - 1]  # 一個上のカテゴリ
                             if len(category2.channels) < 49:  # チャンネル数オーバーなら入れ替えを行う
                                 break
                             channels2 = category2.text_channels
