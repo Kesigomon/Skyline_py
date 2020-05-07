@@ -230,9 +230,9 @@ class DiscussionBoard(commands.Cog):
             # 存在しなければ 1
             count = self.counter.setdefault(channel, 0) + 1
             self.counter[channel] = count
-            # 10で割り切れる数字のときの処理
-            if count % 10 == 0:
-                # 10発言ごとに上に行ける
+            # 3で割り切れる数字のときの処理
+            if count % 3 == 0:
+                # 3発言ごとに上に行ける
                 channels = sorted(channel.category.channels, key=lambda c: c.position)
                 index = channels.index(channel)
                 # # インデックスチャンネルは動かない
