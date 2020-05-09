@@ -1,3 +1,4 @@
+from .authorize import Authorize
 from .board import DiscussionBoard
 from .botowner import Bot_Owner_Command
 from .categoryindex import Category_Index
@@ -25,3 +26,4 @@ def cogs(bot):
     bot.add_cog(Role_save(bot, '役職セーブ'))
     bot.add_cog(Message_count(bot, 'メッセージカウント'))
     bot.add_cog(Ticket(bot, 'トラブルチケット'))
+    bot.add_cog(Authorize(bot, "認証機能"))

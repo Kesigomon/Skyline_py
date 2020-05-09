@@ -1,9 +1,7 @@
-import random
-
 import discord
 from discord.ext import commands
 
-from .general import is_zatudanfolum, agree_messages
+from .general import is_zatudanfolum
 
 
 class Normal_Command(commands.Cog):
@@ -109,39 +107,3 @@ class Normal_Command(commands.Cog):
             )
         else:
             await ctx.send('あなたはまだこの機能を使えません。')
-
-    @commands.command(check=[is_zatudanfolum])
-    async def agree(self, ctx):
-        roles = [ctx.guild.get_role(i) for i in
-                 (515467427459629056, 515467425429585941, 575319592533229598)]
-        if roles[0] not in ctx.author.roles:
-            # 送信する文章指定。
-            content = (
-                '{0}さんの\n'
-                'アカウントが登録されました！{1}の\n'
-                '{2}個のチャンネルが利用できます！\n'
-                'まずは<#515467585152876544>で自己紹介をしてみてください！'
-            ).format(ctx.author.mention, ctx.guild.name, len(ctx.guild.channels))
-            # 左から順に、ユーザーのメンション、サーバーの名前、サーバーのチャンネル数に置き換える。
-            # 役職付与
-            await ctx.author.add_roles(*roles)
-            # メッセージ送信
-            await ctx.send(content)
-            member = ctx.author
-            name = member.display_name
-            des1 = random.choice(agree_messages).format(name, member.guild.me.display_name)
-            embed = discord.Embed(
-                title='{0}さんが参加しました。'.format(name),
-                colour=0x2E2EFE,
-                description=(
-                    '```\n{3}\n```\n'
-                    'ようこそ{0}さん、よろしくお願いします！\n'
-                    'このサーバーの現在の人数は{1}です。\n'
-                    '{2}に作られたアカウントです。'
-                ).format(name, member.guild.member_count, member.created_at, des1)
-            )
-            embed.set_thumbnail(url=member.avatar_url)
-
-            await self.client.get_channel(515467559051591681).send(embed=embed)
-        else:
-            await ctx.send('登録終わってますやんか')
