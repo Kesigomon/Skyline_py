@@ -11,6 +11,7 @@ from .normal import Normal_Command
 from .rolesave import Role_save
 from .staff import Staff_Command
 from .ticket import Ticket
+from .vc import VC
 
 
 def cogs(bot):
