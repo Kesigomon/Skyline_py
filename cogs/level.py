@@ -301,9 +301,15 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
             await ctx.send('＊ケツイがまだ足りないようだ。')
 
     async def update_level(self, member, level):
+        result = []
         for key, value in self.role_dict.items():
             if level >= key:
-                await member.add_roles(value)
+                result.append((key, value))
+        result.sort(key=lambda i: i[0], reverse=True)
+        if result:
+            await member.add_roles(result[0][1])
+        if len(result) >= 2:
+            await member.remove_roles(*[v for k, v in result[1:]])
 
     async def update_ranking(self):
         await self.ready.wait()
@@ -350,7 +356,6 @@ class Level(commands.Cog):  # レベルシステム（仮運用）
     async def on_close(self):
         self.closed.set()
         await self._save(self.guild.me, wait=True)
-
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
