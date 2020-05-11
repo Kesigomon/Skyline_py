@@ -28,3 +28,4 @@ def cogs(bot):
     bot.add_cog(Message_count(bot, 'メッセージカウント'))
     bot.add_cog(Ticket(bot, 'トラブルチケット'))
     bot.add_cog(Authorize(bot, "認証機能"))
+    bot.add_cog(VC(bot, "VC機能"))
