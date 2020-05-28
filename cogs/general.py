@@ -8,7 +8,7 @@ join_message = """
 <#515467524960157716> をよく読みアカウント登録をするとサーバーを利用できます。
 
 公式サイトはこちら：
-https://chat-forum-dcc.jimdo.com/
+<https://chat-forum-dcc.jimdo.com/>
 ──────────────────────
 """
 
