@@ -36,7 +36,8 @@ class Authorize(commands.Cog):
         ):
             return
         member = self.get_member(payload.user_id)
-        if self.default_roles[0] in member.roles:
+        # 何らかの役職を持っていれば認証処理は行わない
+        if len(member.roles) >= 2:
             return
         await member.add_roles(*self.default_roles)
         name = member.display_name
