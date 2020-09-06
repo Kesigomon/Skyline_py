@@ -1,17 +1,48 @@
+import io
+import json
+
 import discord
 from discord.ext import commands
 
 from .general import (
-    voice_text
+    voice_text,
+    save_channel
 )
 
 
 class VC(commands.Cog):
+    filename = "vc.json"
 
     def __init__(self, bot, name=None):
         self.bot: commands.Bot = bot
         self.name = name if name is not None else type(self).__name__
         self.cache = {}  # 元々の名前保存用
+        self.save_channel = None
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        self.save_channel: discord.TextChannel = self.bot.get_channel(save_channel)
+        await self.load()
+
+    async def load(self):
+        def check(m: discord.Message):
+            return (
+                    m.author == self.bot.user
+                    and m.attachments
+                    and m.attachments[0].filename == self.filename
+            )
+
+        stream = io.BytesIO()
+        async for message in self.save_channel.history(limit=None).filter(check):
+            await message.attachments[0].save(stream)
+            break
+        else:
+            return
+        data: dict = json.loads(stream.read().decode('UTF-8'))
+        self.cache = {
+            self.bot.get_channel(int(key)): value
+            for key, value in data.items()
+        }
 
     @commands.command()
     async def vc(self, ctx: commands.Context, *, name):
@@ -33,6 +64,13 @@ class VC(commands.Cog):
         await channel.edit(name=name)
         await text_channel.edit(name=f"{name}txt")
         await ctx.send("変更しました")
+
+    @commands.Cog.listener()
+    async def on_save(self):
+        data = {str(channel.id): name for channel, name in self.cache.items()}
+        stream = io.StringIO(json.dumps(data, indent=4))
+        file = discord.File(stream, filename=self.filename)
+        await self.save_channel.send(file=file)
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
