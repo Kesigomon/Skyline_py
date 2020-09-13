@@ -41,11 +41,15 @@ class Authorize(commands.Cog):
             return
         await member.add_roles(*self.default_roles)
         name = member.display_name
-        des1 = random.choice(agree_messages).format(name, member.guild.me.display_name)
+        title = random.choice(agree_messages).format(name, member.guild.me.display_name)
+        description = (
+            f"ようこそ{member.mention}さん！{member.guild.name}へ！"
+            "<#515467585152876544> よければ自己紹介おねがいします！"
+        )
         embed = discord.Embed(
-            title=f"```{des1}```",
+            title=f"```{title}```",
             colour=0x2E2EFE,
-            description=f"ようこそ{member.mention}さん！{member.guild.name}へ！ #🔰│新規参加の方へ をお読みください！"
+            description=description
         )
         embed.set_thumbnail(url=member.avatar_url)
         await self.bot.get_channel(main_channel).send(embed=embed)
