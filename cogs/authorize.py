@@ -37,5 +37,8 @@ class Authorize(commands.Cog):
         if len(member.roles) >= 2:
             return
         await member.add_roles(*self.default_roles)
-        content = f"ようこそ**{member.mention}**さん！{member.guild.name}へ！"
+        content = (
+            f"ようこそ{member.mention}さん！{member.guild.name}へ！\n"
+            f"<#515467585152876544> よければ自己紹介をお願いします！"
+        )
         await self.bot.get_channel(main_channel).send(content)
