@@ -1,3 +1,5 @@
+import random
+
 import discord
 from discord.ext import commands
 
@@ -6,7 +8,8 @@ from .general import (
     authorize_message,
     authorize_message_channel,
     default_roles_id,
-    main_channel
+    main_channel,
+    agree_messages
 )
 
 
@@ -37,8 +40,12 @@ class Authorize(commands.Cog):
         if len(member.roles) >= 2:
             return
         await member.add_roles(*self.default_roles)
-        content = (
-            f"ようこそ{member.mention}さん！{member.guild.name}へ！\n"
-            f"<#515467585152876544> よければ自己紹介をお願いします！"
+        name = member.display_name
+        des1 = random.choice(agree_messages).format(name, member.guild.me.display_name)
+        embed = discord.Embed(
+            title=f"```{des1}```",
+            colour=0x2E2EFE,
+            description=f"ようこそ{member.mention}さん！{member.guild.name}へ！ #🔰│新規参加の方へ をお読みください！"
         )
-        await self.bot.get_channel(main_channel).send(content)
+        embed.set_thumbnail(url=member.avatar_url)
+        await self.bot.get_channel(main_channel).send(embed=embed)
