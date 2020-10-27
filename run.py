@@ -2,11 +2,13 @@ import asyncio
 import datetime
 import os
 
+import discord
+
 from new_skyline2 import SKYLINE
 
 token = os.environ['token']
 loop = asyncio.get_event_loop()
-client = SKYLINE(loop=loop)
+client = SKYLINE(loop=loop, intents=discord.Intents.all())
 
 
 async def main():
